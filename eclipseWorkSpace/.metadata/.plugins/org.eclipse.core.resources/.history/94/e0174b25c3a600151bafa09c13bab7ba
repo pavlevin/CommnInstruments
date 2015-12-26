@@ -1,0 +1,85 @@
+public class CombinedUser{
+	private String userName;
+	UnixUsr unixUsr = new UnixUsr("bla", "blu");
+	DBUsr dbUsr;
+	CombinedUser(){
+		this.userName="NoName";
+}
+	CombinedUser(String userName){
+		this.userName=userName;
+	}
+	public static void main(String[] args) throws InstantiationException, IllegalAccessException{
+		CombinedUser combo1 = new CombinedUser();
+		UnixUsr a = CombinedUser.UnixUsr("f").new UnixUsr("f","f");
+//new combo1.unixUsr("bla", "blu");
+		System.out.println(a.login);
+	}
+	void setLogin(String login) {
+		unixUsr.login=login;	
+	}
+	
+	void setLoginFor(DBUsr dbUsr,String login) {
+		dbUsr.login=login;	
+	}
+
+	String getLogin(UnixUsr unixUsr) {
+		return unixUsr.login;
+		
+	}
+	String getLogin(DBUsr dbUsr) {
+		return dbUsr.login;
+	}
+
+	void setPassword(String password) {
+		unixUsr.password=password;
+	}
+
+	String getPassword(UnixUsr unixUsr) {
+		return unixUsr.password;
+	}
+	String getPassword(DBUsr dbUsr) {
+		return dbUsr.password;
+	}
+	void setUserName(String userName) {
+		this.userName=userName;
+		
+	}
+	String getUserName() {
+		return userName;
+	}
+
+class DBUsr{
+	private String serviceName, login, password;
+	DBUsr(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setServiceName(String serviceName) {
+		this.serviceName=serviceName;}
+	String getServiceName(){
+		return this.serviceName;
+		}
+	}
+
+class UnixUsr {
+	private String identityFile, login, password;
+	UnixUsr(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setIdentityFile(String identityFile) {
+		this.identityFile = identityFile;
+	}
+	String getIdentityFile() {
+		return identityFile;
+
+}
+
+}
+
+
+
+
+
+}
+

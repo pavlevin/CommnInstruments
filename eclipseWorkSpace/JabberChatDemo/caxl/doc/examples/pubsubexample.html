@@ -1,0 +1,305 @@
+<!--
+/**
+ * filename:        pubsubexample.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--    This is a simple example that demonstrates a Jabberwerx client
+                connecting to a server, subscribing to a forum and receiving forum
+                items that are published.
+        -->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>PubSub Example</title>
+
+        <script type='text/javascript' src='../../jabberwerx.js'></script>
+        <script type='text/javascript' src='./jabberwerxexamples.js'></script>
+
+        <script type="text/javascript">
+        (function() { //wrapped in an anon function to avoid polluting global namespace
+            // Map the global jQuery symbol to jabberwerx's jquery for convenience.
+            var $ = jabberwerx.$;
+
+            /**
+             * Configuration information including
+             *   httpBindingURL - the BOSH binding URL.
+             *   domain - The user's domain (domain part of the connected JID)
+             *   username - The user (local part of connected JID)
+             *   password - The account password.
+             *   pubSubService - The server pubsub component
+             */
+            var demo_config = {
+                httpBindingURL: "/httpbinding",
+                domain: "example.com",
+                username: "jwtest0",
+                password: "test",
+                pubSubService: "info-broker.example.com"
+            };
+
+            /**
+             * Instantiate the Jabberwerx Client, the main access and routing
+             * object. Clients define a connection and session.
+             *
+             * see ../api/symbols/jabberwerx.Client.html
+             */
+            var client = new jabberwerx.Client();
+
+            /**
+             * Instantiate the pubsub controller. The constructor is passed the
+             * associated client and registers itself with the client. The
+             * controller is managed by the client. The PubSubController allows
+             * us to manage pusub subscriptions, items etc.
+             *
+             * see ../api/symbols/jabberwerx.PubSubController.html
+             */
+            var pubSubController = new jabberwerx.PubSubController(client);
+
+            /**
+             * Local cached subscribed PubSubNode
+             *
+             * see ../api/symbols/jabberwerx.PubSubNode.html
+             */
+            var forumNode = null;
+
+            /**
+             * The pubsubItemsChanged event handler, bound to a node in the
+             * subscription complete callback defined below.
+             *
+             * This event is triggered when new items have been published to a
+             * node. The data is a node, the node's items is the list of
+             * published items. This handler simply adds the first item to a
+             * text box.
+             *
+             * see ../api/symbols/jabberwerx.PubSubNode.html
+             * see ../api/jabberwerxEvents.html#jabberwerx.PubSubNode
+             */
+            var handleForumItemReceived = function(evtObj) {
+                if (evtObj.data.operation == "added") {
+                    var payload = evtObj.data.items;
+                    $("#receivedForumItems").val(jabberwerx.$(payload[0].data).attr('from') + ": " + jabberwerx.$(payload[0].data).text());
+                }
+            }
+
+            /**
+             * Function called when the "Enter Forum" button is clicked.
+             *
+             * subscribes to the "forum" node by calling creating the
+             * appropriately named node and subscribing to it. The node's
+             * subscribe method s passed a callback triggered when the
+             * subscription is complete. The callback is passed an error
+             * stanza if the sub failed for some reason.
+             *
+             * see ../api/symbols/jabberwerx.PubSubController.html#node
+             * see ../api/symbols/jabberwerx.PubSubNode.html#subscribe
+             */
+            var enterForum = function(nodeName) {
+                //check client connection status
+                if(client == null || !client.isConnected()) {
+                    alert("The client is not connected.  Please connect first.");
+                    return;
+                }
+
+                forumNode = null;
+                /**
+                 * Both node creation and subscription may throw exceptions for
+                 * bad arguments or invalid states. They should be called within
+                 * try-catch blocks.
+                 *
+                 * node is passed the node name and the xcp pubsub
+                 * service JID. The jabberwerx.PubSubNode model is created and
+                 * registered with the PubSubController (which manages the
+                 * lifetime of the node).
+                 *
+                 * Subscribe is passed a callback that is triggered on
+                 * subscription completion.
+                 */
+                try {
+                    forumNode = pubSubController.node($('#forumNameField').val(),
+                                                      demo_config.pubSubService);
+                    forumNode.subscribe(subscribeCallback);
+                } catch (ex) {
+                    alert("Error occurred while entering forum: " + ex.message);
+                }
+            }
+            /**
+             * Callback triggered when a "forum" node subscription is complete.
+             *
+             * This callback is passed an error stanza if the subscription
+             * failed for some reason.
+             */
+            var subscribeCallback = function(err) {
+                if(err != undefined) {
+                    $('#forumName').val('');
+                    $('#forumName').hide();
+                    $('#forumNameField').show();
+                    $('#enterForumButton').show();
+                    $('#exitForumButton').hide();
+
+                    /**
+                     * Note use of the global error reporter
+                     * jabberwerx.errorReporter to format the error stanza into
+                     * a human readable string.
+                     */
+                    alert("An Error Occurred: " +
+                          jabberwerx.errorReporter.getMessage(err));
+                } else {
+                    /**
+                     * Now that the "forum" node is subscribed to, we will want
+                     * to receive notification of changes to its published items
+                     * by binding to the node's pubsubItemChanged event.
+                     */
+                    forumNode.event("pubsubItemsChanged").bind(handleForumItemReceived);
+
+                    $('#forumNameField').hide();
+                    $('#forumName').show();
+                    //node.toString() returns the node's display name
+                    $('#forumName').html(forumNode.node.toString());
+
+                    $('#enterForumButton').hide();
+                    $('#exitForumButton').show();
+                }
+            }
+
+            /**
+             * Function called when the "Exit Forum" button is clicked.
+             *
+             * unsubscribes from the "forum" node by calling its unsubscribe
+             * method. That method is passed a callback triggered when the
+             * unsubscription is complete. The callback is passed an error
+             * stanza if the unsub failed for some reason.
+             *
+             * see ../api/symbols/jabberwerx.PubSubNode.html#unsubscribe
+             */
+            var exitForum = function() {
+                forumNode.unsubscribe(unsubscribeCallback);
+            }
+            /**
+             * Callback triggered when a "forum" node is unsubscribed.
+             *
+             * This function is passed an error stanza if the attempt ended in
+             * error.
+             */
+            var unsubscribeCallback = function(err) {
+                if(err != undefined) {
+                    /**
+                     * Note use of the global error reporter
+                     * jabberwerx.errorReporter to format the error stanza into
+                     * a human readable string.
+                     */
+                    alert("An Error Occurred: " +
+                          jabberwerx.errorReporter.getMessage(err));
+                } else {
+                    /**
+                     * We no longer want to receive item updates from this node.
+                     * unbind from its pubsubItemsChanged event (inverse of the
+                     * subscribeCallback defined above)
+                     */
+                    forumNode.event("pubsubItemsChanged").unbind(handleForumItemReceived);
+                    forumNode = null;
+
+                    $('#forumNameField').show();
+                    $('#forumName').hide();
+
+                    $('#enterForumButton').show();
+                    $('#exitForumButton').hide();
+                }
+            }
+
+            $(document).ready(function() {
+                /**
+                 * Add a login to this example by inserting appropriate HTML
+                 * into #conn-data. See Simple Client Connection example for extensive
+                 * details on connection.
+                 *
+                 * see ./connectexample.html
+                 */
+                jabberwerx_examples.addLogin($("#conn-data"), client, demo_config);
+
+                $('#enterForumButton').click(enterForum);
+                $('#exitForumButton').click(exitForum);
+
+                $('#forumName').hide();
+                $('#exitForumButton').hide();
+
+                /**
+                 * The Jabberwerx API supports binding to a "clientDisconnected"
+                 * event. The event will automatically be triggered whenever the
+                 * client is disconnected. If some error caused the disconnect
+                 * an error stanza will be passed to the event.
+                 */
+                client.event("clientDisconnected").bind(function(evt) {
+                    $('#forumName').val('');
+                    $('#forumName').hide();
+                    $('#forumNameField').show();
+                    $('#enterForumButton').show();
+                });
+            });
+        })();
+        </script>
+    </head>
+    <body>
+        <h2>PubSub Example</h2>
+        <div>An example demonstrating how to use CAXL's Client, PubSubController and PubSubNode classes to subscribe to and receive items from a forum</div>
+        <h3>How it Works</h3>
+        This example automatically performs a number of actions in the page onReady event:
+        <ol>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.Client.html' target='none'>jabberwerx.Client</a>.</li>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.PubSubController.html' target='none'>jabberwerx.PubSubController</a> for controlling the publish-subscribe.</li>
+        </ol>
+        The example also demonstrates (based on user actions like button clicks) additional PubSub functionality available within CAXL:
+        <ul>
+            <li><div>Connecting as username and password to a binding URL</div>
+                 &nbsp;&nbsp;NOTE: the <a href='./connectexample.html' target='none'>Simple Client Connection</a> example is the best source for connection information.</li>
+            <li><a href='../../doc/api/symbols/jabberwerx.PubSubNode.html#createNode' target='none'>Creating a new node.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.PubSubNode.html#subscribe' target='none'>Subscribing to a node.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.PubSubNode.html#unsubscribe' target='none'>Unsubscribing from a node.</a></li>
+            <li>Registering for the <a href='../../doc/api/jabberwerxEvents.html#jabberwerx.PubSubNode' target='none'>jabberwerx.PubSubNode pubsubItemsChanged event</a> to retrieve items that have been published to the forum.</li>
+        </ul>
+        <h3>In Action</h3>
+        <p>Instructions for using this example:
+        <ul>
+            <li>Click the "Connect" button to connect the client to the server.</li>
+            <li>Type in the name of an existing forum room and click the "Enter Forum" button to subscribe to the existing forum.</li>
+            <li>Any items that are published to the forum will be displayed in the "Forum Items" area of this page.</li>
+        </ul>
+
+        ***Note: You cannot publish with this example.  Please use the <a href="./pubsubownerexample.html" target="none">PubSub Owner example</a> in another browser in order to fully simulate the publish-subscribe behavior.
+        </p>
+        <table align="center" border="1"><tr><td>
+            <table align="center" border="0">
+                <!-- login HTML will be inserted here -->
+                <tr><td colspan="2" id="conn-data"></td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr>
+                    <td>
+                        <label for="forumNameField">Forum Name: </label>
+                    </td>
+                    <td align="left">
+                        <div id="forumName"></div>
+                        <input type="text" id="forumNameField" size="30" maxLength="60"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan=2 align="center">
+                        <input type="button" id="enterForumButton" value="Enter Forum"/>
+                        <input type="button" id="exitForumButton" value="Exit Forum"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan=2>Forum Items</td>
+                </tr>
+                <tr>
+                    <td colspan=2>
+                        <textarea cols=40 rows=3 id="receivedForumItems" readonly="readonly"></textarea>
+                    </td>
+                </tr>
+            </table>
+        </td></tr></table>
+    </body>
+</html>

@@ -1,0 +1,17 @@
+import java.util.ArrayList;
+public class Account{
+	/*
+	 * */
+	public ArrayList<UnixUser> users= new ArrayList<UnixUser>();
+	public void addUnixUser(String username, String password){
+		this.users.add(new UnixUser(username,password));
+	}
+	public void removeUser(UnixUser user){
+		this.users.remove(user);
+	}
+	}
+
+
+
+
+

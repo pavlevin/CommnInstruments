@@ -1,0 +1,48 @@
+
+abstract class User {
+	String username;
+	String userId;
+	String userType;
+	public User() {
+		username="Unnamed";
+		userId="No ID";
+		userType="Abstract";
+	}
+	public String setUsername(String username){
+		return this.username=username;
+	}
+	public String setUserId(String userId){
+		return this.userId=userId;
+	}
+}
+
+abstract class DBUser extends User {
+	String DBHost;
+	String DBUsername;
+	String DBPassword;
+	Integer DBPort;
+	String DBServiceName;
+	DBUser(){
+		userType="DBUser";
+		DBUsername=username;
+		DBHost=null;
+		DBPassword=null;
+		DBPort=0;
+		DBServiceName=null;
+	}
+	public String setDBUsername(String DBUsername){
+		return this.DBUsername=DBUsername;
+	}
+	public String setDBHost(String DBHost){
+		return this.DBHost=DBHost;
+	}
+	public String setDBPassword(String DBPassword){
+		return this.DBPassword=DBPassword;
+	}
+	public Integer setDBPort(Integer DBPort){
+		return this.DBPort=DBPort;
+	}
+	public String setDBServiceName(String DBServiceName){
+		return this.DBServiceName=DBServiceName;
+	}
+}

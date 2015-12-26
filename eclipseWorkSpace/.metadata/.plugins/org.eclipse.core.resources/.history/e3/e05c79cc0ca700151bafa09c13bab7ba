@@ -1,0 +1,50 @@
+class DBUser extends User {
+	protected String serviceName;
+	protected String login;
+	protected String password;
+	DBUser(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+
+}
+
+class UnixUser extends User{
+	protected String identityFile;
+	protected String login;
+	protected String password;
+	UnixUser(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+
+}
+
+class InformaticaUser {
+	
+}
+
+abstract class User{
+	void setFieldValue(String field,String value){
+		try {
+			java.lang.reflect.Field nme = this.getClass().getDeclaredField(field);
+			nme.set(this, value);
+		} catch (IllegalArgumentException  | SecurityException | NoSuchFieldException | IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	Object getFieldValue(String field){
+		try {
+			java.lang.reflect.Field nme = this.getClass().getDeclaredField(field);
+			return nme.get(this);
+		} catch (IllegalArgumentException  | SecurityException | NoSuchFieldException | IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+}
+
+
+

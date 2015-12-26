@@ -1,0 +1,114 @@
+<!--
+/**
+ * filename:        emoticonsdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library: Emoticons</title>
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+            var emoticons = new jabberwerx.ui.Emoticons();            
+            jabberwerx.$(document).ready(function() {
+                var $ = jabberwerx.$;
+                
+                $('#translateBtn').click(function() {
+                    var rawText = $('.rawText')[0].value;
+                    $('.translatedText').html(emoticons.translate(rawText));
+                });
+                
+                $('.rawText').keyup(function(eventObj) {
+                    if (eventObj.keyCode == 13) {
+                        $('#translateBtn').click();
+                    }
+                });
+                
+                for (var i in emoticons.emoticons) {
+                    $("table#list").append("<tr>" +
+                        "<td class='noEmoticons'>" + i + "</td>" +
+                        "<td>" + i + "</td>" +
+                        "<td>" + emoticons.emoticons[i] + "</td>" +
+                        "<td>foo" + i + "</td>" +
+                        "<td>foo " + i + "</td>" +
+                        "<td>" + i + "foo</td>" +
+                        "<td>" + i + " foo</td>" +
+                        "<td>!" + i + "</td>" +
+                        "<td>" + i + "!</td>" +
+                        "</tr>");
+                }
+                var textNodes = $('#list :not(.noEmoticons)').contents().filter(function() {
+                    return this.nodeType === 3;
+                }).each(function() {
+                    $(this).replaceWith(emoticons.translate(this.nodeValue));
+                });
+            });
+        </script>
+        <style type="text/css">
+            td.noEmoticons {
+                text-align: right;
+            }
+            .userInteraction {
+                border-color: blue;
+                border-width: medium;
+                border-style: solid;
+                background-color: yellow;
+                width: 50%
+            }
+            .translatedText {
+                background-color: white;
+                border-width: 1px;
+                border-style: solid;
+                border-color: grey;
+                min-height: 28px;
+                width: 200px;
+                bottom: 0px;
+            }
+            .rawText {
+                width: 200px;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Demo for Emoticons</h2>
+        
+        <div class="userInteraction">
+            <table width="100%">
+                <td>
+                    <table>
+                        <tr>
+                            <td>Raw Text:</td>
+                            <td><input type="text" class="rawText"/></td>
+                        </tr>
+                        <tr>
+                            <td>Translated Text:</td>
+                            <td><div class="translatedText">Translated text...</div></td>
+                        </tr>
+                    </table>
+                </td>
+                <td>
+                    <button id="translateBtn">Translate</button>
+                </td>
+            </table>            
+        </div>
+        
+        <h2>All emoticons table</h2>
+        <table border='1' id='list'>
+          <thead>
+            <td>Text</td>
+            <td>IMG</td>
+            <td>File</td>
+            <td>\w before</td>
+            <td>\w\s before</td>
+            <td>\w after</td>
+            <td>\s\w after</td>
+            <td>\W before</td>
+            <td>\W after</td>	
+        </thead>
+        </table>
+    </body>
+</html>

@@ -1,0 +1,17 @@
+
+public abstract class User {
+	String username;
+	String userId;
+	public User() {
+		username="Unnamed";
+		userId="No ID";
+	}
+	public User(String username){
+		this.username=username;
+		userId="0";
+	}
+	public User(String username,String userId){
+		this.username=username;
+		this.userId=userId;
+	}
+}

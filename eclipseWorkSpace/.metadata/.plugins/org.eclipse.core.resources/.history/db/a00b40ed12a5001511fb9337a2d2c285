@@ -1,0 +1,17 @@
+
+
+public class DataBaseUtils{
+	public static void main(String[] args){
+		AccountTest UAT1 = new AccountTest();
+		System.out.println(UAT1);
+		Account acc = new Account();
+		acc.addUser(UserType.DataBase, "rwa_owner", "rwa_pass");
+		acc.addUser(UserType.DataBase, "fds_owner", "fds_pass");
+		acc.addUser(UserType.Unix, "fcl_owner", "fcl_pass");
+		System.out.println(acc.getUser(0).getUsername());
+
+		
+	}
+		
+}
+

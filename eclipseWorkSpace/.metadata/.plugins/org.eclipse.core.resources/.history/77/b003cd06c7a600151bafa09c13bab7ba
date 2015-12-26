@@ -1,0 +1,97 @@
+import java.lang.reflect.Field;
+
+public class CombinedUser{
+	private String userName;
+	
+
+	CombinedUser(){
+		this.userName="NoName";
+}
+	CombinedUser(String userName){
+		this.userName=userName;
+	}
+	public static void main(String[] args) {
+		UnixUsr unixUsr = new UnixUsr("bla", "blu");
+		CombinedUser d = new CombinedUser();
+		String ff = d.getFieldByName("identityFile").getName();
+		System.out.println(ff);
+	}
+	void setLoginFor(UnixUsr unixUsr,String login) { 
+		unixUsr.login=login;	
+	}
+	
+	void setLoginFor(DBUsr dbUsr,String login) {
+		dbUsr.login=login;	
+	}
+
+	String getLoginFor(UnixUsr unixUsr) {
+		return unixUsr.login;
+		
+	}
+	Field getFieldByName(String fieldName){
+		Field a;
+		for (int i = 0; i < UnixUsr.class.getDeclaredFields().length; i++)
+			if(fieldName.equals(UnixUsr.class.getDeclaredFields()[i].getName()))
+				return UnixUsr.class.getDeclaredFields()[i];
+		return null;
+	}
+	String getLoginFor(DBUsr dbUsr) {
+		return dbUsr.login;
+	}
+
+	void setPasswordFor(UnixUsr unixUsr,String password) {
+		unixUsr.password=password;
+	}
+	void setPasswordFor(DBUsr dbUsr,String password) {
+		dbUsr.password=password;
+	}
+
+	String getPasswordFor(UnixUsr unixUsr) {
+		return unixUsr.password;
+	}
+	String getPasswordFor(DBUsr dbUsr) {
+		return dbUsr.password;
+	}
+	void setUserName(String userName) {
+		this.userName=userName;
+		
+	}
+	String getUserName() {
+		return userName;
+	}
+
+static class DBUsr{
+	private String serviceName, login, password;
+	DBUsr(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setServiceName(String serviceName) {
+		this.serviceName=serviceName;}
+	String getServiceName(){
+		return this.serviceName;
+		}
+	}
+
+static public class UnixUsr {
+	private String identityFile, login, password;
+	UnixUsr(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setIdentityFile(String identityFile) {
+		this.identityFile = identityFile;
+	}
+	String getIdentityFile() {
+		return identityFile;
+
+}
+
+}
+
+
+
+
+
+}
+

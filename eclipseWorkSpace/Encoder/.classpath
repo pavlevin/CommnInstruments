@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="build/Encoder.jar"/>
+	<classpathentry kind="lib" path="build/GostEncryptor.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-2.4.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/eclipse/eclipse/eclipseWorkSpace/Encoder/lib/babbler-0.6.0.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

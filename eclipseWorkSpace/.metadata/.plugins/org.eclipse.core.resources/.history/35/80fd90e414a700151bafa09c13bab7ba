@@ -1,0 +1,61 @@
+import java.lang.reflect.Field;
+
+public class CombinedUser extends CommonUser{
+	private static String userName;
+	CombinedUser(){
+		this.userName="NoName";
+		
+}
+	CombinedUser(String userName){
+		this.userName=userName;
+	}
+	public static void main(String[] args) {
+		CombinedUser combUser = new CombinedUser();
+		System.out.println(combUser.getLoginFor(dbUsr));	
+	
+	
+	}
+		void setUserName(String userName) {
+		this.userName=userName;
+		
+	}
+	
+	String getUserName() {
+		return userName;
+	}
+
+	
+	
+
+}	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

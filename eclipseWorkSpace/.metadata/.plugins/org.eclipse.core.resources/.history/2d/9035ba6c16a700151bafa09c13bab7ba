@@ -1,0 +1,67 @@
+import java.util.ArrayList;
+public class Account{
+	private static ArrayList<DBUser> dbUsers = new ArrayList<DBUser>();
+	private static ArrayList<UnixUser> unixUsers = new ArrayList<UnixUser>();
+	private static ArrayList<InformaticaUser> InformaticaUsers = new ArrayList<InformaticaUser>();
+	private static int ID;
+	public static void main(String[] args){
+		addTestUsers();
+		GetSetFields dd = getUserByName("Unix User 2");
+
+		//User.listOfAvailableFields(dbUser1.getClass());
+		ShowUser(dbUsers.get(0));
+		ShowUser(dbUsers.get(1));
+		ShowUser(unixUsers.get(2));
+		ShowUser(unixUsers.get(3));
+	
+	}
+	private static void ShowUser(DBUser dbUser) {
+		System.out.println("User ID: "+ID+" @"+dbUser.getFieldValue("login") + " / " + dbUser.getFieldValue("password"));
+	}
+	private static void ShowUser(UnixUser unixUser) {
+		System.out.println("User ID: "+ID+" @"+unixUser.getFieldValue("login") + " / " + unixUser.getFieldValue("password"));
+	}
+	
+	
+	
+	static DBUser getUserByName(String userName){
+		DBUser user = null;
+		for (DBUser i : dbUsers){
+			if (userName.equals(i.getFieldValue("login")))
+				return user=i;
+		}
+		return user;
+	}
+	
+	static void createDBUser(String username, String password){
+		DBUser user = new DBUser(username,password);
+		dbUsers.add(ID++,user);
+	}
+	
+	static void createUnixUser(String username, String password){
+		UnixUser user = new UnixUser(username,password);
+		unixUsers.add(ID++,user);
+	}
+	
+	static void addTestUsers(){
+		createDBUser("DB User 1", "DB Pass 1");
+		createDBUser("DB User 2", "DB Pass 2");
+		createUnixUser("Unix User 1", "Unix Pass 1");
+		createUnixUser("Unix User 2", "Unix Pass 2");
+	}
+	public void removeUser(UnixUser user){
+/*		this.usersCredentials.remove(user); abstract String getLogin();
+		DBUser 	dbUser1 = new DBUser("DB User 1", "DB Pass 1"),
+				dbUser2 = new DBUser("DB User 2", "DB Pass 2");
+		UnixUser 	unixUser1 = new UnixUser("Unix User 1", "Unix Pass 1"),
+					unixUser2 =new UnixUser("Unix User 2", "Unix Pass 2");
+
+*/
+	}
+}
+
+
+
+
+
+

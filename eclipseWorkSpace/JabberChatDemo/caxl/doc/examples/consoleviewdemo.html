@@ -1,0 +1,178 @@
+<!--
+/**
+ * filename:        consoleviewdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ ConsoleView Demo</title>
+        <link rel="stylesheet" href="../../resources/themes/default/css/styles.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+
+//jabberwerx_config overrides default configuration. 
+var jabberwerx_config = {
+    persistDuration: 30
+}
+
+//application specific subclass
+jabberwerx.app.ConsoleDemo = jabberwerx.ui.JWApp.extend({
+
+    /**
+          *  Method invoked when the application is initially created. NOT invoked when application
+          *  is loaded from store.
+          *
+          *  Applications should create JWA objects and bind to JWA events in this method
+        */
+    appCreate: function() {
+        this._super();
+        //create models controllers and view
+        this.client = new jabberwerx.Client('ConsoleDemo');
+        this.consoleView = new jabberwerx.ui.ConsoleView(this.client);        
+    },
+
+    /**
+          *  Method is invoked once the application is loaded (all JWA objects have been created/loaded and initialized.
+          *   Method is also called after application creation (after appCreate has been called).
+          *
+          *  Application should render it's views and rebind any HTML events (these events are not persisted).
+        */
+    appInitialize: function() {
+        this._super();
+        var cdiv = jabberwerx.$("div.consoleDiv");
+        cdiv.height(cdiv.parent().height());
+        cdiv.width(cdiv.parent().width());
+        this.consoleView.render().appendTo(cdiv);
+        this.consoleView.dimensions({height: cdiv.height(), width: cdiv.width()});
+        //map htmlevents
+        var that = this;
+        jabberwerx.$("input.as_sent").bind("click", function() {
+            var val = jabberwerx.$("textarea.msg_input").val();
+            if (!val) {
+                return;
+            }
+            try {
+                that.consoleView._streamSentHandler({data: [jabberwerx.util.unserializeXML(val)]});
+            } catch (ex) {
+                jabberwerx.util.debug.log("ConsoleDemo could not parse input: " + ex.message);
+            }
+        });
+        jabberwerx.$("input.as_received").bind("click", function() {
+            var val = jabberwerx.$("textarea.msg_input").val();
+            if (!val) {
+                return;
+            }
+            try {
+                that.consoleView._streamReceivedHandler({data: [jabberwerx.util.unserializeXML(val)]});
+            } catch (ex) {
+                jabberwerx.util.debug.log("ConsoleDemo could not parse input: " + ex.message);
+                throw ex;
+            }
+        });
+        jabberwerx.$("input.as_log").bind("click", function() {
+            var val = jabberwerx.$("textarea.msg_input").val();
+            if (!val) {
+                return;
+            }
+            jabberwerx.util.debug.log(val);
+        });
+        
+    },
+
+    /**
+           * destroy any JWA objects this application explicitly created
+         */
+    destroy: function() {
+        //
+        this._super();
+    },
+
+}, "jabberwerx.app.ConsoleDemo");
+
+
+/**
+  *  Allow jabberwerx.app to control lifetime of application. Application is loaded from persisted store if possible
+  *  otherwise a new instance is created. New instance is assigned to singleton jabberwerx.util.app._jwappinst.
+*/
+jabberwerx.app.persistedApplicationClass('jabberwerx.app.ConsoleDemo');
+
+        </script>
+    
+        <style type="text/css">
+div.jwa_console {
+    height:     250px;
+    width:      75%;
+}
+table.demoTbl {
+}
+div.createDiv {
+    margin: 0px 0px 24px 0px;
+    width: 100%;
+    display: none;
+}
+div.msgDiv {
+    width: 100%;
+    height: auto;
+}
+div.optsDiv {
+    margin: 3px 3px 9px;
+}
+textarea.msg_input {
+    width: 98%;
+    height: 250;
+    margin: 3px 3px 9px;
+}
+div.optsActDiv {
+    margin: 3px;
+}
+div.msgActsDiv {
+    margin: 3px;
+}
+div.consoleDiv {
+    height: 100%;
+}
+
+        </style>
+    </head>
+    
+    <body>
+        <h2>Cisco AJAX XMPP Library ConsoleView Demo</h2>
+        <table   class="demoTbl" border=1 width="99%">
+            <col width="33%"/>
+            <col width="66%"/>
+            <!--
+            <tr><th>Demo Options</th><th>Console</th></tr>
+            -->
+            <tr>
+                <td>
+                    <div class="createDiv">
+                        <div class="optsDiv">
+                            <div><input type='checkbox' id="noInputChk"/> Don't show input</div>
+                            <div><input type='checkbox' id='seChk'/> Something else</div>
+                        </div>
+                        <div class="optsActDiv">
+                            <input type="button" id="create_btn" value="Create Console"/>
+                        </div>
+                    </div>
+                    <div class="msgDiv">
+                        <textarea class="msg_input"></textarea>
+                        <div class="msgActsDiv">
+                            <input type="button" class="as_sent" value="as Sent"/>
+                            <input type="button" class="as_received" value="as Received"/>
+                            <input type="button" class="as_log" value="as Log"/>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="consoleDiv"></div>
+                </td>            
+            </tr>                
+        </table>
+    </body>
+
+</html>

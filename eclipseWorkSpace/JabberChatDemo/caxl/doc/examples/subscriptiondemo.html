@@ -1,0 +1,172 @@
+<!--
+/**
+ * filename:        subscriptiondemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ Subscription Demo</title>
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+            var client;
+            var authView;
+            var roster;
+            var rosterView;
+            var subView;
+            var bareSubView;
+            
+            jabberwerx_config = {
+                domain: "example.com"
+            };
+        
+            jabberwerx.$(document).bind("ready", function() {
+                jabberwerx.$("button#bare_sub").click(_showHideBareSub);
+                
+                client = new jabberwerx.Client('sampleclient');
+                
+                client.event("clientStatusChanged").bind(_connected);
+                jabberwerx.$("button#logout").click(_logout).hide();
+                
+                authView = new jabberwerx.ui.AuthenticationView(client, jabberwerx_config.domain);
+                authView.render().appendTo("#auth_div");
+            });
+            
+            // Show an unmodified SubscriptionView
+            function _showHideBareSub() {
+                if (!bareSubView) {
+                    var dummyClient = new jabberwerx.Client();
+                    var dummyRoster = new jabberwerx.RosterController(dummyClient);
+                    bareSubView = new jabberwerx.ui.SubscriptionView(dummyRoster, "user@example.com",
+                                                    {nickname: "User's Nickname", group: "Demo Group"});
+                    bareSubView.event("actionComplete").bind(function(evtObj) {
+                        // Note: This won't fire for Accept or Deny since the dummyClient is not
+                        // connected.
+                        alert("Action completed was " + evtObj.data.action);
+                    });
+                    bareSubView.render().show().appendTo("#bare_sub_div");
+                    jabberwerx.$("button#bare_sub").text("Hide bare subscripiton view");
+                    authView.hide();
+                } else {
+                    bareSubView.jq.toggle();
+                    authView.jq.toggle();
+                    if (bareSubView.jq.is(":visible")) {
+                        jabberwerx.$("button#bare_sub").text("Hide bare subscripiton view");
+                    } else {
+                        jabberwerx.$("button#bare_sub").text("Show bare subscripiton view");
+                    }
+                }
+            }
+            
+            // Create SubscriptionView when a subscribe request arrives
+            function _handleSubReceive(evt) {
+                var contact = evt.data.stanza.getFromJID();
+                subView = new jabberwerx.ui.SubscriptionView(roster, contact, {group: "Demo Group"});
+                subView.render().hide().appendTo("#subscription_div");
+                jabberwerx.$("#roster_div").fadeTo(500, 0.3, function() {
+                    subView.jq.fadeIn(500);
+                });
+                
+                subView.event("actionComplete").bind(function() {
+                    subView.jq.fadeOut(500, function() {
+                        jabberwerx.$("#roster_div").fadeTo(500, 1.0);
+                        subView.jq.remove();
+                    });
+                });
+                
+                // Handled
+                return true;
+            }
+            
+            // Create RosterView when connected
+            function _connected(evt) {
+                if (evt.data.next == jabberwerx.Client.status_connected) {
+                    if (!roster) {
+                        roster = client.controllers.roster || new jabberwerx.RosterController(client);
+                        roster.autoaccept_in_domain = false;
+                        roster.event('subscriptionReceived').bindWhen(function(data) {
+                            if (!data.handled) {
+                                return data;
+                            } else {
+                                return false;
+                            }
+                        }, _handleSubReceive);
+                    }
+                    if (!rosterView) {
+                        rosterView = new jabberwerx.ui.RosterView(client.entitySet,
+                                            jabberwerx.ui.RosterView.groupmode_expanded);
+                        rosterView.setDefaultGroupingName("unknown");
+                        rosterView.render().appendTo("#roster_div");
+                        rosterView.dimensions({width:200, height:350});
+                    } else {
+                        jabberwerx.$("#roster_div").show();
+                    }
+                    
+                    // Hide authView and show logout button
+                    jabberwerx.$("button#logout").show();
+                    authView.hide();
+                    jabberwerx.$("button#bare_sub").hide();
+                }
+            }
+            
+            function _logout() {
+                var $ = jabberwerx.$;
+                $(".auth_status").text("");
+                client.disconnect();
+                authView.show();
+                $("div.message").text("").hide();
+                $("button#logout").hide();
+                $("#roster_div").hide();
+                subView.hide();
+                $("button#bare_sub").show();
+            }
+        </script>
+        <!-- Internal styles -->
+        <style type="text/css">
+            button#logout {
+                margin: 5px 0;
+            }
+            #roster_div {
+                z-index: 1;
+                position: absolute;
+            }
+            #subscription_div {
+                z-index: 2;
+                position: absolute;
+                top: 100px;
+                left: 40px;
+            }
+        </style>
+        <!-- IE doesn't support rgba -->
+        <!--[if !IE]> <---->
+        <style>
+            #subscription_div {
+                background-color: rgba(50, 255, 50, 0.75);
+            }
+        </style>
+        <!--><![endif]-->
+        <!--[if IE]>
+        <style>
+            #subscription_div {
+                background-color: rgb(50, 200, 50);
+            }
+        </style>
+        <![endif]-->                
+    </head>
+    <body>
+        <h2>Subscription Demo</h2>
+        <div>
+            <button type="button" id="bare_sub">Show bare subscripiton view</button><p>
+            <div id="bare_sub_div"></div>
+            <button type="button" id="logout">Logout</button>
+            <div id="auth_div"></div>
+            <div id="roster_div"></div>
+            <div id="subscription_div"></div>
+            <div class="message" style="height:0;"></div>
+        </div>
+    </body>
+</html>

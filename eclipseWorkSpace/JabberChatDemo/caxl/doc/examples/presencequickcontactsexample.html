@@ -1,0 +1,296 @@
+<html>
+    <title>Jabberwerx Presence & QuickContacts Example</title>
+    <head>
+        <script type='text/javascript' src='../../jabberwerx.js'></script>
+        <script type='text/javascript' src='../../jabberwerx.cisco.js'></script>
+        <script type='text/javascript' src='../../doc/examples/jabberwerxexamples.js'></script>
+
+        <script type="text/javascript">
+        (function() { //wrapped in an anon function to avoid polluting global namespace
+
+            // Map the global jQuery symbol to jabberwerx's jquery for convenience.
+            var $ = jabberwerx.$;
+
+            /**
+             * Configuration information including
+             *   httpBindingURL - the BOSH binding URL.
+             *   domain - The user's domain (domain part of the connected JID)
+             *   username - The user (local part of connected JID)
+             *   password - The account password.
+             */
+            var demo_config = {
+                httpBindingURL: "/httpbinding",
+                domain: "example.com",
+                username: "jwtest0",
+                password: "test"
+            };
+
+            /**
+             * Instantiate the Jabberwerx Client, the main access and routing
+             * object. Clients define a connection and session.
+             *
+             * see ../api/symbols/jabberwerx.Client.html
+             */
+            var client = new jabberwerx.Client();
+
+            /**
+             * Create the QC Controller to manage quick contacts
+             *
+             * see ../api/symbols/jabberwerx.cisco.QuickContactController.html
+             */
+            var qcController = new jabberwerx.cisco.QuickContactController(client);
+
+            /**
+             * Include a roster controller that will work with the QC controller
+             * to handle numerous subscription edge cases. For instance, if a
+             * contact is already subscribed then a QC subscription should fail.
+             *
+             * see ../api/symbols/jabberwerx.RosterController.html
+             */
+            new jabberwerx.RosterController(client);
+
+            /**
+             *  Convenience function returns a list of JIDs.
+             */
+            function getJIDList() {
+                var jids = [];
+                jids.push('jwtest1' + "@" + demo_config.domain);
+                jids.push('jwtest2' + "@" + demo_config.domain);
+                jids.push('jwtest3' + "@" + demo_config.domain);
+                jids.push('jwtest4' + "@" + demo_config.domain);
+                jids.push('jwtest5' + "@" + demo_config.domain);
+                jids.push('jwtest6' + "@" + demo_config.domain);
+                jids.push('jwtest7' + "@" + demo_config.domain);
+                jids.push('jwtest8' + "@" + demo_config.domain);
+                jids.push('jwtest9' + "@" + demo_config.domain);
+                jids.push('jwtest10' + "@" + demo_config.domain);
+
+                return jids;
+            }
+
+            /**
+             *  Convenience function that subscribes a list of JIDs
+             *
+             *  subscribeAll may throw an exception if an invalid JID is
+             *  encountered or some invalid state arises. It should be called
+             *  from within a try-catch block
+             *
+             *  see ../api/symbols/jabberwerx.cisco.QuickContactController.html#subscribeAll
+             */
+            function subscribe() {
+                try {
+                    qcController.subscribeAll(getJIDList());
+                } catch (ex) {
+                    alert("Exception thrown by subscribeAll: " + ex.message);
+                }
+            }
+
+            /**
+             *  Convenience function that unsubscribes a list of JIDs
+             *  unsubscribeAll may throw an exception if an invalid JID is
+             *  encountered or some invalid state arises. It should be called
+             *  from within a try-catch block
+             *
+             *  see ../api/symbols/jabberwerx.cisco.QuickContactController.html#unsubscribeAll
+             */
+            function unsubscribe() {
+                try {
+                    qcController.unsubscribeAll(getJIDList());
+                } catch (ex) {
+                    alert("Exception thrown by unsubscribeAll: " + ex.message);
+                }
+            }
+
+            $(document).ready(function() {
+                /**
+                 * Add a login to this example by inserting appropriate HTML
+                 * into #conn-data. See Simple Client Connection example for extensive
+                 * details on connection.
+                 *
+                 * see ./connectexample.html
+                 */
+                jabberwerx_examples.addLogin($("#conn-data"), client, demo_config);
+
+                $('#subscribeButton').click(subscribe);
+                $('#unsubscribeButton').click(unsubscribe);
+
+                /**
+                * Here we bind the 'entityCreated' event on the EntitySet.
+                * This event is triggered when subscribing to a JID(s).
+                * The event is passed the jabberwerx.Entity that was created
+                * and is retrieved from the event data.
+                *
+                * The 'primaryPresenceChanged' event is bound on
+                * the entity to track any changes in presence. This event is
+                * triggered when the presence of a enitiy changes and is passed
+                * a jabberwerx.Presence object if connected,  null if the
+                * entity goes offline.
+                */
+               client.entitySet.event("entityCreated").bind(function(evt) {
+                   var qcontact = evt.data;
+                   _roster._updateRosterItem(qcontact);
+
+                   qcontact.event("primaryPresenceChanged").bind(function(evt) {
+                       _roster._updateRosterItem(qcontact);
+                    });
+               });
+
+                /**
+                  * Here the 'entityDestroyed' event is bound on the EntitySet.
+                  * This event is triggered when the unsubscibing JID(s).
+                  */
+                client.entitySet.event("entityDestroyed").bind(function(evt) {
+                    _roster._removeRosterItem(evt.data);
+                });
+
+            });
+
+            /**
+             * A simple roster view that adds and removes entities from a table
+             */
+            var _roster = {
+                /**
+                 * Update an existing or add a new table entry representing
+                 * an entity.
+                 *
+                 * NOTE _table_entry is kept with the entity.
+                 *      Entities are cached within the client and only one
+                 *      instance of an entity will ever be used.
+                 */
+                _updateRosterItem: function(contact) {
+                    //Only show contacts in our roster by checking the entities type
+                    if (!(contact instanceof jabberwerx.Contact)) {
+                        return;
+                    }
+
+                    //If a table row does not yet exist for this entity, create
+                    //it by cloning a template and appending to table
+                    if (!contact._table_entry) {
+                        contact._table_entry = $(".template .roster-item").clone();
+                        contact._table_entry.appendTo(".roster .roster-list");
+                    }
+                    //set the entities display name
+                    contact._table_entry.children(".contact").text(contact.getDisplayName() || "\u00a0")
+                    /**
+                     * query for presence information, format and display.
+                     * getPrimaryPresence returns a jabberwerx.Presence object
+                     * that is used to get presence type, show and status.
+                     *
+                     * see ../api/symbols/jabberwerx.Presence.html
+                     */
+                    var presence = contact.getPrimaryPresence();
+                    var show = "unknown";
+                    var status = "";
+                    if (presence) {
+                        show = presence.getType() ||
+                                presence.getShow() ||
+                                "available";
+                        status = presence.getStatus();
+                    }
+                    show = " [" + show + "]" + (status ? "(" + status + ")" : "");
+                    contact._table_entry.children(".presence").text(show || "\u00a0")
+                },
+
+                /**
+                 * Remove a table row that represents an entity
+                 */
+                _removeRosterItem: function(contact) {
+                    if (contact._table_entry) {
+                        contact._table_entry.remove();
+                        delete contact._table_entry;
+                    }
+                }
+            };
+        })();
+        </script>
+
+        <style type="text/css">
+            .template {
+                visibility: hidden;
+                display: none;
+            }
+            div.roster {
+                margin: 4px 0px;
+                border: 2px solid grey;
+                padding: 4px;
+            }
+            .roster .roster-list{
+                width: 300px;
+            }
+            .roster th {
+                background-color: grey;
+                color: white;
+            }
+            .roster-item td {
+                border: 1px solid grey;
+                padding: 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>CAXL Presence & QuickContact Example</h2>
+        <div>An example demostrating Presence and Quick Contacts.</div>
+        <h3>How it Works</h3>
+        This example automatically performs a number of actions in the page onReady event.
+        <ol>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.Client.html' target='_blank'>jabberwerx.Client</a>.</li>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.cisco.QuickContactController.html' target='_blank'>jabberwerx.cisco.QuickContactController</a> to manage Quick Contact sessions.</li>
+            <li>Registering for <a href='../../doc/api/jabberwerxEvents.html' target='_blank'>jabberwerx.Entity and jabberwerx.EntitySet Events</a> to monitor presence changes.</li>
+        </ol>
+        The example also demonstrates (based on user actions like button clicks) additional Quick Contact functionality available within CAXL:
+        <ul>
+            <li><div>Connecting as a given username with a given password.</div>
+            &nbsp;&nbsp;NOTE: the <a href='./connectexample.html' target='_blank'>connectexample</a> example is the best source for connection information.</li>
+            <li><a href='../../doc/api/symbols/jabberwerx.cisco.QuickContactController.html#subscribeAll' target='_blank'>Subscribing to a list of contacts.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.cisco.QuickContactController.html#unsubscribeAll' target='_blank'>Unsubscribing from a list of contacts.</a></li>
+        </ul>
+
+        <h3>In Action</h3>
+        <table align="left">
+            <tr>
+                <td>
+                    <p>Instructions for using this example:
+                    <ul>
+                        <li>Click the "Connect" button to connect the client to the server.</li>
+                        <li>Subscribe to a preset number of contacts by clicking the 'Subscribe' button.</li>
+                        <li>Login to several contacts with usernames jwtest1 to jwtest10 using the
+                            <a href="./connectexample.html" target="_blank">Connect Example</a> in seperate tabs or windows.</li>
+                        <li>Observe presence changes as additional users are connected and disconnected..</li>
+                        <li>Unsubscribe to previously subscribed contacts by clicking the 'Unsubscribe' button.</li>
+                    </ul>
+                    </p>
+                </td>
+            </tr>
+        </table>
+
+        <table align="center" border="1"><tr><td>
+            <table align="center" border="0">
+                <!-- login HTML will be inserted here -->
+                <tr><td id="conn-data"></td></tr>
+                <tr><td>&nbsp;</td></tr>
+                <tr><td>&nbsp;</td></tr>
+                <tr><td>
+                  <input type="button" id="subscribeButton" value="Subscribe"/>
+                  <input type="button" id="unsubscribeButton" value="Unsubscribe"/>
+                </td></tr>
+                <tr><td>
+                    <div class="roster">
+                        <table class="roster-list">
+                            <tr>
+                                <th style="width:60%;">Contact</th>
+                                <th>Presence</th>
+                            </tr>
+                        </table>
+                    </div>
+                </td></tr>
+            </table>
+        </tr></td></table>
+        <table class="template" id="roster-item">
+            <tr class="roster-item">
+                <td class="contact"></td>
+                <td class="presence"></td>
+            </tr>
+        </table>
+    </body>
+
+</html>

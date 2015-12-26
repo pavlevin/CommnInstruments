@@ -1,0 +1,483 @@
+<!--
+/**
+ * filename:        mucexample.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--    This is a simple example that demonstrates a Jabberwerx multi-user chat room.
+                It demonstrates multi-user chat room creation, invitations, message broadcasts and subject changes.
+        -->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Multi-user Chat Example</title>
+
+        <script type='text/javascript' src='../../jabberwerx.js'></script>
+        <script type='text/javascript' src='./jabberwerxexamples.js'></script>
+
+        <script type="text/javascript">
+        (function(){ //wrapped in an anon function to avoid polluting global namespace
+
+            //jQuery shortcut mapped to Jabberwerx's version
+            var $ = jabberwerx.$;
+
+            /**
+             * Configuration information including
+             *   httpBindingURL - the BOSH binding URL.
+             *   domain - The user's domain (domain part of the connected JID)
+             *   username - The user (local part of connected JID)
+             *   password - The account password.
+             *   chatroom - the default chat room to enter
+             *   nickname - the default nick to use when entering a room.
+             */
+            var demo_config = {
+                httpBindingURL: "/httpbinding",
+                domain: "example.com",
+                username: "jwtest0",
+                password: "test",
+                chatroom: "testroom@conference.example.com",
+                nickname: "testnickname"
+            };
+
+            /**
+             * Instantiate the Jabberwerx Client, the main access and routing
+             * object. Clients define a connection and session.
+             *
+             * see ../api/symbols/jabberwerx.Client.html
+             */
+            var client = new jabberwerx.Client();
+
+            /**
+             * Instantiate the client side multi-user chat controller. The
+             * constructor is passed the associated client and registers itself
+             * with the client. The controller is managed by the client.
+             * The MUCController allows us to manage rooms.
+             *
+             * see ../api/symbols/jabberwerx.MUCController.html
+             */
+            var mucController = new jabberwerx.MUCController(client);
+
+            /**
+             * For simplicity this example only references exactly one room.
+             * Since rooms are entities, it would be possible to reference open
+             * rooms via the client's entity set.
+             *
+             * see ../api/symbols/jabberwerx.MUCRoom.html
+             */
+            var room;
+
+            /**
+             * Called when the entityCreated, entityUpdated, entityDestroyed
+             * and entityRenamed events are triggered against the MUCOccupantCache
+             *
+             * see ../api/symbolds/jabberwerx.MUCOccupantCache.html
+             */
+            function updateOccupantsList() {
+                /**
+                 * room.occupants is a jabberwerx.EntitySet of
+                 * jabberwerx.MUCOccupant entities. The toArray method converts
+                 * an entity set to a simple array of entities.
+                 *
+                 * ../api/symbols/jabberwerx.MUCOccupant.html
+                 */
+                if(room == null || room.occupants.toArray().length == 0) {
+                    $("#occupantsContainer").html('<select id="occupants" multiple="multiple" style="width: 200px"><option value="-1" selected="selected">Not currently in a room</option></select>');
+                } else {
+                    $("#occupantsContainer").html('<select id="occupants" multiple="multiple" style="width: 200px"></select>');
+
+                    var occupants = room.occupants.toArray();
+                    //jabberwerx.MUCOccupant.getNickname() returns the nick the occupant is using in this room.
+                    for(var i in occupants) {
+                        $("#occupants").append('<option value="' + occupants[i].getNickname() + '" selected="selected">' + occupants[i].getNickname() + '</option>');
+                    }
+                }
+            }
+
+            // Called when the "Enter Room" button is pressed
+            function enterRoom() {
+                // if the client has not been created or we are not yet fully connected...
+                if(client == null || !client.isConnected()) {
+                    alert("The client is not connected.  Please connect first.");
+                    return;
+                }
+                //create the room using the user supplied room name
+                //see ../api/symbols/jabberwerx.MUCController.html#room
+                room = mucController.room($("#chatRoomNameField").val());
+
+                // Respond to an event that is triggered when an occupant is added to the room
+                room.occupants.event("entityCreated").bind(function(evt) {
+                    updateOccupantsList();
+                });
+
+                // Respond to an event that is triggered when an occupant is updated in the room
+                room.occupants.event("entityUpdated").bind(function(evt) {
+                    updateOccupantsList();
+                });
+
+                // Respond to an event that is triggered when an occupant is removed from the room
+                room.occupants.event("entityDestroyed").bind(function(evt) {
+                    updateOccupantsList();
+                });
+
+                // Respond to an event that is triggered when an occupant in the room is renamed
+                room.occupants.event("entityRenamed").bind(function(evt) {
+                    updateOccupantsList();
+                });
+
+                /**
+                 * Event fired when the room has been entered completely. This
+                 * event handler maps other event handlers that are valid only
+                 * when a room has been entered.
+                 */
+                room.event("roomEntered").bind(function(evt) {
+                    /**
+                     * event fired when we have fully exited a room.
+                     * Destroy the room and clear our local reference.
+                     *
+                     * see ../api/symbols/jabberwerx.MUCRoom.html#destroy
+                     */
+                    room.event("roomExited").bind(function(evt) {
+                        room.destroy();
+                        room = null;
+
+                        $('#exitRoomButton').hide();
+                        $('#enterRoomButton').show();
+                    });
+                    /**
+                     * event fired when the room receives a message. evt.data
+                     * is the jabberwerx.Message received.
+                     *
+                     * ../api/symbols/jabberwerx.Message.html#getBody
+                     */
+                    room.event("roomBroadcastReceived").bind(function(evt) {
+                        $("#receivedBroadcastMessages").val(evt.data.getBody());
+                        $("#broadcastField").val("");
+                    });
+                    /**
+                     * event fired when the room receives a new subject.
+                     * evt.data is the jabberwerx.Message whose subject is the
+                     * new room subject.
+                     *
+                     * see ../api/symbols/jabberwerx.Message.html#getSubject
+                     */
+                    room.event("roomSubjectChanged").bind(function(evt) {
+                        $("#subjectLabel").html(evt.data.getSubject());
+                    });
+
+                    $('#enterRoomButton').hide();
+                    $('#exitRoomButton').show();
+                    /**
+                     * The room's subject is one opf its properties and is
+                     * available via room.properties.subject.
+                     */
+                    $('#subjectLabel').html(room.properties.subject);
+                });
+
+                /**
+                 * jabberwerx.MUCRoom.enter takes the nickname we want to
+                 * enter the room with and an addition argument object that
+                 * may define callbacks fired when the asynchronous function
+                 * completes. Since we have an event handler bound to the
+                 * roomEntered event all we need is an error callback in case
+                 * the server did not allow the room's creation.
+                 *
+                 * enter may also throw exaceptions for invalid arguments or
+                 * bad state so it should be wrapped in a try-catch.
+                 *
+                 * see ../api/symbols/jabberwerx.MUCRoom.html#enter
+                 */
+                var enterRoomArgs = { errorCallback: onRoomEnterError };
+
+                try {
+                    room.enter($("#nicknameField").val(), enterRoomArgs);
+                } catch(ex) {
+                    alert("The following error occurred while attempting to enter the room: " + ex.message);
+                }
+            }
+
+            /**
+             * Callback fired upon failed entry into the room. Note no room
+             * events are fired if this callback is invoked.
+             *
+             * Cleanup the room object and clear our local reference.
+             */
+            function onRoomEnterError(err, aborted) {
+                alert('Error entering room: ' + err.message);
+                room.destroy();
+                room = null;
+            }
+
+            /**
+             * Called when the "Exit Room" button is pressed.
+             * Simply exists the room.
+             *
+             * see ../api/symbols/jabberwerx.MUCRoom.html#exit
+             */
+            function exitRoom() {
+                room.exit();
+            }
+
+            // Called when the "Broadcast" button is pressed
+            function broadcast() {
+                //room.isActive returns true if we have fully entered the room.
+                if(room == null || !room.isActive()) {
+                    alert("Please enter a chat room before attempting to broadcast");
+                    return;
+                }
+                /**
+                 * room.sendBroadcast takes a plaintext message and broadcasts it
+                 * to the room. It may throw TypeError for bad arguments or state
+                 * and should be wrapped in a try-catch
+                 *
+                 * see ../api/symbols/jabberwerx.MUCRoom.html#sendBroadcast
+                 */
+                try {
+                    room.sendBroadcast($("#broadcastField").val());
+                } catch(ex) {
+                    alert(ex.message);
+                }
+            }
+
+            // Called when the "Change Subject" button is pressed
+            function changeSubject() {
+                //room.isActive returns true if we have fully entered the room.
+                if(room == null || !room.isActive()) {
+                    alert("Please enter a chat room before attempting to change the subject");
+                    return;
+                }
+                /**
+                 * room.changeSubject takes a plaintext subject and broadcasts it
+                 * to the room. It may throw TypeError for bad arguments or state
+                 * and should be wrapped in a try-catch.
+                 *
+                 * changeSubject is passed an error callback so that errors
+                 * returned by the room (permission errors for instance) can
+                 * be displayed to the user.
+                 *
+                 * Note the use of jabberwerx.errorReporter to format the raw
+                 * error stanza into a human readable string.
+                 *
+                 * see ../api/symbols/jabberwerx.MUCRoom.html#changeSubject
+                 * see ../api/symbols/jabberwerx.ErrorReporter.html
+                 */
+                try {
+                    room.changeSubject(
+                        $("#subjectField").val(),
+                        function(err) {
+                            if (err) {
+                                alert("Subject could not be changed. " +
+                                      jabberwerx.errorReporter.getMessage(err.error));
+                            }
+                        });
+                } catch(ex) {
+                    alert("Error occurred while changing subject: " + ex.message);
+                }
+            }
+
+            // Called when the "Invite User" button is pressed
+            function inviteUser() {
+                //room.isActive returns true if we have fully entered the room.
+                if(room == null || !room.isActive()) {
+                    alert("Please enter a chat room before attempting to invite a user");
+                    return;
+                }
+                /**
+                 * room.invite takes a bare jid of another user to invite into
+                 * the room, a reason for the invite ("Because") and a flag signalling
+                 * whether or not to use the room server to send the message.
+                 * On a successsful call the given user will be sent a message
+                 * that will allow them to join the room.
+                 *
+                 * It may throw TypeError for bad arguments or state
+                 * and should be wrapped in a try-catch.
+                 *
+                 * see ../api/symbols/jabberwerx.MUCRoom.html#invite
+                 */
+                try {
+                    room.invite($('#inviteUserField').val() + '@' + demo_config.domain, "Because", true);
+                } catch(ex) {
+                    alert("Error occurred while inviting a user: " + ex.message);
+                }
+            }
+
+            $(document).ready(function() {
+                /**
+                 * Add a login to this example by inserting appropriate HTML
+                 * into #conn-data. See Simple Client Connection example for extensive
+                 * details on connection.
+                 *
+                 * see ./connectexample.html
+                 */
+                jabberwerx_examples.addLogin($("#conn-data"), client, demo_config);
+
+                $("#chatRoomNameField").val(demo_config.chatroom);
+                $("#nicknameField").val(demo_config.nickname);
+
+                $('#enterRoomButton').click(enterRoom);
+                $('#exitRoomButton').click(exitRoom);
+                $('#broadcastButton').click(broadcast);
+                $('#subjectButton').click(changeSubject);
+                $('#inviteUserButton').click(inviteUser);
+
+                $('#exitRoomButton').hide();
+
+                /**
+                 * Respond to an inviteReceived event, triggered when an
+                 * invitation is received. evt.data is a room invite object
+                 * with a getInvitor() method that returns the jid of the user
+                 * that invited us and a getRoom() method
+                 * that returns the room the invitation is to.
+                 *
+                 * see ../api/symbols/jabberwerx.MUCInvite.html
+                 */
+                mucController.event("mucInviteReceived").bind(function(evt) {
+                    alert(evt.data.getInvitor() + " invited you to chat in room: " + evt.data.getRoom());
+                });
+            });
+        })();
+        </script>
+    </head>
+    <body>
+        <h2>Multi-user Chat Example</h2>
+        <div>An example demonstrating how to use CAXL's Client, MUCController and Room classes to create a multi-user chat client.</div>
+        <h3>How it Works</h3>
+        This example automatically performs a number of actions in the page onReady event:
+        <ol>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.Client.html' target='_blank'>jabberwerx.Client</a>.</li>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.MUCController.html' target='_blank'>jabberwerx.MUCController</a> for controlling the multi-user chat.</li>
+            <li>Registering for the <a href='../../doc/api/jabberwerxEvents.html#jabberwerx.MUCController' target='_blank'>jabberwerx.MUCController mucInviteReceived event</a> to handle invitation requests.</li>
+        </ol>
+        The example also demonstrates (based on user actions like button clicks) additional multi-user chat functionality available within CAXL:
+        <ul>
+            <li><div>Connecting as a given username with a given password.</div>
+            &nbsp;&nbsp;NOTE: the <a href='./connectexample.html' target='_blank'>Simple Client Connection</a> example is the best source for connection information.</li>
+
+            <li><a href='../../doc/api/symbols/jabberwerx.MUCController.html#room' target='_blank'>Creating a new room.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.MUCRoom.html#enter' target='_blank'>Entering a room.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.MUCRoom.html#occupants' target='_blank'>Retrieving the list of occupants of a room.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.MUCRoom.html#changeSubject' target='_blank'>Changing the chat room subject.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.MUCRoom.html#sendBroadcast' target='_blank'>Sending a broadcast message to the occupants of the room.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.MUCRoom.html#invite' target='_blank'>Inviting a user to the room.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.MUCRoom.html#occupants' target='_blank'>Reacting to events that are triggered (i.e. entityCreated, etc.) as a result of a change to the occupants of the room</a></li>
+        </ul>
+        <h3>In Action</h3>
+        <table align="left">
+            <tr>
+                <td>
+                    <p>Instructions for using this example:
+                    <ul>
+                        <li>Click the "Connect" button to connect the client to the server.</li>
+                        <li>Click the "Enter Room" button to create new room and enter it.  Feel free to change the default room name.</li>
+                        <li>Type a broadcast message into the edit field provided and click the "Broadcast" button to send it to all of the occupants of the room</li>
+                        <li>Type a new subject into the edit field provided and click the "Change Subject" button.</li>
+                        <li>Type the user name (not including the domain) of the user you would like to invite to the room and click the "Invite User Button".</li>
+                    </ul>
+
+                    ***Note: In order to simulate multiple users connecting to the same room, please open another instance of your browser and navigation to this
+                    page.
+
+                    </p>
+                </td>
+            </tr>
+        </table>
+        <table align="center" border="1"><tr><td>
+            <table align="center" border="0">
+                <!-- login HTML will be inserted here -->
+                <tr><td colspan="2" id="conn-data"></td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr>
+                    <td><label for="chatRoomNameField">Chat Room Name: </label></td>
+                    <td><input type="text" id="chatRoomNameField" size="30" maxLength="30"/></td>
+                </tr>
+                <tr>
+                    <td><label for="nicknameField">Nickname: </label></td>
+                    <td><input type="text" id="nicknameField" size="30" maxLength="30"/></td>
+                </tr>
+                <tr>
+                    <td colspan="2" align="center">
+                        <input type="button" id="enterRoomButton" value="Enter Room"/>
+                        <input type="button" id="exitRoomButton" value="Exit Room"/>
+                        <div id="spacer">&nbsp;</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" align="center" valign="top">
+                        <table border=0>
+                            <tr>
+                                <td valign="top">
+                                    <table border=0 align="center" valign="top">
+                                        <tr>
+                                            <td align="center" valign="top">
+                                                <label for="occupants">Chat Room Occupants</label>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div id="occupantsContainer">
+                                                    <select id="occupants" multiple="multiple" style="width: 200px">
+                                                        <option selected value="-1">Not currently in a room</option>
+                                                    </select>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <table border=0>
+                                                    <tr>
+                                                        <td>
+                                                            <label for="subjectLabel">Subject:</label>
+                                                        </td>
+                                                        <td>
+                                                            <div id="subjectLabel"></div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td>
+                                    <table border=0>
+                                        <tr>
+                                            <td align="center">
+                                                <label for="receivedBroadcastMessages">Broadcast Messages</label>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <textarea cols=35 rows=3 id="receivedBroadcastMessages" readonly="readonly"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <input type="text" id="broadcastField" size="30" maxLength="30"/>
+                                                <input type="button" id="broadcastButton" value="Broadcast"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <input type="text" id="subjectField" size="30" maxLength="30"/>
+                                                <input type="button" id="subjectButton" value="Change Subject"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <input type="text" id="inviteUserField" size="30" maxLength="30"/>
+                                                <input type="button" id="inviteUserButton" value="Invite User"/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td></tr></table>
+    </body>
+</html>

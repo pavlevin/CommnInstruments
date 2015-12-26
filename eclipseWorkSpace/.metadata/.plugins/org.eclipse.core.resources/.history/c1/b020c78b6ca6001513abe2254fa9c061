@@ -1,0 +1,28 @@
+import java.util.ArrayList;
+public class Account{
+	/*
+	 * */
+	public ArrayList<User> usersCredentials = new ArrayList<User>();
+	public static void main(String[] args){
+		Account acc = new Account();
+		acc.addUser("rwa_owner", "1");
+		acc.addUser("fds_owner", "2");
+		acc.addUser("fcl_owner", "3");
+		acc.addUser("fds_owner", "4");
+		acc.addUser("fcl_owner", "5");
+		
+	}
+	
+	public void addUser(String username, String password){
+		
+	}
+	public void removeUser(UnixUser user){
+		this.usersCredentials.remove(user);
+	}
+}
+
+
+
+
+
+

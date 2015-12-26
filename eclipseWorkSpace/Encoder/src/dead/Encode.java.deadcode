@@ -1,0 +1,139 @@
+	/*		Dead Methods
+	
+	private static byte[] byteArraySummator(byte[] a, byte[] b, long module) {
+		if (a.length != b.length) {
+			throw new IllegalArgumentException("\nUnequal byte array lengths!\n" +
+					"a.length = " + String.valueOf(a.length) + ";\n" +
+					"b.length = " + String.valueOf(b.length) + ".\n");
+		}
+		if (module < 2) {
+			throw new IllegalArgumentException("\nInvalid summation module");
+		}
+		
+		ByteBuffer wrapped;		// Buffer to convert byte[] to long
+		ByteBuffer dbuf;		// Buffer to convert long to byte[]
+		
+		wrapped = ByteBuffer.wrap(a);
+		long aLong = (long) wrapped.getInt();	// a as a long
+		wrapped = ByteBuffer.wrap(b);
+		long bLong = (long) wrapped.getInt();	// b as a long
+		
+		long cLong = aLong + bLong;		// summation
+		while (cLong >= module)
+			cLong -= module;
+		int cInt = (int) cLong;
+		
+		dbuf = ByteBuffer.allocate(a.length);
+		dbuf.putInt(cInt);
+		byte[] c = dbuf.array();
+		return c;
+	}
+	
+	private static byte[] byteSplit(byte[] x) {
+		int n = x.length;
+		byte[] out = new byte[2*n];
+		String app = new String();
+		for (int i = 0; i < n; i++) {
+			app = Integer.toBinaryString((int) x[i]);
+			// Set string length to 8 digits
+			while (app.length() < 8)
+				app = "0" + app;
+			app = app.substring(app.length()-8,app.length());
+			// Upper bits
+			out[2*i] = (byte) Integer.parseInt(app.substring(0,4),2);
+			// Lower bits
+			out[2*i+1] = (byte) Integer.parseInt(app.substring(4,8),2);
+		}
+		return out;
+	}
+	
+	private static byte[] byteDesplit(byte[] x) {
+		int n = x.length;
+		String a = new String();
+		String b = new String();
+		if (n%2 == 1) {
+			throw new IllegalArgumentException(
+					"\nByte array length must be even!");
+		}
+		else {
+			byte[] out = new byte[n/2];
+			for (int i = 0; i < n/2; i++) {
+				// Upper bits
+				a = Integer.toBinaryString((int) (x[2*i]));
+				// Set string length to 4 digits
+				while (a.length() < 4)
+					a = "0" + a;
+				a = a.substring(a.length()-4,a.length());
+				
+				//Lower bits
+				b = Integer.toBinaryString((int) (x[2*i+1]));
+				// Set string length to 4 digits
+				while (b.length() < 4)
+					b = "0" + b;
+				b = b.substring(b.length()-4,b.length());
+				
+				out[i] = (byte) Integer.parseInt(a + b,2);
+			}
+			return out;
+		}
+	}
+	
+	private static int bitCyclicLeftShift(int in, int n) {
+		StringBuilder sb = new StringBuilder();
+		// Input binary string
+		String s = intToString(in,32);
+		sb.append(s);
+		// Shift
+		if (n > 0) {
+			for (int i = 0; i < n; i++) {
+				sb.insert(sb.length(),sb.charAt(0));
+				sb.delete(0,1);
+			}
+		}
+		if (n < 0) {
+			for (int i = 0; i < -n; i++) {
+				sb.insert(0, sb.charAt(sb.length()-1));
+				sb.delete(sb.length()-1, sb.length());
+			}
+		}
+		return (int) Long.parseLong(sb.toString(),2);
+	}
+	
+	private static byte[] bitCyclicLeftShift(byte[] x, int n) {
+		StringBuilder sb = new StringBuilder();
+		String app = new String();
+		// Form one binary string
+		for (int i = 0; i < x.length; i++) {
+			app = Integer.toBinaryString((int) x[i]);
+			// Leading zeros addition
+			while (app.length() < 8)
+				app = "0" + app;
+			// Leaving only 8 lowest bits, it is necessary if the
+			// byte was negative and after type cast to int
+			// we have a 32 digits length string
+			app = app.substring(app.length()-8,app.length());
+			sb.append(app);
+		}
+		// Shift
+		if (n > 0) {
+			for (int i = 0; i < n; i++) {
+				sb.insert(sb.length(),sb.charAt(0));
+				sb.delete(0,1);
+			}
+		}
+		if (n < 0) {
+			for (int i = 0; i < -n; i++) {
+				sb.insert(0, sb.charAt(sb.length()-1));
+				sb.delete(sb.length()-1, sb.length());
+			}
+		}
+		// String to byte[]
+		byte[] out = new byte[x.length];
+		String s = sb.toString();
+		for (int i = 0; i < x.length; i++) {
+			out[i] = (byte) (Integer.parseInt(s.substring(8*i,8*(i+1)),2));
+		}
+		return out;
+	}
+	*/
+

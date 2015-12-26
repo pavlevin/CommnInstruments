@@ -1,0 +1,307 @@
+<!--
+/**
+ * filename:        pubsubownerexample.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--    This is a simple example that demonstrates creating a node,
+                publishing items and deleting the node.
+        -->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>PubSub Owner Example</title>
+
+        <script type='text/javascript' src='../../jabberwerx.js'></script>
+        <script type='text/javascript' src='./jabberwerxexamples.js'></script>
+
+        <script type="text/javascript">
+        (function() { //wrapped in an anon function to avoid polluting global namespace
+            // Map the global jQuery symbol to jabberwerx's jquery for convenience.
+            var $ = jabberwerx.$;
+
+            /**
+             * Configuration information including
+             *   httpBindingURL - the BOSH binding URL.
+             *   domain - The user's domain (domain part of the connected JID)
+             *   username - The user (local part of connected JID)
+             *   password - The account password.
+             *   pubSubService - The server pubsub component
+             */
+            var demo_config = {
+                httpBindingURL: "/httpbinding",
+                domain: "example.com",
+                username: "jwtest0",
+                password: "test",
+                pubSubService: "info-broker.example.com"
+            };
+
+            /**
+             * Instantiate the Jabberwerx Client, the main access and routing
+             * object. Clients define a connection and session.
+             *
+             * see ../api/symbols/jabberwerx.Client.html
+             */
+            var client = new jabberwerx.Client();
+
+            /**
+             * Instantiate the pubsub controller. The constructor is passed the
+             * associated client and registers itself with the client. The
+             * controller is managed by the client. The PubSubController allows
+             * us to manage pusub subscriptions, items etc.
+             *
+             * see ../api/symbols/jabberwerx.PubSubController.html
+             */
+            var pubSubController = new jabberwerx.PubSubController(client);
+
+            /**
+             * A reference to our current PubSubNode.
+             *
+             * see ../api/symbols/jabberwerx.PubSubNode.html
+             */
+            var pubSubNode = null;
+
+            /**
+             * Function called when the "Create Node" button is clicked.
+             *
+             * Uses the PubSubController to create a PubSubNode model and then
+             * uses that PubSubNode to create a node on the pubsub service.
+             *
+             * This is the typical pattern in CAXL pubsub, create the
+             * PubSubNode object and then use that object to manipulate the
+             * pubsub service. Simply creating a PubSubNode does not create
+             * the node on the server. That requires a call to createNode.
+             *
+             * see ../api/symbols/PubSubController.html#node
+             * see ../api/symbols/PubSubNode.html#createNode
+             */
+            function createNode() {
+                try{
+                    pubSubNode = pubSubController.node($("#nodeLabel").val(),
+                                                       demo_config.pubSubService);
+                    pubSubNode.createNode();
+
+                    $('#nodeCreatedLabel').html("Node Created");
+                    $('#deleteNodeLabel').html("&nbsp;");
+                    $('#createNodeButton').attr("disabled", true);
+                    $('#publishButton').attr("disabled", false);
+                    $('#deleteNodeButton').attr("disabled", false);
+                }
+                catch(e){
+                    $('#nodeCreatedLabel').html("Unable to create node.");
+                    alert("Exception trying to create a new item: " + e.message);
+                }
+            }
+
+            /**
+             * Function called when "Publish Item" is clicked.
+             *
+             * Constructs the payload part of stanza using NodeBuilder and then
+             * publishes that payload to the current node.
+             *
+             * see ../api/symbols/NodeBuilder.html
+             * see ../api/symbols/PubSubNode.html#publish
+             */
+            function publishItem() {
+                try{
+                    //Create a <notification/>
+                    var notification = new jabberwerx.NodeBuilder("{http://protocols.example.com/forums}notification");
+                    /**
+                     * set its from attribute to our name and its text to the
+                     * user supplied item data.
+                     * <notification from='jwtest0'>foo</notification>
+                     */
+                    notification.
+                        attribute("from", demo_config.username).
+                        text($("#itemName").val());
+                    /**
+                     * Publish the payload. publish is passed an optional id,
+                     * the item to publish and an optinal callback fired when
+                     * the publish is complete. id and callback are ignored
+                     * in this example.
+                     *
+                     * Note the NodeBuilder's data property is the actual DOM
+                     * to be passed to publish.
+                     */
+                    pubSubNode.publish(null, notification.data, publishCallback);
+                    $('#itemPublishedLabel').html("Item: '" +
+                                                  $("#itemName").val() +
+                                                  "' published to node.");
+                }
+                catch(e){
+                    $('#itemPublishedLabel').html("Unable to publish item");
+                    alert("Exception trying to publish a new item: " + e.message);
+                }
+            }
+
+            /**
+             * Callback function that is called upon completion of the "publish" method
+             *
+             * see ../api/symbols/PubSubNode.html#publish
+             */
+            var publishCallback = function(err, id) {
+                if(err) {
+                    alert("Failed to publish: " + abberwerx.errorReporter.getMessage(err.error));
+                }
+            }
+
+            /**
+             * Function called when the "Delete Node" button is clicked.
+             *
+             * Deletes the node on the pubsub service and removes it from
+             * the PubSubController.
+             *
+             * see ../api/symbols/PubSubNode.html#deleteNode
+             * see ../api/symbols/PubSubNode.html#remove
+             */
+            function deleteNode() {
+                try{
+                    //delete the node from the service
+                    pubSubNode.deleteNode();
+                    //remove the node from the controller
+                    pubSubNode.remove();
+                    pubSubNode = null;
+
+                    $('#createNodeButton').attr("disabled", false);
+                    $('#publishButton').attr("disabled", true);
+                    $('#deleteNodeButton').attr("disabled", true);
+                    $('#deleteNodeLabel').html("Node deleted");
+                    $('#nodeCreatedLabel').html('&nbsp;');
+                    $('#itemPublishedLabel').html('&nbsp;');
+                    $('#nodeLabel').val('');
+                    $('#itemName').val('');
+
+                }
+                catch(e){
+                    $('#deleteNodeLabel').html("Unable to delete node.");
+                    alert("Exception trying to delete node: " + e.message);
+                }
+            }
+            /**
+             * Simple PubSub Example that creates/deletes nodes and publishes items to the node.
+             */
+            $(document).ready(function() {
+                /**
+                 * Add a login to this example by inserting appropriate HTML
+                 * into #conn-data. See Simple Client Connection example for extensive
+                 * details on connection.
+                 *
+                 * see ./connectexample.html
+                 */
+                jabberwerx_examples.addLogin($("#conn-data"), client, demo_config);
+
+                $('#createNodeButton').click(createNode);
+                $('#publishButton').click(publishItem);
+                $('#deleteNodeButton').click(deleteNode);
+
+                /**
+                 * The Jabberwerx API supports binding to a "clientConnected"
+                 * event. The event will automatically be triggered whenever the
+                 * client is fully connected.
+                 */
+                client.event("clientConnected").bind(function(evt) {
+                    $('#createNodeButton').attr("disabled", false);
+                    $('#publishButton').attr("disabled", true);
+                    $('#deleteNodeButton').attr("disabled", true);
+                    $('#deleteNodeLabel').html("&nbsp;");
+                    $('#nodeCreatedLabel').html('&nbsp;');
+                    $('#itemPublishedLabel').html('&nbsp;');
+                    $('#nodeLabel').val('');
+                    $('#itemName').val('');
+                });
+                /**
+                 * The Jabberwerx API supports binding to a "clientDisconnected"
+                 * event. The event will automatically be triggered whenever the
+                 * client is disconnected. If some error caused the disconnect
+                 * an error stanza will be passed to the event.
+                 */
+                client.event("clientDisconnected").bind(function(evt) {
+                    pubSubNode = null;
+                    $('#createNodeButton').attr("disabled", true);
+                    $('#publishButton').attr("disabled", true);
+                    $('#deleteNodeButton').attr("disabled", true);
+                    $('#deleteNodeLabel').html("&nbsp;");
+                    $('#nodeCreatedLabel').html('&nbsp;');
+                    $('#itemPublishedLabel').html('&nbsp;');
+                    $('#nodeLabel').val('');
+                    $('#itemName').val('');
+                });
+            });
+        })();
+        </script>
+    </head>
+
+    <body>
+        <h2>PubSub Owner Example</h2>
+        <div>An example demonstrating how to create/delete nodes and publish items.</div>
+        <h3>How it Works</h3>
+        This example automatically performs a number of actions in the page onReady event.
+        <ol>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.Client.html' target='_blank'>jabberwerx.Client</a>.</li>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.PubSubController.html' target='_blank'>jabberwerx.PubSubController</a> to create/delete nodes and publish items.</li>
+        </ol>
+        The example also demonstrates (based on user actions like button clicks) additional PubSub Owner functionality available within CAXL:
+        <ul>
+            <li><div>Connecting as username and password to a binding URL</div>
+                 &nbsp;&nbsp;NOTE: the <a href='./connectexample.html' target='_blank'>Simple Client Connection</a> example is the best source for connection information.</li>
+            <li><a href='../../doc/api/symbols/jabberwerx.PubSubNode.html#createNode' target='_blank'>Creating a new Node.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.NodeBuilder.html' target='_blank'>Using the NodeBuilder class to construct stanzas.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.PubSubNode.html#publish' target='_blank'>Publishing an Item.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.PubSubNode.html#deleteNode' target='_blank'>Deleting a Node.</a></li>
+
+        </ul>
+        <h3>In Action</h3>
+        <p>Instructions for using this example:</p>
+        <ul>
+            <li>Click the "Connect" button to connect the client to the server.</li>
+            <li>Enter a node name and click the "Create Node" button to create a new node on the PubSub service.</li>
+            <li>Enter item text and click the "Publish Item" button to publish the text.</li>
+            <li>Click the "Delete Node" button to delete the current node and all of its items from the PubSub service.</li>
+        </ul>
+
+        <p>***Note: This example works in tandem with the <a href="pubsubexample.html" target="_blank">PubSub Example</a>. Nodes created and items
+        published within this example are displayed and updated within the PubSub example.</p>
+        <table align="center" border="1"><tr><td>
+            <table align="center" border="0">
+                <!-- login HTML will be inserted here -->
+                <tr><td colspan="2" id="conn-data"></td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr>
+                    <td><label for="label">Enter Node Name: </label></td>
+                    <td>
+                        <input type="text" id="nodeLabel" size="30" maxLength="30"/>
+                        <input type="button" disabled="true" id="createNodeButton" value="Create Node"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><div id="nodeCreatedLabel">&nbsp;</div></td>
+                </tr>
+                <tr>
+                    <td><label for="label">Enter Item: </label></td>
+                    <td>
+                        <input type="text" id="itemName" size="30" maxLength="30"/>
+                        <input type="button" disabled="true" id="publishButton" value="Publish Item"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><div id="itemPublishedLabel">&nbsp;</div></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><input type="button" disabled="true" id="deleteNodeButton" value="Delete Node"/></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><div id="deleteNodeLabel">&nbsp;</div></td>
+                </tr>
+            </table>
+        </td></tr></table>
+    </body>
+</html>

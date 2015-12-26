@@ -1,0 +1,54 @@
+import java.util.ArrayList;
+
+public class AccountTest extends Account{
+	
+}
+class Account{
+	/*
+	 * */
+	private ArrayList<User> users;
+	public void addUser(UserType type, String unixUsername, String unixPassword){
+		this.users.add(new User(type,unixUsername,unixPassword));
+		}
+	public void removeUser(User user){
+		this.users.remove(user);
+	}
+}
+class UserType {
+	public enum UserTypes {
+		Unix,
+		DataBase,
+		Informatica };
+	
+}
+
+
+	
+
+	class User {
+		private String userName,userPassword;
+		public UserType userType;
+		public User(UserType userType, String userName, String pass){
+			this.userName=userName;
+			this.userPassword=pass;
+			this.userType=userType;
+		}
+		public String setUsername(String user){
+			return this.userName=user;
+		}
+		public String setPassword(String pass){
+			return this.userPassword=pass;
+		}
+		public String getUsername(){
+			return this.userName;
+		}
+		public String getPassword(){
+			return this.userPassword;
+		}
+		public UserType getUserType(){
+			return this.userType;
+		}
+	}
+
+
+

@@ -1,0 +1,61 @@
+public abstract class CommonUserAction {
+	static void setLoginFor(UnixUsr unixUsr,String login) { 
+		unixUsr.login=login;	
+	}
+	
+	String getLoginFor(UnixUsr unixUsr) {
+		return unixUsr.login;
+	}
+	
+	void setLoginFor(DBUsr dbUsr,String login) {
+		dbUsr.login=login;	
+	}
+
+	String getLoginFor(DBUsr dbUsr) {
+		return dbUsr.login;
+	}
+	
+	void setPasswordFor(UnixUsr unixUsr,String password) {
+		unixUsr.password=password;
+	}
+	
+	String getPasswordFor(UnixUsr unixUsr) {
+		return unixUsr.password;
+	}
+	
+	void setPasswordFor(DBUsr dbUsr,String password) {
+		dbUsr.password=password;
+	}
+	
+	String getPasswordFor(DBUsr dbUsr) {
+		return dbUsr.password;
+	}
+	
+	class DBUsr{
+		private String serviceName, login, password;
+		DBUsr(String login, String password){
+			this.login = login;
+			this.password=password;
+			this.serviceName="jjj";
+		}
+		void setServiceName(DBUsr dbUsr,String serviceName){
+			dbUsr.serviceName=serviceName;
+		}
+		String getServiceName(DBUsr dbUsr){
+			return dbUsr.serviceName;
+		}
+
+	}
+
+	class UnixUsr {
+		private String identityFile, login, password;
+		UnixUsr(String login, String password){
+			this.login = login;
+			this.password=password;
+		}
+		void setIdentityFile(UnixUsr unixUsr,String identityFile){
+			unixUsr.identityFile=identityFile;
+		}
+		
+	}
+}

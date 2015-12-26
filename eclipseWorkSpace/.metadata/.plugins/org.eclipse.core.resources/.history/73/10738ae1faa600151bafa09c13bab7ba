@@ -1,0 +1,72 @@
+class DBUserSep{
+	private String serviceName;
+	private String login;
+	private String password;
+	DBUserSep(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setServiceName(String serviceName) {
+		this.serviceName=serviceName;}
+	String getServiceName(){
+		return this.serviceName;}
+	
+	void setLogin(String login){
+		this.login=login;	
+	}
+	
+	String getLogin(){
+		return this.login;
+	}
+	
+	void setPassword(String password) {
+		this.password=password;
+		
+	}
+	
+	String getPassword(){
+		return password;
+	}
+}
+
+class UnixUserSep extends User{
+	private String identityFile;
+	private String login;
+	private String password;
+	UnixUserSep(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setIdentityFile(String identityFile) {
+		this.identityFile = identityFile;
+	}
+	String getIdentityFile() {
+		return identityFile;
+	}
+	
+	void setLogin(String login) {
+		this.login=login;	
+	}
+	
+	String getLogin() {
+		return this.login;
+	}
+	
+	void setPassword(String password) {
+		this.password=password;
+		
+	}
+	
+	String getPassword() {
+		return password;
+	}
+
+}
+
+abstract class User{
+	abstract void setLogin(String login);
+	abstract String getLogin();
+	abstract void setPassword(String password);
+	abstract String getPassword();
+	
+}

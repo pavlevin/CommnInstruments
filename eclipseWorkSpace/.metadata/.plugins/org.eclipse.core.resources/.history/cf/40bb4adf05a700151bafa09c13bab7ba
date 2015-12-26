@@ -1,0 +1,91 @@
+import java.text.Format.Field;
+
+class DBUser extends User {
+	private String serviceName;
+	private String login;
+	private String password;
+	DBUser(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setServiceName(String serviceName) {
+		this.serviceName=serviceName;}
+	String getServiceName(){
+		return this.serviceName;}
+	@Override
+	void setLogin(String login){
+		this.login=login;	
+	}
+	@Override
+	String getLogin(){
+		return this.login;
+	}
+	@Override
+	void setPassword(String password) {
+		this.password=password;
+		
+	}
+	@Override
+	String getPassword(){
+		return password;
+	}
+}
+
+class UnixUser extends User{
+	private String identityFile;
+	private String login;
+	private String password;
+	UnixUser(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setIdentityFile(String identityFile) {
+		this.identityFile = identityFile;
+	}
+	String getIdentityFile() {
+		return identityFile;
+	}
+	@Override
+	void setLogin(String login) {
+		this.login=login;	
+	}
+	@Override
+	String getLogin() {
+		return this.login;
+	}
+	@Override
+	void setPassword(String password) {
+		this.password=password;
+		
+	}
+	@Override
+	String getPassword() {
+		return password;
+	}
+
+}
+
+class InformaticaUser {
+	
+}
+
+
+
+abstract class User{
+	abstract void setLogin(String login);
+	abstract String getLogin();
+	abstract void setPassword(String password);
+	abstract String getPassword();
+	void setValue(String field,String value){
+		try {
+			java.lang.reflect.Field nme = this.getClass().getDeclaredField(field);
+			nme.set(this, value);
+		} catch (IllegalArgumentException  | SecurityException | NoSuchFieldException | IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}
+
+
+

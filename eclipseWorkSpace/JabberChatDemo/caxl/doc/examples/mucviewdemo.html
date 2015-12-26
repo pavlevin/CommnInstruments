@@ -1,0 +1,146 @@
+<!--
+/**
+ * filename:        mucviewdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ MUC Demo</title>
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+var demo_config = {
+    domain: "example.com",
+    conferenceServer: 'conference.example.com',
+    rooms: ["testroom1", "testroom2"],
+    invitees: ["jwtest2", "jwtest3", "jwtest4"],
+    maxGraphAge: 5,
+    unsecureAllowed: false,
+    logPersistence: false
+};        
+jabberwerx.util.config.logPersistence = demo_config.logPersistence;
+jabberwerx.util.setMaxGraphAge(demo_config.maxGraphAge);
+jabberwerx._config.unsecureAllowed = demo_config.unsecureAllowed;
+
+jabberwerx.$(document).bind("ready", function() {
+        var $ = jabberwerx.$;
+
+        var client = new jabberwerx.Client('sampleclient');
+
+        $("input.logout-btn").click(function() {
+            client.disconnect();
+        }).hide();
+
+        var authView = new jabberwerx.ui.AuthenticationView(client, demo_config.domain);
+        authView.render().appendTo(".auth");
+        
+        var tabpane = new jabberwerx.ui.TabbedView();
+        tabpane.render().appendTo("div.chat_area");
+        tabpane.update();
+        $("div.chat_area").hide();
+        $("div.options").hide();
+        var sendMediated = true;
+        
+        
+        tabpane.event("tabActivated").bind(function(evt) {
+            $("input.room_invite").
+            unbind("click").
+            val("Invite");            
+
+            room = evt.data.content._MucRoom;
+            if (room) {
+                $("input.room_invite").
+                    val("Invite To " + room.getDisplayName()).
+                    unbind("click").
+                    click(function() {
+                        var sentjids = jabberwerx.$.map(demo_config.invitees, function(jid) {
+                            if (jid.indexOf("@") == -1) {
+                                return jid + "@" + demo_config.domain;
+                            }
+                            return jid;
+                        });
+                        sentjids = room.invite(sentjids, '', sendMediated);
+                        var sentjidsstr = sentjids.join();
+                        var badjids = [];
+                        badjids = jabberwerx.reduce(demo_config.invitees, function(jidstr, jidlist) {
+                            if (sentjidsstr.indexOf(jidstr) == -1) {
+                                jidlist.push(jidstr);
+                            }
+                            return jidlist;
+                        }, badjids);
+                        
+                        if (badjids.length != 0) {
+                            jabberwerx.util.debug.log('Could not send invites to {' + badjids.join() + '}');
+                        } 
+                        if (sentjids.length != 0) {
+                            jabberwerx.util.debug.log('Sent invites to {' + sentjidsstr + '} using ' + (sendMediated ? 'mediated':'direct') + ' method.');
+                        }
+                        sendMediated = !sendMediated;                        
+                    });
+            }        
+        });
+        
+        var muc = client.controllers.muc || new jabberwerx.MUCController(client);
+        tabpane.dimensions({width: 850, height: 350});
+           
+        client.event("clientStatusChanged").bind(function(evt) {
+            if (evt.data.next == jabberwerx.Client.status_connected) {
+                var prs = client.getCurrentPresence();
+                if (!prs) {
+                    prs = new jabberwerx.Presence();
+                    client.sendStanza(prs);
+                }
+            
+                authView.hide();
+                $("div.chat_area").show();
+                $("div.options").show();
+                $("input.logout-btn").show();
+
+                //Define a callback for room entry to create the view
+                var view;
+                var tab;
+                var cb = function(err) {
+                    if (err) {
+                        return;
+                    }
+                    view = new jabberwerx.ui.MucView(this);
+                    tab = tabpane.addTab("muc::" + this.jid, view);
+                    view.render().appendTo("#display");
+                  
+                };
+                    
+                for (var i = 0; i < demo_config.rooms.length; i++) {
+                    var room = muc.room(demo_config.rooms[i] + '@' + demo_config.conferenceServer);
+                    room.enter(client.connectedUser.getDisplayName(), cb);
+                }
+                
+                // doing this works around rendering problems in Safari
+                tabpane.dimensions(tabpane.dimensions());
+            } else if (evt.data.next == jabberwerx.Client.status_disconnected) {
+                authView.show();
+                $("div.chat_area").hide();
+                $("div.options").hide();
+                $.each(tabpane.getAllTabs(), function() {
+                    this.remove();
+                });
+            }
+        });
+});
+        </script>
+    </head>
+    <body>
+        <h2>XCP Login</h2>
+        <div>
+            <div class="auth"></div>
+            <div class="chat_area"></div>
+            <div class="options">                
+                <input type="button" class="logout-btn" value="logout"/>
+                <input type="button" class="room_invite" value="Invite"/>
+            </div>
+        </div>
+    </body>
+</html>

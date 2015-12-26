@@ -1,0 +1,11 @@
+
+public class UserType implements UserType{}
+
+interface UserTypes {
+	public enum UserTypes {
+		Unix,
+		DataBase,
+		Informatica };
+	
+}
+

@@ -1,0 +1,900 @@
+<!--
+/**
+ * filename:        developerGuide.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2012 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cisco AJAX XMPP Library Developer Guide</title>
+    <link rel="stylesheet" type="text/css" href="jabberwerx.css" />
+</head>
+<body class="border">
+
+<table width="90%">
+<tr>
+<td><img class="summary" src="cisco.gif"/></td>
+<td class="center"><h1 class="title">Cisco AJAX XMPP Library Developer Guide</h1></td>
+</tr>
+</table>
+<div class="summary">
+<h2 align="center">
+<br/>
+Web 2.0 library for XMPP-based Instant Messaging, Availability and Roster Management
+<br/><br/>
+</h4>
+</div>
+<br/>
+
+<h2>Introduction</h2>
+<p>
+The Cisco AJAX XMPP Library is a JavaScript XMPP client library that allows you to integrate instant messaging, availability and roster management
+services from <b>Cisco WebEx</b> and <b>Cisco Unified Presence</b> to your web-based application.
+<p>
+The Cisco AJAX XMPP Library is an object-oriented, client-side library which communicates with a BOSH server component.
+<a href="http://xmpp.org/extensions/xep-0124.html">BOSH</a> (Bidirectional-streams Over Synchronous HTTP) technology is used as a HTTP binding
+for XMPP communications that is useful in situations where a device or client is unable to maintain a long-lived TCP connection to an
+XMPP server e.g. in a web browser.
+</p>
+<p>
+The Cisco AJAX XMPP Library is comprised of the following modules:
+<ul>
+    <li>jQuery: an open-source library for searching, traversing, and manipulating the browser's DOM</li>
+    <li>Cisco AJAX XMPP Library Minimal API: a high-level API for sending and receiving XMPP stanzas</li>
+    <li>Cisco AJAX XMPP Library Core API: a high-level API for messaging and presence</li>
+    <li>Cisco AJAX XMPP Library Unbundled API: the same features as the Core API but without bundling jQuery</li>
+    <li>Cisco AJAX XMPP Library UI API: HTML UI components built on top of the core Cisco AJAX XMPP Library API</li>
+</ul>
+</p>
+
+<table width="90%">
+<tr>
+<td><h3 class="center">High-Level Architecture</h3></td>
+</tr>
+<tr>
+<td class="center"><img class="image" src="jwHighLevelArch.png"/></td>
+</tr>
+</table>
+<br/>
+<p>
+You can use the Cisco AJAX XMPP Library as an API or as a web UI or both. The core Cisco AJAX XMPP Library API does not depend on use of the Cisco AJAX XMPP Library UI
+API. The internals of the library use jQuery for low-level JavaScript tasks but there is no dependency on any JavaScript UI
+framework for the UI components.
+</p>
+
+<br/>
+<hr/>
+<br/>
+
+<h2 id="supportedBrowsers">Supported Browsers</h2>
+<p>Current List of JabberWerxAJAX supported and tested OS/Browser combinations:</p>
+
+<h4><a name="JabberWerx-CAXLSupportedPlatforms-Windows"></a>Windows</h4>
+
+<ul>
+    <li>Chrome</li>
+    <li>Firefox</li>
+    <li>Internet Explorer 8</li>
+    <li>Internet Explorer 9</li>
+    <li>Latest Internet Explorer</li>
+</ul>
+
+<p style="font-size: larger">
+<strong>Note:</strong><br/>When configured to use CORS an additional requirement exists. Internet Explorer requires the http binding URL must be targeted to the same scheme as the hosting page.
+This means that if your AJAX page is at http://example.com, then your httpBindingURL must also begin with HTTP. Similarly, if your AJAX page is at https://example.com, then your httpBindingURL must also begin with HTTPS. This restriction is for IE only and is resolved in IE 10.
+<br/><br/>
+<strong>Note:</strong><br/>Internet Explorer versions 8 and 9 are explicitly tested and documented. IE 10 and later are standards compliant and will be treated like
+Chrome and Firefox where only the latest versions are regression tested.<br/>
+</p>
+
+
+<h4><a name="JabberWerx-CAXLSupportedPlatforms-MacOSX"></a>Mac OS X</h4>
+
+<ul>
+    <li>Chrome</li>
+    <li>Firefox</li>
+    <li>Safari</li>
+</ul>
+
+
+<h4><a name="JabberWerx-CAXLSupportedPlatforms-Linux"></a>Linux</h4>
+
+<ul>
+    <li>Chrome</li>
+    <li>FireFox</li>
+</ul>
+
+<p>Versions of the Browsers and OS should be the latest, with all service packs and updates installed.</p>
+
+<hr/>
+<h2>Minimal API</h2>
+<p>
+Cisco provides a minimal distribution of the core library for applications that do not need typical IM functionality.
+</p>
+<p>
+The minimal library, jabberwerx.min.js, provides client session management, authentication, stanza sending and eventing when a stanza is received. IM centric functionality like 1-1 chat sessions, text conferencing rooms and publish/subscribe is not available. A list of classes included in the minimal library can be found in the API documentation delivered with the library.
+</p>
+<br/>
+<hr/>
+<br/>
+
+<h2>Unbundled API</h2>
+<p>
+Cisco also provides a distribution of the core library for application developers who need to use their own version of jQuery. The unbundled library, jabberwerx.unbundled.js, provides all of the functions of the standard jabberwerx.js library but requires that the preferred version of jQuery be loaded before the jabberwerx.unbundled.js code. This library is intended for a small subset of advanced developers and you are encouraged to contact the JabberWerx team before making use of it.
+</p>
+<br/>
+<hr/>
+<br/>
+
+<h2>Loading Statically versus Dynamically</h2>
+
+<p>
+You can load the Cisco AJAX XMPP Library either statically or dynamically.  To load statically, simply include a standard &lt;script&gt; tag that references the library file directly:
+</p>
+<pre class='codebox'>
+&lt;script type='text/javascript' src='../../jabberwerx.js'&gt;
+&lt;/script&gt;
+</pre>
+
+<p>
+You can load dynamically via a number of JavaScript loaders.  Simply reference the library file according to your loader's documentation. When
+the load complete handler returns, the Cisco AJAX XMPP Library is ready for use.
+</p>
+
+<p>
+For example, if using the Yahoo! Toolkit, the following would load the library:
+</p>
+
+<pre class='codebox'>
+YAHOO.util.Get.script('../../jabberwerx.js', {
+    onSuccess: function(){
+        // do something interesting...
+    }
+});
+</pre>
+
+<br/>
+<hr/>
+<br/>
+
+<h2>Distributions (DEBUG versus RELEASE)</h2>
+<p>
+Cisco provides two distributions of the Cisco AJAX XMPP Library, the Debug distribution (for troubleshooting purposes), and the Release distribution.
+</p>
+<p>
+<b>
+Note! Do not use the Debug distribution in the final end-user product. The Debug distribution is for troubleshooting purposes only. While functionally equivalent, the Debug distribution may
+load and run significantly slower than the Release distribution.
+</b>
+</p>
+<p>
+The Cisco AJAX XMPP Library is delivered as one of two distributions: Release and Debug. Both distributions include the library code, resources, examples, and documentation. The Release distribution provides a "minified" library code file, where all core code and dependencies are in a single, standalone file for each target (jabberwerx.js for the core non-UI library; jabberwerx.ui.js for the UI library). The Debug distribution provides the library code as a set of individual javascript files, with jabberwerx.js and jabberwerx.ui.js acting as dependency loaders. The two distributions are interchangable, and require no changes in how the library loads or operates.
+</p>
+<p>
+To use the Debug distribution in parallel with the Release distribution, first unpackage the Release distribution into its own directory, called "caxl". Then unpackage the Debug distribution into its own directory, called "caxl-debug". These two directories must be in the same parent directory for your web site.
+</p>
+<p>To load the release builds, the &lt;script&gt; tag that loads the Cisco AJAX XMPP Library should be set to "caxl/jabberwerx.js" (for core) or "caxl/jabberwerx.ui.js" (for UI) to load the release builds (assuming the HTML is in the same directory that holds the Cisco AJAX XMPP Library sub-directories). To switch to the debug builds, change the path to "caxl-debug/jabberwerx.js" or "caxl-debug/jabberwerx.ui.js".
+</p>
+<p>
+To remove the Debug distribution, delete the "caxl-debug" directory.
+</p>
+<br/>
+<hr/>
+<br/>
+
+
+<h2>Architecture</h2>
+
+<h3>Model View Controller</h3>
+The Cisco AJAX XMPP Library uses a model-view-controller framework. The top-level base class for all Cisco AJAX XMPP Library objects is the
+<code>JWBase</code> class. <code>JWBase</code> defines the object-oriented structure of the classes and also the common object behaviors and
+properties.
+<br/><br/>
+<table>
+<tr>
+<td><img class="image" src="mvc.png"/></td>
+<td>
+<ul class="align1">
+    <li class="li-plain">
+        <h4 class="inner-headings">Views</h4>
+        Views represent the UI features in the library. The UI features include components for IM, group chat, availability and roster
+        management. The jabberwerx.ui.JWView has no explicit dependency on any JavaScript UI framework. The <code>jabberwerx.ui</code> namespace
+        contains all the view objects.
+        <h4 class="inner-headings">Controllers</h4>
+        The controllers allow for actions to be invoked by the user, and translate these actions into model logic. They can also listen for
+        changes in
+        the model, and notify those changes to the subscribers. Finally, controllers are the "handles" that control the application-level setup and
+        tear down. All controller classes extend from the base <code>Controller</code> class. The <code>jabberwerx</code> namespace contains all
+        the model objects.
+        <h4 class="inner-headings">Model</h4>
+        The model is a graph of <code>jabberwerx.JWModel</code> objects, and is self-contained. The model objects represent the individual items in the
+        domain e.g. users, contacts, JIDs. They represent the data in the system but they do not contain display information. All model objects
+        derive from the <code>jabberwerx.JWModel</code> class (and subsequently <code>JWBase</code>) and are contained in the <code>jabberwerx</code>
+        namespace.
+    </li>
+</ul>
+</td>
+</tr>
+</table>
+<br/>
+<hr/>
+<br/>
+
+<h2>NodeBuilder</h2>
+<p>
+CAXL includes a helper class that simplifies XMPP stanza and element construction.
+It is used to produce virtually all XMPP stanzas. NodeBuilder wraps a DOM element
+and its ownerDocument, exposing them through <code>jabberwerx.NodeBuilder</code>
+<code>data</code> and <code>document</code> properties.
+</p>
+<p>
+The best practice is to start with the built-in stanza kinds (<code>jabberwerx.Stanza</code>) and construct new children using <code>NodeBuilder</code>
+Selection and traversal continues to use jQuery with a DOM reference available from the <code>NodeBuilder.data</code> property.
+</p>
+<h3>Naming</h3>
+Names in <code>jabberwerx.NodeBuilder</code> use a Clarke like notation and include any of the following forms:
+<ol>
+    <li>{namespace-uri}prefix:local-name</li>
+    <li>{namespace-uri}local-name</li>
+    <li>prefix:local-name</li>
+    <li>local-name</li>
+</ol>
+<strong>Note</strong>: namespaced attributes are not supported.
+<h3>Functionality</h3>
+<p>
+<code>jabberwerx.NodeBuilder</code> may be created with either a name or an existing element. The builder will wrap a given
+element or if passed a string name, create a new document and then a new root element.
+</p>
+<p>
+<code>jabberwerx.NodeBuilder</code> exposes methods for modifying attributes and appending new elements and text nodes.
+<ul>
+  <li><code>attribute(name, val)</code>: Adds or updates an attribute to this <code>NodeBuilder</code>'s data</li>
+  <li><code>element(name, attrs)</code>: Appends a new element to this <code>NodeBuilder</code>'s data, with the given name and attributes.</li>
+  <li><code>text(val)</code>: Appends a new text node to this <code>NodeBuilder</code>'s data.</li>
+</ul>
+<br/>
+The <code>jabberwerx.NodeBuilder.node(n)</code> method appends the given node using the following rules:
+<ul>
+  <li>If <code>n</code> is a document, its documentElement is appended to this <code>NodeBuilder</code>'s data and a <code>NodeBuilder</code> wrapping that element is returned</li>
+  <li>If <code>n</code> is an element, it is cloned and appended to this <code>NodeBuilder</code>'s data and a <code>NodeBuilder</code> wrapping the cloned element is returned</li>
+  <li>If <code>n</code> is a TextNode, its value is appended to this <code>NodeBuilder</code>'s data and this <code>NodeBuilder</code> is returned</li>
+  <li>Otherwise, a <code>TypeError</code> is thrown</li>
+</ul>
+</p>
+<p>
+Finally, an entire string representing a parsed xml fragment may be appended using the <code>jabberwerx.NodeBuilder.xml(val)</code> method.
+</p>
+<h3>Usage with jQuery</h3>
+<code>jabberwerx.NodeBuilder</code> does not supply traversal or selection functionality. Instead the <code>NodeBuilder.data</code> property is used as a jQuery context.
+This is a very typical pattern seen throughout CAXL.
+
+<h3>Examples</h3>
+<ul>
+<li>
+A function that returns a geoloc element from a given lattitude/longitude
+<pre class="codebox">
+    function genGeoLocElement(latLon) {
+        var builder = new jabberwerx.NodeBuilder("{http://jabber.org/protocol/geoloc}geoloc");
+        builder.element("lat").text(latLon.lat());
+        builder.element("lon").text(latLon.lng());
+        return builder.data;
+    }
+</pre>
+</li>
+<li>
+A function that returns an array of "Romeo and Juliet" chat messages
+<pre class="codebox">
+    function genRomeoAndJulietMessages(count) {
+        var doms = [];
+        var idx;
+
+        var quotes = [
+            "Did my heart love till now? Forswear it, sight!",
+            "For I ne'er saw true beauty till this night.",
+            "It is the east, and Juliet is the sun",
+            "Good Night, Good night! Parting is such sweet sorrow, that I shall say good night till it be morrow.",
+            "What's in a name? That which we call a rose by any other name would smell as sweet.",
+            "See, how she leans her cheek upon her hand! O that I were a glove upon that hand, that I might touch that cheek!"
+        ];
+        for (idx = 0; idx < count; idx++) {
+            var q = quotes[Math.floor(Math.random() * 4294967296) % quotes.length];
+            var builder = new jabberwerx.NodeBuilder("{jabber:client}message");
+            builder.attribute("id", "message-" + idx).
+                    attribute("to", "juliet@capulet.net").
+                    attribute("type", "chat").
+                    element("body").
+                            text(q).parent.
+                    element("{http://jabber.org/protocol/chatstates}active");
+
+            doms[idx] = builder.data;
+        }
+        return doms;
+    }
+</pre>
+</li>
+</ul>
+<h3>More Information</h3>
+
+<p>Detailed API documentation can be found Detailed API descriptions can be
+found <a href='symbols/jabberwerx.NodeBuilder.html'>here</a>.</p>
+<br/>
+<hr/>
+<br/>
+<h2>Core Classes</h2>
+<h3>Model Classes</h3>
+<ul class="align1">
+    <li class="li-plain">
+        <h4 class="inner-headings"><code>jabberwerx.JID</code></h4>
+        A JID (or Jabber ID) represents the form 'node@domain/resource' e.g. foo@bar.com/webclient.
+        <h4 class="inner-headings"><code>jabberwerx.Entity</code></h4>
+        The Entity class is a core base class which represents something that is addressable by JID e.g. user, server, room, etc.
+        <h4 class="inner-headings"><code>jabberwerx.EntitySet</code></h4>
+        The EnitySet is a repository for Entity objects based on JID and/or node.
+        <h4 class="inner-headings"><code>jabberwerx.User</code></h4>
+        The User typically represents the logged-in user and is an extension of Entity.
+        <h4 class="inner-headings"><code>jabberwerx.Contact</code></h4>
+        The Contact class represents a contact which is part of a user's roster and is an extension of User.
+        <h4 class="inner-headings"><code>jabberwerx.ChatSession</code></h4>
+        The ChatSession allows IM messages to be sent and received as part of an IM chat session between the logged-in user and another Jabber
+        user.
+        <h4 class="inner-headings"><code>jabberwerx.MUCRoom</code></h4>
+        The MUCRoom allows occupants to enter, exit and participate in a multi-user chat room.
+        <h4 class="inner-headings"><code>jabberwerx.Client</code></h4>
+        The Client object is a key class as it provides a JavaScript API to the jabber protocol. It sends and receives communication over its
+        connection on behalf of any other model objects. The Client object can be used to send and receive raw XMPP messages.
+    </li>
+</ul>
+<h3>Controller Classes</h3>
+<ul class="align1">
+    <li class="li-plain">
+        <h4 class="inner-headings"><code>jabberwerx.RosterController</code></h4>
+        The RosterController provides an API for managing a user's roster e.g. fetch roster, add contact, update contact, delete contact.
+        <h4 class="inner-headings"><code>jabberwerx.ChatController</code></h4>
+        The ChatController provides an API for chat functionality. It is responsible for controlling the creation and deletion of ChatSession model
+        objects.
+        <h4 class="inner-headings"><code>jabberwerx.MUCController</code></h4>
+        The MUCController is the multi-user chat controller and is responsible for the management of MUCRoom objects.
+        <h4 class="inner-headings"><code>jabberwerx.CapabilitiesController</code></h4>
+        The CapabilitiesController is responsible for attaching the capabilities element to all outgoing presence stanzas. It also registers for disco
+        info iq messages and responds with the identity and list of supported capabilities of this client.
+    </li>
+</ul>
+<h3>jQuery</h3>
+<ul class="align1">
+    <li class="li-plain">
+        <h4 class="inner-headings"><code>jabberwerx.$</code></h4>
+        The jQuery package included with the Cisco AJAX XMPP Library has been assigned
+        to jabberwerx.$. You can include any version of jQuery in your website
+        along with the Cisco AJAX XMPP Library and not override the jQuery used by
+        the Cisco AJAX XMPP Library.
+    </li>
+</ul>
+
+<br/>
+<hr/>
+<br/>
+<h2>Eventing</h2>
+
+<h3>Eventing Sequence</h3>
+<ul class="align1">
+    <li class="li-plain">
+        <h4 class="inner-headings">Creating a new event</h4>
+        To create a new event on a <code>jabberwerx.JWModel</code> type object, the <code>applyEvent(eventName)</code> method is called. This creates a new
+        event and returns a <code>jabberwerx.EventNotifier</code> object.
+        <h4 class="inner-headings">Register for an event</h4>
+        The <code>jabberwerx.JWModel</code> objects contain an <code>event(eventName)</code> method to return the associated <code>jabberwerx.EventNotifier</code> for an
+        existing event. To register for the event, there are two available methods on the <code>jabberwerx.EventNotifier</code> object:
+        <ul>
+            <li><code>bind(callback)</code>: register a callback method which is invoked when the event triggers. The callback method is passed
+                an <code>jabberwerx.EventObject</code>.</li>
+            <li><code>bindWhen(selector, callback)</code>: similar to <code>bind()</code> but with the additional selector (jQuery string or
+                method) which is a filter to determine whether to trigger the event or not</li>
+        </ul>
+        <h4 class="inner-headings">Trigger an event</h4>
+        To trigger an event, the <code>jabberwerx.EventNotifier</code> object provides a <code>trigger()</code> method.
+    </li>
+</ul>
+
+<h3>Event Chaining</h3>
+The Cisco AJAX XMPP Library treats the events for received stanzas ("iqReceived", "messageReceived", and "presenceReceived") as a chain of events:
+a "before" event (e.g. "beforeIqReceived"), the "on" event (e.g. "iqReceived"), and the "after" event (e.g. "afterIqReceived").
+For these events, all of the callbacks for a given level are triggered; if any callback returns a true value, then the following events in
+the chain are not triggered.  For instance, if a callback for "beforeIqReceived" returns true, then the "iqReceived" and "afterIqReceived"
+events are not triggered.
+<h3>Sample Code</h3>
+<p>
+<pre class="codebox">
+var client = jabberwerx.client;
+var notifier = client.event('presenceReceived');
+
+// callback for event
+var cb = function(eventObject) {
+    // some interesting properties ...
+    // event name
+    eventObject.name
+    // event notifier object (can be used to unbind)
+    eventObject.notifier
+    // event source
+    eventObject.source
+    // optional data object that may be passed via trigger
+    eventObject.data
+};
+
+// register a callback with the event notifier
+notifier.bind(cb);
+
+// this will invoke the callback
+notifier.trigger();
+
+// this will invoke the callback with an additional object
+var obj = 'new string';
+notifier.trigger(obj);
+
+// unregister callback
+notifier.unbind(cb);
+
+// this should not trigger the callback now
+notifier.trigger();
+</pre>
+</p>
+<h3>Sample Flow</h3>
+<p>
+The following is an eventing call flow for the 'chatReceived' event.
+</p>
+<br/>
+<img class="image" src="eventFlow.png"/>
+<br/><br/>
+<h3>Entity Batch Updates Events</h3>
+The entity cache is a <code>jabberwerx.EntitySet</code> used by the client and controllers to cache entities during
+sessions. It is accessible through the client: <code>client.entitySet</code>. The entity cache provides a type and
+controller agnostic way of accessing entities. That is, a user does not need to know what controller
+creates <code>jabberwerx.Contact</code> entities in order to use them.
+<br/><br/>
+Some controllers add and remove large numbers of entities at times, usually during connect and disconnect.
+For example, <code>jabberwerx.RosterController</code> performs a fetch at connection time and is cleared on disconnect.
+Creating, adding, removing and destroying entities fire events, flooding listeners during connection and disconnection.
+To make these large entity adds and removes more efficient the entity cache will combine all events together into one set of
+batch events; batchUpdateStarted and batchUpdateEnded.
+See the <code>jabberwerx.EntitySet.startBatch</code> documentation for a detailed discussion of batching.
+<br/><br/>
+During connection the cache fires a batchUpdateStarted event after authentication but before the clientStatusChanged event.
+Any entity events triggered by lifetime controllers will be queued. A batchUpdateEnded event with queued events as data
+will be triggered just before the clientStatusChanged connected event.
+<br/><br/>
+The entity cache clears itself on disconnection by walking its data structures and calling each entities
+associated controller's <code>cleanupEntity</code> method. A controller that creates entities should override the
+<code>jabberwerx.Controller.cleanupEntity</code> method and dispose of the given entity (usually by calling <code>entity.remove()</code>).
+<code>cleanupEntities</code> will only be called with entities the controller created.
+<br/>
+<hr/>
+<br/>
+
+<h2>Client/Controller Login Handling</h2>
+<p>The <code>Client</code> allows interested <code>Controller</code>s to delay the final "connected" event from triggering until they have finished initializing.  This is especially useful if such initialization is asynchronous, such as &lt;iq/&gt; requests. For example, this lets the <code>DiscoController</code> request information on the server and any directly associated services it has, and allows the <code>RosterController</code> to fetch and process the user's roster.</p>
+
+<p>This feature is implemented via the <a href='symbols/jabberwerx.Rendezvousable.html'><code>Rendezvousable</code></a> mixin.  An interested controller applies this mixin, then overrides the <a href='symbols/jabberwerx.Rendezvousable.html#.startRendezvous'><code>startRendezvous(ctx)</code></a> function to begin its login work (e.g. request roster, get disco#info and disco#items, etc).  When the initialization work is complete, the controller calls <a href='symbols/jabberwerx.Rendezvousable.html#.finishRendezvous'><code>finishRendezvous()</code></a> on itself.  Once all <code>Rendezvousable</code> controllers have finished, the <code>Client</code> then continues on, triggering the "clientStatusChanged" for the connected status.</p>
+
+<hr/>
+<br/>
+
+<h2>Error Handling</h2>
+There are two types of error objects that get thrown by Cisco AJAX XMPP Library methods:
+<ol>
+    <li>Built-in JavaScript errors</li>
+    <li>Cisco AJAX XMPP Library-specific errors</li>
+</ol>
+Where possible, the errors which can be thrown from methods are being documented via the throws declaration in the JsDocs.
+<ol>
+    <li class="bold">
+        <h3  class="inner-headings">JavaScript Errors</h3>
+        <span class="normal">
+        The client library uses built-in JavaScript errors for all common error scenarios. For example, basic data validation checks the type for certain
+        method parameters. If the method parameter is of the wrong type, then a <code>TypeError</code> instance is created and thrown
+        from the method.
+        </span>
+    </li>
+    <p/>
+    <li class="bold">
+        <h3 class="inner-headings">Cisco AJAX XMPP Library-Specific Errors</h3>
+        <span class="normal">
+        Cisco AJAX XMPP Library error handling is defined using error-specific classes. There is a base error class <code>jabberwerx.util.Error</code>, and all other error classes extend from this base
+        error class. In addition to a unique error class name, each error instance contains an error message string that is stored in the <code>message</code> property of an error object.
+        The error classes do not use error codes. This is a code
+        snippet which catches an exception from the <code>PrivacyListController.fetch()</code> method:
+        </span>
+        <pre class="codebox">
+try {
+    var notConnectedClient = new jabberwerx.Client('notconnected');
+    var privacyListController = new jabberwerx.PrivacyListController(notConnectedClient);
+    privacyListController.fetch("myList",onFetch);
+} catch (ex) {
+    alert("thrown exception is jabberwerx.Client.NotConnectedError");
+}
+        </pre>
+    </li>
+</ol>
+<p>
+
+<h3>Error Reporter</h3>
+The Cisco AJAX XMPP Library contains an Error Reporter that allows you to retrieve a user-friendly error message from an error element returned from the BOSH server or a string representation of the error element. You can also add custom error messages to the Error Reporter.
+
+<ol>
+    <li class="bold">
+        <h4 class="inner-headings">Get Message</h4>
+        <span class="normal">
+        This is an example of the Error Reporter:
+        <pre class="codebox">
+var errorMessage = jabberwerx.errorReporter.getMessage(errorElement);
+        </pre>
+        In this example, errorElement is either an Element object that looks like this:
+        <pre class="codebox">
+&lt;error xmlns="jabber:client" code="503" type="cancel"&gt;
+  &lt;service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/&gt;
+&lt;/error&gt;
+        </pre>
+        or it is a string in the format of:
+        <pre class="codebox">
+"{urn:ietf:params:xml:ns:xmpp-stanzas}service-unavailable"
+        </pre>
+        Either case returns the same error message.
+        </span>
+    </li>
+    <li class="bold">
+        <h4 class="inner-headings">Add Message</h4>
+        <span class="normal">
+        You can add custom error messages to the Error Reporter using the following command.
+        <pre class="codebox">
+jabberwerx.errorReporter.addMessage(errorCondition, errorMessage);
+        </pre>
+        errorCondition is the string representation of the error. An example of this is:
+        <pre class="codebox">
+"{urn:ietf:params:xml:ns:xmpp-stanzas}service-unavailable"
+        </pre>
+        getMessage returns the string errorMessage when that error is passed in
+        </span>
+    </li>
+</ol>
+
+<br/>
+<hr/>
+<br/>
+
+<h2>Troubleshooting</h2>
+
+<h3>Most Common Errors</h3>
+<dl>
+    <dt><strong>{urn:ietf:params:xml:ns:xmpp-sasl}mechanism-too-weak</strong> ("You are not authorized to perform this action.")</dt>
+    <dd>- The authentication mechanisms supported by the client and those reported by the server do not match. Usually, this is because PLAIN is the only mechanism the client and server have in common, but the connection is insecure (e.g. HTTP instead of HTTPS). Use an HTTPS binding URL (<strong>RECOMMENDED</strong>), or set the "unsecureAllowed" flag in the connectArgs passed to <a href="symbols/jabberwerx.Client.html#connect">Client.connect()</a> connection arguments (<strong>NOT RECOMMENDED</strong>).</dd>
+
+    <dt><strong>{urn:ietf:params:xml:ns:xmpp-streams}service-unavailable</strong> ("Could not reach the account server")</dt>
+    <dd>- The BOSH service could not be reached.  Verify that the URL listed in the "httpBindingURL" connectArgs is reachable.</dd>
+
+    <dt><strong>{urn:ietf:params:xml:ns:xmpp-streams}conflict</strong> ("This resource is logged in elsewhere")</dt>
+    <dd>Another client connected with the same username and resourceName as this client. Specify a unique name when creating a jabberwerx.Client instance, or clear the resourceName to have the server generate a unique name for each connection.</dd>
+
+    <dt><strong>{urn:ietf:params:xml:ns:xmpp-sasl}not-authorized</strong> ("Invalid user name or password")</dt>
+    <dd>As the message specifies, the user name and/or password are not correct; verify the proper values are provided for each.</dd>
+
+    <dt><strong>{urn:ietf:params:xml:ns:xmpp-stanzas}conflict</strong> ("Conflicting names were encountered")</dt>
+    <dd>Another entity (e.g. room occupant, or pubsub node) already exists with that name. Specify a different name for the entity.</dd>
+</dl>
+
+<h3>Complete List of Errors</h3>
+<p>
+The following table identifies the XMPP stanzas and corresponding error messages that are currently supported by the Error Reporter. In the event that the Error Reporter encounters an XMPP error that is not in the list below, the generic message "Operation failed" will be reported.
+<table class="listing" align="center">
+    <thead>
+        <tr>
+            <td class="listingHeading">XMPP Stanza</td>
+            <td class="listingHeading">Error Reporter Message</td>
+            <td class="listingHeading">Likely Cause</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-sasl}mechanism-too-weak</td>
+            <td class="listing">You are not authorized to perform this action.</td>
+            <td class="listing">Using PLAIN authentication over an unencrypted connection. Use HTTPS or set the "unsecureAllowed" flag.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-sasl}not-authorized</td>
+            <td class="listing">Invalid user name or password.</td>
+            <td class="listing">Either the username or password is incorrect (note that there is only one error condition here, not separate conditions for incorrect username and incorrect pasword)</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}conflict</td>
+            <td class="listing">Conflicting names were encountered.</td>
+            <td class="listing">Another entity (e.g. room occupant, pubsub node) already exists on that service.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-streams}conflict</td>
+            <td class="listing">This resource is logged in elsewhere.</td>
+            <td class="listing">Another client is connected with the same resource (full JID) as this client.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-streams}service-unavailable</td>
+            <td class="listing">Could not reach the account server.</td>
+            <td class="listing">The server or recipient does not currently provide the requested service.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-sasl}temporary-auth-failure</td>
+            <td class="listing">Unable to login. Check username and password.</td>
+            <td class="listing">The authentication failed because of a temporary error condition on the server.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}bad-request</td>
+            <td class="listing">The request was not valid.</td>
+            <td class="listing">The request was not formatted correctly according to the relevant protocol.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}feature-not-implemented</td>
+            <td class="listing">This feature is not yet implemented. Sorry for the inconvenience.</td>
+            <td class="listing">The feature represented in the XML stanza is not implemented by the intended recipient or an intermediate server and therefore the stanza cannot be processed.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}forbidden</td>
+            <td class="listing">You are not authorized to perform this action.</td>
+            <td class="listing">The requesting entity does not possess the required permissions to perform the action.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}internal-server-error</td>
+            <td class="listing">An unknown server error occurred. Contact your administrator.</td>
+          	<td class="listing">The server has experienced a misconfiguration or an otherwise-undefined internal error that prevents it from servicing the stream.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}item-not-found</td>
+            <td class="listing">The requested item could not be found.</td>
+            <td class="listing">The addressed JID or item requested cannot be found.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}jid-malformed</td>
+            <td class="listing">The JID is not valid.</td>
+            <td class="listing">The sending entity has provided or communicated an XMPP address (e.g., a value of the 'to' attribute) or aspect thereof (e.g., a resource identifier) that does not adhere to the syntax defined in RFC6122.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}not-acceptable</td>
+            <td class="listing">The given information was not acceptable.</td>
+            <td class="listing">The stanza size does not meet the server's configured limits. Please look for the application-specific error condition (&lt;max/&gt;, &lt;min/&gt;..etc).</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}not-allowed</td>
+            <td class="listing">You are not allowed to perform this action.</td>
+            <td class="listing">The recipient or server does not allow any entity to perform the action.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}not-authorized</td>
+            <td class="listing">You are not authorized to perform this action.</td>
+            <td class="listing">The sender must provide proper credentials before being allowed to perform the action, or has provided improper credentials.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}registration-required</td>
+            <td class="listing">You must register with the service before continuing.</td>
+            <td class="listing">The requesting entity is not authorized to access the requested service because registration is required. Please register with the service.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}remote-server-not-found</td>
+            <td class="listing">Could not find the requested server.</td>
+            <td class="listing">A remote server or service specified as part or all of the JID of the intended recipient does not exist.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}remote-server-timeout</td>
+            <td class="listing">Unable to contact the server.</td>
+            <td class="listing">A remote server or service specified as part or all of the JID of the intended recipient (or required to fulfill a request) could not be contacted within a reasonable amount of time</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}service-unavailable</td>
+            <td class="listing">This service is not available. Try again later.</td>
+          	<td class="listing">BOSH URL is not accessible from the browser. Verify that the BOSH service is running, and CORS is supported or the proxy is running correctly.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}undefined-condition</td>
+            <td class="listing">An unknown error occurred. Contact your administrator.</td>
+            <td class="listing">The error condition is not one of those defined by the other conditions. Please look for the application-specific error condition.</td>
+        </tr>
+        <tr>
+            <td class="listing">{urn:ietf:params:xml:ns:xmpp-stanzas}unexpected-request</td>
+            <td class="listing">Did not expect the request at this time.</td>
+            <td class="listing">The recipient or server understood the request but was not expecting it at this time (e.g., the request was out of order);</td>
+        </tr>
+    </tbody>
+</table>
+</p>
+<br/>
+<hr/>
+<br/>
+
+<h2>Roster - Default Group</h2>
+<p>
+By default, when a user adds or updates a contact on a client application using the RosterController, the group attribute for the contact is
+empty (i.e. they have no group). However, some client applications do not display contacts without a group attribute.
+Therefore, the RosterController class contains a property to facilitate a client application (using the Cisco AJAX XMPP Library) that wants any contacts added or updated to be members of a group.
+ This property is jabberwerx.RosterController.defaultGroup. You can set this property as follows:
+<pre class="codebox">
+    var rosterCtrl = new jabberwerx.RosterController(....);
+    rosterCtrl.defaultGroup = "Buddies";
+</pre>
+The Cisco AJAX XMPP Library uses this property when an add or update contact call is made without a groups
+parameter, or where the groups parameter is null or empty.
+</p>
+<p>
+<i>Note: This is not the same as the default grouping name in jabberwerx.ui.RosterView . The
+RosterView default group name refers to the group display name for entities that belong to no group
+(i.e. contacts with an empty group attribute). This is purely a visual setting.</i>
+</p>
+<br/>
+<hr/>
+<br/>
+
+<h2>XHTML-IM Configuration</h2>
+<p>
+XHTML-IM conversion and cleaning is handled automatically when using accessor methods
+jabberwerx.Message.getHTML and jabberwerx.Message.setHTML. By default XHTML-IM cleaning uses XEP-0071
+Recommended Profile to decide what HTML tags, attributes and style properties are allowed. Any not
+allowed are removed from the message's xhtml-im as described in XEP-0071. "Allowable"
+may be modified using the jabberwerx.xhtmlim.allowedTags map and the jabberwerx.xhtmlim.allowedStyles array.
+allowedTags maps allowed tags to allowed attributes. Here is a partial definition of allowedTags:
+<pre class="codebox">
+    jabberwerx.xhtmlim.allowedTags = {
+        ...
+        strong:     [],
+        a:          ["style","href","type"],
+        blockquote: ["style"],
+        ...
+    }
+</pre>
+The strong tag is allowed but all attributes are removed, anchor tags may have a style, href or type etc.
+To disallow a tag, delete it from the map. Modify attributes by adding or removing them from the tag's array.
+</p><p>
+Style properties are much the same. Their default value is from XEP-0071 Recommended Profile. Modify
+allowed properties by changing jabberwerx.xhtmlim.allowedStyles. For example to remove font size add
+<pre class="codebox">
+    delete jabberwerx.xhtmlim.allowedStyles[jabberwerx.xhtmlim.allowedStyles.indexOf("font-size")] ;
+</pre>
+to startup code.
+</p><p>
+jabberwerx.cisco adds a Table Module to allowedTags. This is implemented in the proprietary library to
+keep the base library complient with the XEP.
+</p>
+<br/>
+<hr/>
+<br/>
+
+<h2>Handling window unload events</h2>
+<p>The BOSH interface is not aware when the browser, or tab, in which the Cisco AJAX XMPP Library is running
+closes or the page refreshs. This is due to the nature of BOSH traffic. The interface waits a
+predefined number of seconds before it declares the connection is dead. During this intervening time all
+messages that the server sends to the client are lost.</p>
+<p>To avoid these "stray" messages, you can disconnect the client when the window is
+unloaded. Do this by binding a handler for the windows beforeUnload event:
+<pre class="codebox">
+    // The beforeUnload event handler. Forces the client to disconnect.
+    var unloadHandler = function() {
+        client.disconnect();
+    };
+    client.event("clientStatusChanged").bind(function(evt) {
+        if (evt.data.next == jabberwerx.Client.status_connected) {
+            // Upon connecting bind the handler
+            $(window).bind("beforeunload", unloadHandler);
+        } else if (evt.data.next == jabberwerx.Client.status_disconnected) {
+            // Upon disconnecting unbind the handler
+            $(window).unbind("beforeunload", unloadHandler);
+        }
+    });
+</pre>
+</p>
+<p><b>Note</b>: Cisco AJAX XMPP Library does not automatically disconnect the client during window unload events. The user is responsible for calling disconnect in the appropriate events.</p>
+<br/>
+<hr/>
+<br/>
+
+<h2>Sample Applications</h2>
+<p>
+There are a number of sample applications packaged as part of the Cisco AJAX XMPP Library. These samples are contained in the /doc/examples folder.
+The following description outlines the various different types of sample apps:
+
+<h2>Sample Code</h2>
+
+<h3>Connecting to the BOSH server</h3>
+<pre class="codebox">
+var client = new jabberwerx.Client('sampleclient');
+var username = "jwtest1@example.com";
+var password = "test";
+
+var connectArgs = {
+    // the proxy url to the BOSH server
+    httpBindingURL: '/httpbinding',
+    // onConnected is the success callback method
+    successCallback: onConnected,
+    // onClientError is the error callback method
+    errorCallback: onClientError
+};
+client.connect(username, password, connectArgs);
+</pre>
+<h3>Presence</h3>
+<ul class="align1">
+    <li class="li-plain">
+        <h4 class="inner-headings">Set Presence</h4>
+        <pre class="codebox">
+// set show state and the user-defined status message
+client.sendPresence('away', 'gone to lunch');
+        </pre>
+    </li>
+    <li class="li-plain">
+        <h4 class="inner-headings">Subscribe for Presence</h4>
+        <pre class="codebox">
+// register for an incoming presence stanza
+jabberwerx.globalEvents.bind ("presenceReceived", "onPresenceReceived");
+
+// callback method for the 'presenceReceived' event
+function onPresenceReceived (event) {
+    // get the associated jabberwerx.Presence object data
+    var presence = event.data;
+
+    var type = presence.getType();
+    var show = presence.getShow();
+    var status = presence.getStatus();
+    var priority = String(presence.getPriority());
+    var fromJID = presence.getFromJID();
+    var toJID = presence.getToJID();
+}
+        </pre>
+</ul>
+<h3>Messaging</h3>
+<pre class="codebox">
+var chatController = new jabberwerx.ChatController(client);
+var chatSession = chatController.openSession(jid);
+chatSession.event('chatReceived').bind(onChatReceived);
+
+// Callback method for the 'chatReceived' event
+function onChatReceived(event) {
+    var message = event.data;
+    var from = message.getFrom()
+    var text = message.getBody()
+}
+</pre>
+
+<br/>
+
+<hr/>
+
+<h5>
+    <p>THE SPECIFICATIONS AND INFORMATION REGARDING THE PRODUCTS IN THIS
+      MANUAL ARE SUBJECT TO CHANGE WITHOUT NOTICE. ALL STATEMENTS, INFORMATION, AND
+      RECOMMENDATIONS IN THIS MANUAL ARE BELIEVED TO BE ACCURATE BUT ARE PRESENTED
+      WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. USERS MUST TAKE FULL
+      RESPONSIBILITY FOR THEIR APPLICATION OF ANY PRODUCTS.
+    </p>
+        <p>THE SOFTWARE LICENSE AND LIMITED WARRANTY FOR THE ACCOMPANYING PRODUCT
+      ARE SET FORTH IN THE INFORMATION PACKET THAT SHIPPED WITH THE PRODUCT AND ARE
+      INCORPORATED HEREIN BY THIS REFERENCE. IF YOU ARE UNABLE TO LOCATE THE SOFTWARE
+      LICENSE OR LIMITED WARRANTY, CONTACT YOUR CISCO REPRESENTATIVE FOR A COPY.
+    </p>
+        <p>The Cisco implementation of TCP header compression is an adaptation of
+      a program developed by the University of California, Berkeley (UCB) as part of
+      UCB's public domain version of the UNIX operating system. All rights reserved.
+      Copyright &#169; 1981, Regents of the University of California.
+    </p>
+        <p>NOTWITHSTANDING ANY OTHER WARRANTY HEREIN, ALL DOCUMENT FILES AND
+      SOFTWARE OF THESE SUPPLIERS ARE PROVIDED "AS IS" WITH ALL FAULTS. CISCO AND THE
+      ABOVE-NAMED SUPPLIERS DISCLAIM ALL WARRANTIES, EXPRESSED OR IMPLIED, INCLUDING,
+      WITHOUT LIMITATION, THOSE OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+      AND NONINFRINGEMENT OR ARISING FROM A COURSE OF DEALING, USAGE, OR TRADE
+      PRACTICE.
+    </p>
+        <p>IN NO EVENT SHALL CISCO OR ITS SUPPLIERS BE LIABLE FOR ANY INDIRECT,
+      SPECIAL, CONSEQUENTIAL, OR INCIDENTAL DAMAGES, INCLUDING, WITHOUT LIMITATION,
+      LOST PROFITS OR LOSS OR DAMAGE TO DATA ARISING OUT OF THE USE OR INABILITY TO
+      USE THIS MANUAL, EVEN IF CISCO OR ITS SUPPLIERS HAVE BEEN ADVISED OF THE
+      POSSIBILITY OF SUCH DAMAGES.
+    </p><p>Any Internet Protocol (IP) addresses and phone numbers used in this document are not intended to be actual addresses and phone numbers. Any examples, command display output, network topology diagrams, and other figures included in the document are shown for illustrative purposes only. Any use of actual IP addresses or phone numbers in illustrative content is unintentional and coincidental.</p>
+    <p>
+        <p>Cisco and the Cisco logo are trademarks or registered trademarks of Cisco and/or its affiliates in the U.S. and other countries. To view a list of Cisco trademarks, go to this URL:<a href='http://www.cisco.com/go/trademarks' target='blank'>http://www.cisco.com/go/trademarks</a>. Third-party trademarks mentioned are the property of their respective owners. The use of the word partner does not imply a partnership relationship between Cisco and any other company. (1110R)</p>
+        &#169; 2014 Cisco Systems, Inc. All rights reserved.
+    </p>
+</h5>
+</body>
+</html>

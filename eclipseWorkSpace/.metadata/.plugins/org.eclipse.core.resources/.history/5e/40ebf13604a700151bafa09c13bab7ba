@@ -1,0 +1,35 @@
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
+
+public class UserActions{
+	String name="Field";
+	public static void main(String[] args){
+		UserActions ua = new UserActions();
+		ua.setValue("name", "bla");
+		/*Object[] f = ua.getClass().getDeclaredFields();
+		for (Object o : f){
+			System.out.println("1 - "+f.getClass().getCanonicalName());
+			System.out.println("2 - "+f.toString());
+		}*/
+		
+		
+		
+	}
+	void setValue(String field,String value){
+		try {
+			Field F = this.getClass().getDeclaredField(field);
+			Type f = F.getGenericType();
+			;
+			System.out.println(F.get(F));
+			
+			System.out.println(F.get(f));
+			;
+			System.out.println();
+			
+			
+		} catch (IllegalArgumentException  | SecurityException | NoSuchFieldException | IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}

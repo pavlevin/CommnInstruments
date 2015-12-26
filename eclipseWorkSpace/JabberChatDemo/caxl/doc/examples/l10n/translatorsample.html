@@ -1,0 +1,263 @@
+<!--
+/**
+ * filename:        translatorsample.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Translation Sample</title>
+        <link rel="translation" type="text/javascript" xml:lang="en" href="exampleTranslations.en.js"/>
+        <link rel="translation" type="text/javascript" xml:lang="ga" href="exampleTranslations.ga.js"/>
+        <link rel="translation" type="text/javascript" xml:lang="zh" href="exampleTranslations.zh.js"/>
+        
+        <script type="text/javascript" src="../../../jabberwerx.js"></script>
+        <script type="text/javascript">
+var l10n = {
+    strings: {
+        "Username:" : "",
+        "Password:" : "",
+        "We are connected" : "",
+        "Currency is £": ""
+    },
+    load: function(lang) {
+        try {
+            jabberwerx.l10n.load(lang);
+            alert("Loaded best-match translation for " + lang + " as " + jabberwerx.l10n.locale);
+        } catch (ex) {
+            alert("Could not load translation for " + lang + "\n\nReason: " + ex.message);
+        }
+        this.reset();
+    },
+    add: function(key, val) {
+        // Adds an ad-hoc translation to the global table
+        jabberwerx.l10n.addTranslation(key, val);
+        this.strings[key] = jabberwerx._(key);
+        this.reset();
+    },
+    remove: function(key) {
+        // Removes an ad-hoc translation from the global table
+        jabberwerx.l10n.removeTranslation(key);
+        // then updates the display for that key
+        this.strings[key] = jabberwerx._(key);
+        this.reset();
+    },
+    see: function(key) {
+        this.strings[key] = jabberwerx._(key);
+        this.reset();
+    },
+    unsee: function(key) {
+        // Removes an ad-hoc translation from the global table
+        jabberwerx.l10n.removeTranslation(key);
+        // and remove that key from display
+        delete this.strings[key];
+        this.reset();
+    },
+    reset: function() {
+        var ins = jabberwerx.$("#translated tr:has(th):last");
+        ins.nextAll().remove();
+        var that = this;
+        var style = "even";
+        jabberwerx.$.each(that.strings, function(name) {
+            var value = jabberwerx._(name);
+            that.strings[name] = value;
+            ins = jabberwerx.$("<tr><td class='key'>&nbsp;</td><td class='val'><span>&nbsp;</span><a href='#'><img src='icon-close'/></a></td></tr>").
+                             insertAfter(ins).
+                             addClass(style);
+            ins.find("td.key").text(name);
+            ins.find("td.val>span").text(value);
+            ins.find("td.val>a").
+                attr("title", jabberwerx._("Remove")).
+                bind("click", function() {
+                    l10n.unsee(name);
+                    
+                    return false;
+                });
+            
+            style = (style == "even") ? "odd" : "even";
+            return true;
+        });
+        jabberwerx.$(".actions #locale_txt").val(jabberwerx.l10n.locale);
+    }
+};
+jabberwerx.$(document).ready(function() {
+    // setup locale selection
+    jabberwerx.$(".actions #locale").bind("submit", function() {
+        var lang;
+        lang = jabberwerx.$(".actions #locale_txt").val();
+        lang = jabberwerx.$.trim(lang);
+        if (lang) {
+            l10n.load(lang);
+        } else {
+            jabberwerx.$(".actions #locale_txt").val(jabberwerx.l10n.locale);
+        }
+        
+        return false;
+    }).bind("mouseenter mouseleave", function(evt) {
+        var target = jabberwerx.$(this).children(".inputs");
+        var dim = target.offset();
+        
+        var hint = jabberwerx.$("div.hint.locale");
+        switch (evt.type) {
+            case "mouseenter":
+                hint.show().
+                     css("top", dim.top - hint.height() + 2).
+                     css("left", dim.left + 8);
+                break;
+            case "mouseleave":
+                hint.hide();
+                break;
+        }
+    });
+    
+    // setup key/value entry
+    jabberwerx.$(".actions #keyval").bind("submit", function() {
+        var form = jabberwerx.$(this);
+        var key, value;
+        key = jabberwerx.$.trim(form.find("#keyval_key").val());
+        value = jabberwerx.$.trim(form.find("#keyval_val").val());
+        
+        if (key && value) {
+            l10n.add(key, value);
+        } else if (key) {
+            l10n.remove(key);
+        }
+        return false;
+    }).bind("mouseenter mouseleave", function(evt) {
+        var target = jabberwerx.$(this).children(".inputs");
+        var dim = target.offset();
+        
+        var hint = jabberwerx.$("div.hint.keyval");
+        switch (evt.type) {
+            case "mouseenter":
+                hint.show().
+                     css("top", dim.top - hint.height() + 2).
+                     css("left", dim.left + 8);
+                break;
+            case "mouseleave":
+                hint.hide();
+                break;
+        }
+    });
+    
+    l10n.reset();
+});
+        </script>
+        <style type="text/css">
+body {
+    font-size:      12px;
+    font-family:    arial, helvetica, san-serif;
+}
+table#translated {
+    clear:          both;
+}
+table {
+    width: 90%;
+    border: 1px solid #A2B9C9;
+}
+table td {
+    width:  50%;
+}
+table th {
+    width:  50%;
+    background: #A2B9C9;
+    color:      #FFFFFF;
+}
+table tr.even td {
+    margin:         0px;
+    padding:        5px;
+    width:          168px;
+    background:     #F1F5FA;
+}
+table tr.odd td {
+    margin:         0px;
+    padding:        5px;
+    width:          168px;
+    background:     #E5EBF3;
+    border:         1px solid #E5EBF3;
+}
+
+table td.val img {
+    border:         none;
+    float:          right;
+}
+
+div.inputs {
+    background: #efefef;
+    border:     1px solid #cfcfcf;
+    border-radius:  2px;
+    webkit-border-radius:  2px;
+    -moz-border-radius:  2px;
+    float:  left;
+    clear:  none;
+    margin: 5px 15px 8px 0px;
+    padding:    5px 8px;
+}
+div.inputs div.part {
+    float:  left;
+    clear:  none;
+    margin: 0px 4px;
+}
+div.inputs label {
+    display: block;
+}
+div.hint {
+    display:    none;
+    position:   absolute;
+    background: #F1F5FA;
+    border:     1px solid #A2B9C9;
+    padding:    0px 8px;
+}
+        </style>
+    </head>
+    <body>
+        <h2>Translations</h2>
+        <p>This page demonstrates how to use the "jabberwerx._()" method to translate strings based on a loaded locale.</p>
+        <div class='hint locale'>
+            <p>To load a different locale, type in its "&lt;language code&gt;" (e.g. "en" or "fr") or "&lt;language code&gt;-&lt;country code&gt;" (e.g. "en-US", "en-GB", "fr-FR"). Sample locales included in this page are:</p>
+            <ul>
+                <li>"en"</li>
+                <li>"ga"</li>
+                <li>"zh"</li>
+            </ul>
+        </div>
+        <div class='hint keyval'>
+            <p>To see if a key is in the table, enter its value in the "Key:" field and click "Add".<br/>
+            To add or modify a key, enter its original value in the "Key:" field, enter its new value in the "Value:" field, and click "Add".<br/>
+            To remove a key from the table, click the "Remove" button for that row.</p>
+        </div>
+        <p><b>NOTE:</b> Not all of the strings below include translations. If no translation is found, the original string is returned, and displayed on both sides.</p>
+        <div class='actions'>
+            <form id="locale">
+                <div class='locale inputs'>
+                    <label for="locale_txt">Locale:</label>
+                    <input type="text" id="locale_txt"/>
+                    <input type="submit" id="locale_load" value="Load"/>
+                </div>
+            </form>
+            <form id="keyval">
+                <div class='keyval inputs'>
+                    <div class='part'>
+                        <label for="keyval_key">Key:</label>
+                        <input type='text' id='keyval_key'/>
+                    </div>
+                    <div class='part'>
+                        <label for="keyval_val">Value:</label>
+                        <input type='text' id='keyval_val'/>
+                        <input type='submit' value='Add'/>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <table id="translated" cellspacing="0" cellpadding="0">
+            <tr>
+                <th>Original</th>
+                <th>Translated</th>
+            </tr>
+        </table>
+    </body>
+</html>

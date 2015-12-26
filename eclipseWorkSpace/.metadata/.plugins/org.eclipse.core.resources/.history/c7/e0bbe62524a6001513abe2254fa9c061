@@ -1,0 +1,30 @@
+
+
+public class DataBaseUtils extends Account{
+	public static void main(String[] args){
+		Account acc = new Account();
+		UnixUser user1,user2,user3;
+	/*	user1 = new dbUser("rwa_owner", "rwa_pass");
+		user2 = new UnixUser("fds_owner", "fds_pass");
+		user3 = new dbUser("fcl_owner", "fcl_pass");
+		acc.users.add(user1);
+		acc.users.add(user2);
+		acc.users.add(user3);*/
+		acc.addUnixUser("rwa_owner", "rwa_pass");
+		acc.addUnixUser("fds_owner", "fds_pass");
+		acc.addUnixUser("fcl_owner", "fcl_pass");
+		acc.addUnixUser("fcl_owner", "fcl_pass");
+		acc.addUnixUser("fcl_owner", "fcl_pass");
+		System.out.println(acc.users.iterator().next().getHashID()+ " " + acc.users.iterator().next().getUserType());
+		System.out.println(acc.users.iterator().next().getHashID()+ " " + acc.users.iterator().next().getUserType());
+		System.out.println(acc.users.iterator().next().getHashID()+ " " + acc.users.iterator().next().getUserType());
+		for (int i=0; i<acc.users.size();i++)
+			System.out.println(acc.users.iterator().next().getHashID()+ " " + acc.users.iterator().next().getUserType());
+
+		
+
+		
+	}
+		
+}
+

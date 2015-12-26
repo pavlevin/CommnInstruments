@@ -1,0 +1,84 @@
+<!--
+/**
+ * filename:        XHTMLIMDemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cisco AJAX XMPP Library ~ XHTML-IM Demo</title>
+    <script type="text/javascript" src="../../jabberwerx.js"></script>
+    <script type="text/javascript">
+        var startingHTML = "<p foo='bar' style='font-size:small;font-bar:foo'>        <em>Wow</em>, I&apos;m <span foo='bat' style='color:green'><td><foo/><bar><strong>green</strong></bar></td></span>        with <bar><strong>e</strong>nv<string>y</string></bar>!      </p>";
+    
+        jabberwerx.$(document).ready(function() {        
+            var $ = jabberwerx.$;
+            $("#append-html").bind("click", function() {
+                var textXML = $.trim($("#orig-html").val());
+                $("#display-div").append(textXML);                
+            });
+            $("#append-cleaned").bind("click", function() {
+                var textXML = $.trim($("#cleaned-html").val());
+                $("#display-div").append(textXML);                
+                
+            });
+            $("#clean").bind("click", function() {
+                var textXML = $.trim($("#orig-html").val());
+                textXML = jabberwerx.util.unserializeXML(textXML);
+                textXML = jabberwerx.xhtmlim.sanitize(textXML);
+                $("#cleaned-html").text(textXML.xml);                
+            });
+            $("#clear-display").bind("click", function() {
+                $("#display-div").empty();
+            });
+            $("#orig-html").text(startingHTML);
+        });                   
+    </script> 
+</head>
+<body>
+ <h2>XHTML-IM Sanitizer Demo</h2>    
+        <div>
+            <table>
+                <tr>
+                   <td style="width: 650px;">Unclean HTML</td>
+                   <td id="disp-title" style="width: 600px;"> </td>                      
+                </tr>              
+                <tr>
+                    <td>
+                    <table style="width: 600;">
+                    <tr>
+                        <td><textarea id="orig-html" style="width: 600px; height: 250px; overflow:auto;"></textarea></td>
+                    </tr>
+                    <tr>
+                       <td style="width: 650px;">
+                           <input id="append-html" type="button" value="Display" />
+                           <input id="clean" type="button" value="Sanitize" />
+                       </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 650px;">Sanitized XHTML-IM</td>
+                    </tr>
+                    <tr>
+                       <td><textarea id="cleaned-html" style="width: 600px; height: 250px; overflow:auto;"></textarea></td>
+                    </tr>
+                    <tr>
+                       <td style="width: 650px;">
+                           <input id="append-cleaned" type="button" value="Display" />
+                       </td>
+                    </tr>
+                    </table>
+                   <td><div>
+                        <div id="display-div" style="width: 600px; height: 500px; border-style:solid; border-width:3px;"></div>
+                        <div style="padding-top: 10px;"><input id="clear-display" type="button" value="Clear" /></div>
+                       </div>
+                   </td>
+                   </td>
+                </tr>              
+            </table>
+         </div>      
+</body>
+</html>

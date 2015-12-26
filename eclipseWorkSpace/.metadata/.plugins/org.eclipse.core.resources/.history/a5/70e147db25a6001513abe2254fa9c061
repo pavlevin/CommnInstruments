@@ -1,0 +1,20 @@
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
+public class Account{
+	/*
+	 * */
+	public Set<UnixUser> users = new TreeSet<UnixUser>();
+	public void addUnixUser(String username, String password){
+		this.users.add(new UnixUser(username,password));
+	}
+	public void removeUser(UnixUser user){
+		this.users.remove(user);
+	}
+	}
+
+
+
+
+

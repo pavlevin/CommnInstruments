@@ -1,0 +1,32 @@
+1450300288321	Rename local variable 'UnixUsername'
+1450300299808	Rename local variable 'DBUsername'
+1450300311429	Rename local variable 'DBPassword'
+1450300726644	Delete element
+1450380725846	Rename field 'user'
+1450380809763	Rename field 'pass'
+1450382025403	Rename type 'userTypes'
+1450393012959	Rename type 'UserTypes'
+1450393345170	Delete element
+1450509690405	Extract Class...
+1450510723618	Infer generic type arguments
+1450510742232	Infer generic type arguments
+1450529989102	Extract Class...
+1450532143806	Rename method 'addUnixUser'
+1450543338014	Rename method 'getUserName'
+1450543721343	Rename method 'setUserPassword'
+1450543730223	Rename method 'getUserPassword'
+1450576370056	Rename compilation unit 'dbUser.java'
+1450576398644	Rename compilation unit 'UserType.java'
+1450576931658	Encapsulate field 'login'
+1450598818239	Extract interface 'CommonUserAction'
+1450599410000	Extract method 'show'
+1450602673499	Rename type 'CommonUserAction'
+1450603698816	Encapsulate field 'serviceName'
+1450608898762	Rename method 'setValue'
+1450608925848	Rename method 'getValue'
+1450613273758	Extract method 'ShowUser'
+1450614374035	Delete element
+1450614379137	Delete element
+1450614383556	Delete element
+1450614388080	Delete element
+1450614447590	Rename type 'User'

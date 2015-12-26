@@ -1,0 +1,45 @@
+import java.util.ArrayList;
+public class Account{
+	private static ArrayList<User> usersList = new ArrayList<User>();
+	public static void main(String[] args){
+		addTestUsers();
+		getUserByName("DB User 1").setPassword("New DB pass");
+		getUserByName("Unix User 1").setPassword("New Unix pass");
+		UnixUser unixUser = (UnixUser) getUserByName("Unix User 2");
+		unixUser.setIdentityFile("~/ssh_keys/.*");
+		for (User i : usersList){
+			System.out.println(i.getUserName()+", "+"Login: " + i.getLogin() + ", Password: " + i.getPassword());
+		}
+		System.out.println(unixUser.getIdentityFile());
+		
+	}
+	static User getUserByName(String userName){
+		User user = null;
+		for (User i : usersList){
+			if (userName.equals(i.getLogin()))
+				return user=i;
+		}
+		return user;
+	}
+	static DBUser createUser(String username, String password){
+		DBUser dbUser = new DBUser(username,password);
+		return dbUser;
+	}
+  /*	static UnixUser createUser(){}
+*/	
+	static void addTestUsers(){
+		usersList.add(new DBUser("DB User 1", "DB Pass 1"));
+		usersList.add(new UnixUser("Unix User 1", "Unix Pass 1"));
+		usersList.add(new DBUser("DB User 2", "DB Pass 2"));
+		usersList.add(new UnixUser("Unix User 2", "Unix Pass 2"));
+	}
+	public void removeUser(UnixUser user){
+		//this.usersCredentials.remove(user);
+	}
+}
+
+
+
+
+
+

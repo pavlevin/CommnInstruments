@@ -1,0 +1,74 @@
+import java.io.UnsupportedEncodingException;
+import javax.xml.bind.DatatypeConverter;
+
+
+class Encode {
+    
+    private final static int TEXT_BOX_WIDTH = 60;
+    private static String openText, key;
+    private static byte[] code;
+    
+    public static String[] getCypherSimple(String[] textAndKey) {
+        openText = textAndKey[0];
+        key = textAndKey[1];
+        code = CryptGOST.simple(openText,key);
+        String msg = DatatypeConverter.printBase64Binary(code);
+        return StringMethods.widthLimit(msg,TEXT_BOX_WIDTH);
+    }
+    
+    public static String getEndTextSimple(String[] cypherAndKey) {
+        String cypher = cypherAndKey[0];
+        String key = cypherAndKey[1];
+        byte[] code = DatatypeConverter.parseBase64Binary(cypher);
+        byte[] endTextBytes = CryptGOST.simple(code,key.getBytes(),false);
+        return parseBytesAsText(endTextBytes);
+    }
+    
+    private static String parseBytesAsText(byte[] bytes) {
+    	String text = new String();
+        try {
+            text = new String(bytes,EncoderConsole.whichEncodingDoWeUse());
+        } catch (UnsupportedEncodingException uee) {
+            System.err.println("\nUnsupported encoding!");
+            uee.printStackTrace();
+        }
+        return text;
+    }
+    
+    public static void decryptionTest(String cypher, String key) {
+    	String[] cypherAndKey = {cypher,key};
+    	String endText = getEndTextSimple(cypherAndKey);
+    	System.out.println("Test result:\n" + endText);
+    }
+
+    public static byte[] primitiveXOR(String txtString, String keyString) {
+        byte[] txt = txtString.getBytes();
+        byte[] key = keyString.getBytes();
+        byte[] res = new byte[txtString.length()];
+        
+        for(int i = 0; i < txt.length; i++)
+            res[i] = (byte) (txt[i] ^ key[i%key.length]);
+        
+        return res;
+    }
+    
+    public static byte[] MyXOR(String txtString, String keyString) {
+        byte[] txt = txtString.getBytes();
+        byte[] key = keyString.getBytes();
+        byte[] kek = new byte[txt.length];
+        byte[] res = new byte[txt.length];
+        // Key transformation
+        kek[0] = key[0];
+        for(int j = 1; j < 32; j++) {
+            for(int i = 1; i < txt.length; i++) {
+                kek[i] = (byte) (kek[i-1] ^ key[i%key.length]);
+            }
+        }
+        // Encoding
+        for(int i = 0; i < txt.length; i++)
+            res[i] = (byte) (txt[i] ^ kek[i]);
+        
+        return res;
+    }
+
+}

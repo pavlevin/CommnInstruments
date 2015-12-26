@@ -1,0 +1,153 @@
+<!--
+/**
+ * filename:        savepassdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ Save Password</title>
+        <link rel="stylesheet" href="../../resources/themes/default/css/styles.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+
+var demo_config = {
+    domain: "example.com",
+    maxGraphAge: 30,
+    unsecureAllowed: false,
+    logPersistence: false
+};
+
+jabberwerx.util.config.logPersistence = demo_config.logPersistence;
+jabberwerx.util.setMaxGraphAge(demo_config.maxGraphAge);
+jabberwerx._config.unsecureAllowed = demo_config.unsecureAllowed;
+
+//application specific subclass
+jabberwerx.app.SavePassDemo = jabberwerx.ui.JWApp.extend({
+
+    /**
+          *  Method invoked when the application is initially created. NOT invoked when application
+          *  is loaded from store.
+          *
+          *  Applications should create JWA objects and bind to JWA events in this method
+        */
+    appCreate: function() {
+        this._super();
+        //create models controllers and views
+        this.client = new jabberwerx.Client('SavePassDemo');
+        this.view = new jabberwerx.ui.AuthenticationView(this.client, demo_config.domain);
+        //attach any JWA events
+        this.client.event("clientStatusChanged").bind(this.invocation('_onClientStatusChanged'));
+        this._savingPass = jabberwerx._config.baseReconnectCountdown != 0;
+    },
+
+    /**
+          *  Method is invoked once the application is loaded (all JWA objects have been created/loaded and initialized.
+          *   Method is also called after application creation (after appCreate has been called).
+          *
+          *  Application should render it's views and rebind any HTML events (these events are not persisted).
+        */
+    appInitialize: function() {
+        this._super();
+        //render
+        this.view.render().appendTo(".auth");
+
+        //map html events here, dom is rebuilt at render time
+        jabberwerx.$("button.logout").bind("click", this.invocation("_btnLogoutClick"));
+        jabberwerx.$("input:checkbox[name='_savePass']").bind("click", this.invocation("_savePassClick"));
+
+        //update baserecountcountdown, may have been reset during a rehydration
+        jabberwerx._config.baseReconnectCountdown = (this._savingPass ? 30 : 0);
+
+        //finally check state and set view accordingly
+        this._setState(this.client.clientStatus);
+    },
+
+    /**
+           * destroy any JWA objects this application explicitly created
+         */
+    destroy: function() {
+        //
+        this.client.event("clientStatusChanged").unbind(this.invocation('_onClientStatusChanged'));
+
+        this.client.destroy();
+        this.client = null;
+        this.view.destroy();
+        this.view = null;
+        this._super();
+    },
+
+    _onClientStatusChanged: function(evt) {
+        this._setState(this.client.clientStatus);
+    },
+
+    _btnLogoutClick: function() {
+        this.client.disconnect();
+    },
+
+    _savePassClick: function() {
+        this._savingPass = jabberwerx.$("input:checkbox[name='_savePass']:checked").val();
+        jabberwerx._config.baseReconnectCountdown = (this._savingPass ? 30 : 0);
+    },
+
+    _getPassStr: function() {
+        return this.client._connectParams && this.client._connectParams.password ? this.client._connectParams.password : 'UNDEFINED';
+    },
+
+    _setState: function(state) {
+        var $ = jabberwerx.$;
+
+        switch (state) {
+            case -1: //initializing
+                this.view.hide();
+                $("button.logout").hide();
+                $("div.save").hide();
+                $("div.message").text('invalid until loaded');
+                return;
+            case jabberwerx.Client.status_connected:
+                this.view.hide();
+                $("div.save").hide();
+                $("button.logout").show();
+                $("div.password-val").text('Cached password: ' + this._getPassStr());
+
+                break;
+            case jabberwerx.Client.status_disconnected:
+                this.view.show();
+                $("div.save").show();
+                if (this._savingPass) {
+                    $("input:checkbox[name='_savePass']").val(['savepass']);
+                } else {$("input:checkbox[name='_savePass']").val([]);}
+                $("button.logout").hide();
+                $("div.password-val").text('Cached password: ' + this._getPassStr());
+                break;
+        }
+        $("div.message").text(this.client.getClientStatusString(state));
+    }
+}, "jabberwerx.app.SavePassDemo");
+
+
+/**
+  *  Allow jabberwerx.app to control lifetime of application. Application is loaded from persisted store if possible
+  *  otherwise a new instance is created. New instance is assigned to singleton jabberwerx.util.app._jwappinst.
+*/
+jabberwerx.app.persistedApplicationClass('jabberwerx.app.SavePassDemo');
+
+        </script>
+    </head>
+    <body>
+        <h2>Login</h2>
+        <div>
+            <div class="auth"></div>
+            <button type="button" class="logout">logout</button>
+            <div class="message"></div>
+        </div>
+        <div  style="margin-top: 20">
+            <div class="save"><input type='checkbox' name='_savePass' value='savepass'/>Save password</div>
+            <div class="password-val" style="height:0;"></div>
+        <div>
+    </body>
+</html>

@@ -1,0 +1,1203 @@
+<!--
+/**
+ * filename:        jabberwerxEvents.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2012 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library Events</title>
+        <link href="jabberwerx.css" type="text/css" rel="stylesheet" />
+        <style type="text/css">
+table {
+    width:      90%;
+}
+pre.code {
+    border:         1px dashed #909090;
+    background:     #f0f0f0;
+}
+
+.templates {
+    display:        none;
+    height:         0px;
+}
+
+div.events {
+    margin:         2px;
+    padding:        2px;
+    border:         1px solid #cfcfcf;
+}
+div.events table {
+    width:          100%;
+}
+div.events td {
+    vertical-align: top;
+}
+
+div.events tr:nth-child(even) td {
+    background:     #f0f0f0;
+}
+div.events tr:nth-child(odd) td {
+    background:     #cfcfcf;
+}
+div.events tr td:nth-child(1) {
+    font-family:    "Courier New",fixed;
+}
+
+        </style>
+    </head>
+    <body class="border">
+
+<table>
+<tr>
+    <td><img class="summary" src="cisco.gif"/></td>
+    <td class="center"><h1 class="title">Cisco AJAX XMPP Library Events</h1></td>
+</tr>
+</table>
+<div class="summary">
+<h2 align="center">
+<br/>
+Web 2.0 library for XMPP-based Instant Messaging, Availability and Roster Management
+
+<br/><br/>
+</h2>
+</div>
+<br/>
+
+<div class="toc">
+    <h3>Event Categories</h3>
+    <ul>
+        <li><a href="#events_core">Core Events</a></li>
+        <li><a href="#events_ui">UI Events</a></li>
+    </ul>
+</div>
+
+<div class="core">
+    <h2><a name="events_core" />Core Events</h2>
+
+    <div class="events jabberwerx_ChatController">
+        <a name="jabberwerx.ChatController"/>
+        <h3><a href="symbols/jabberwerx.ChatController.html">jabberwerx.ChatController</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>chatSessionOpened</td>
+                <td><pre class="code">{
+    // the created session
+    chatSession: jabberwerx.ChatSession,
+    // &lt;true&gt; if created via openSession
+    userCreated: Boolean
+}</pre></td>
+                <td>Triggered when a chat session is opened. The <tt>userCreated</tt> flag is &lt;true&gt; if this session is created by the user via <a href="symbols/jabberwerx.ChatSession.html#.openSession">openSession()</a></td>
+            </tr>
+            <tr>
+                <td>chatSessionClosed</td>
+                <td><a href="symbols/jabberwerx.ChatSession.html">jabberwerx.ChatSession</a></td>
+                <td>Triggered when a chat session is closed.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events {event_source}">
+        <a name="jabberwerx.ChatSession"/>
+        <h3><a href="symbols/jabberwerx.ChatSession.html">jabberwerx.ChatSession</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>beforeChatSent</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered before the chat message is sent. This event allows callbacks to modify the stanza before delivery.</td>
+            </tr>
+            <tr>
+                <td>chatSent</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered after the chat message is sent.</td>
+            </tr>
+            <tr>
+                <td>chatReceived</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered when a chat message is received. The message should have a &lt;body/&gt;, and may contain an &lt;error/&gt;</td>
+            </tr>
+            <tr>
+                <td>threadUpdated</td>
+                <td>N/A</td>
+                <td>Triggered when the thread ID for a chat session is changed. <tt>thread</tt> is the new thread ID.</td>
+            </tr>
+            <tr>
+                <td>chatStateChanged</td>
+                <td><pre class="code">{
+    // JID of the entity changing state
+    jid: jabberwerx.JID,
+    // The new chat state
+    state: String
+}</pre></td>
+                <td>Triggered when the chat state changes.
+                    <p><tt>jid</tt> is &lt;null&gt; if the current user's state changes. Otherwise, it is the JID of the entity whose state changed.</p>
+                    <p><tt>state</tt> is the new chat state, and is one of:</p>
+                <ul>
+                    <li>active</li>
+                    <li>composing</li>
+                    <li>gone</li>
+                    <li>inactive</li>
+                    <li>paused</li>
+                </ul></td>
+            <tr>
+                <td>lockedResourceChanged</td>
+                <td><a href="symbols/jabberwerx.JID.html">jabberwerx.JID</a></td>
+                <td>Triggered when the resource this ChatSession is locked to changes. <tt>jid</tt> is the new full JID of the entity if the resource is different, or the bare JID if the previous resource is determined to be "stale".</td>
+            </tr>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_Client">
+        <a name="jabberwerx.Client"/>
+        <h3><a href="symbols/jabberwerx.Client.html">jabberwerx.Client</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>clientStatusChanged</td>
+                <td><pre class="code">{
+    // previous status code
+    prev: Number,
+    // next status code
+    next: Number,
+    // describes the error, if any
+    error: Error object
+}</pre></td>
+                <td>Triggered when a client's status changes. The status codes are one of:
+                <ul>
+                    <li><a href="symbols/jabberwerx.Client.html#.status_disconnected">status_disconnected</a></li>
+                    <li><a href="symbols/jabberwerx.Client.html#.status_disconnected">status_connecting</a></li>
+                    <li><a href="symbols/jabberwerx.Client.html#.status_disconnected">status_connected</a></li>
+                    <li><a href="symbols/jabberwerx.Client.html#.status_disconnected">status_disconnecting</a></li>
+                </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>beforeIqSent</td>
+                <td><a href="symbols/jabberwerx.IQ.html">jabberwerx.IQ</a></td>
+                <td>Triggered before an &lt;iq/&gt; stanza is sent. This event allows callbacks to modify the stanza before delivery.</td>
+            </tr>
+            <tr>
+                <td>iqSent</td>
+                <td><a href="symbols/jabberwerx.IQ.html">jabberwerx.IQ</a></td>
+                <td>Triggered after an &lt;iq/&gt; stanza is sent.</td>
+            </tr>
+            <tr>
+                <td>beforeIqReceived</td>
+                <td><a href="symbols/jabberwerx.IQ.html">jabberwerx.IQ</a></td>
+                <td>Triggered when an &lt;iq/&gt; stanza is received, before mainline processing<sup>[<a href="#stanzareceived-note-1">1</a>]</sup></td>
+            </tr>
+            <tr>
+                <td>iqReceived</td>
+                <td><a href="symbols/jabberwerx.IQ.html">jabberwerx.IQ</a></td>
+                <td>Triggered when an &lt;iq/&gt; stanza is received, during mainline processing<sup>[<a href="#stanzareceived-note-1">1</a>]</sup></td>
+            </tr>
+            <tr>
+                <td>afterIqReceived</td>
+                <td><a href="symbols/jabberwerx.IQ.html">jabberwerx.IQ</a></td>
+                <td>Triggered when an &lt;iq/&gt; stanza is received, after mainline processing<sup>[<a href="#stanzareceived-note-1">1</a>]</sup></td>
+            </tr>
+            <tr>
+                <td>beforeMessageSent</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered before a &lt;message/&gt; stanza is sent. This event allows callbacks to modify the stanza before delivery.</td>
+            </tr>
+            <tr>
+                <td>messageSent</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered after a &lt;message/&gt; stanza is sent.</td>
+            </tr>
+            <tr>
+                <td>beforeMessageReceived</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered when a &lt;message/&gt; stanza is received, before mainline processing<sup>[<a href="#stanzareceived-note-1">1</a>]</sup></td>
+            </tr>
+            <tr>
+                <td>messageReceived</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered when a &lt;message/&gt; stanza is received, during mainline processing<sup>[<a href="#stanzareceived-note-1">1</a>]</sup></td>
+            </tr>
+            <tr>
+                <td>afterMessageReceived</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered when a &lt;message/&gt; stanza is received, after mainline processing<sup>[<a href="#stanzareceived-note-1">1</a>]</sup></td>
+            </tr>
+            <tr>
+                <td>beforePresenceSent</td>
+                <td><a href="symbols/jabberwerx.Presence.html">jabberwerx.Presence</a></td>
+                <td>Triggered before a &lt;presence/&gt; stanza is sent. This event allows callbacks to modify the stanza before delivery.</td>
+            </tr>
+            <tr>
+                <td>presenceSent</td>
+                <td><a href="symbols/jabberwerx.Presence.html">jabberwerx.Presence</a></td>
+                <td>Triggered after a &lt;presence/&gt; stanza is sent.</td>
+            </tr>
+            <tr>
+                <td>beforePresenceReceived</td>
+                <td><a href="symbols/jabberwerx.Presence.html">jabberwerx.Presence</a></td>
+                <td>Triggered when a &lt;presence/&gt; stanza is received, before mainline processing<sup>[<a href="#stanzareceived-note-1">1</a>]</sup></td>
+            </tr>
+            <tr>
+                <td>presenceReceived</td>
+                <td><a href="symbols/jabberwerx.Presence.html">jabberwerx.Presence</a></td>
+                <td>Triggered when a &lt;presence/&gt; stanza is received, during mainline processing<sup>[<a href="#stanzareceived-note-1">1</a>]</sup></td>
+            </tr>
+            <tr>
+                <td>afterPresenceReceived</td>
+                <td><a href="symbols/jabberwerx.Presence.html">jabberwerx.Presence</a></td>
+                <td>Triggered when a &lt;presence/&gt; stanza is received, after mainline processing<sup>[<a href="#stanzareceived-note-1">1</a>]</sup></td>
+            </tr>
+            <tr>
+                <td>reconnectCountdownStarted</td>
+                <td>Number</td>
+                <td>Triggered when the auto reconnect starts its timer. The data is the number of seconds until the next reconnection attempt is made</td>
+            </tr>
+            <tr>
+                <td>reconnectCancelled</td>
+                <td>N/A</td>
+                <td>Triggered when the reconnect logic is cancelled.</td>
+            </tr>
+            <tr>
+                <td>clientConnected</td>
+                <td>N/A</td>
+                <td>Triggered when the client has successfully connected to the server.</td>
+            </tr>
+            <tr>
+                <td>clientDisconnected</td>
+                <td>&lt;error&gt;</td>
+                <td>Triggered when the client has successfully disconnected from the server.</td>
+            </tr>
+        </table>
+        <h4>Notes:</h4>
+        <p><a name="stanzareceived-note-1"/><b>[1]</b> If any callback triggered for these events returns true, then the overall event is considered handled: subsequent events are not triggered, and any built-in processessing (e.g. sending feature-not-implemented for iq's of type 'get' or 'set') is not performed.</p>
+    </div>
+
+    <div class="events jabberwerx_Entity">
+        <a name="jabberwerx.Entity"/>
+        <h3><a href="symbols/jabberwerx.Entity.html">jabberwerx.Entity</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>primaryPresenceChanged</td>
+                <td><pre class="code">{
+    // the full JID of the new primary
+    fullJid: jabberwerx.JID,
+    // the &lt;presence/&gt; of the new primary
+    presence: jabberwerx.Presence
+}</pre></td>
+                <td>Triggered when the primary presence/availability of an entity changed. If there is no primary (e.g. all resources for an entity are offline), <tt>presence</tt> is &lt;null&gt; and <tt>fullJid</tt> is the bare JID of the entity.</td>
+            </tr>
+            <tr>
+                <td>resourcePresenceChanged</td>
+                <td><pre class="code">{
+    // the triggering full JID
+    fullJid: jabberwerx.JID,
+    // the triggering &lt;presence/&gt; stanza
+    presence: jabberwerx.Presence
+}</pre></td>
+                <td>Triggered whenever the presence/availability for an entity is changed. <tt>presence</tt> is the &lt;presence/&gt; stanza that triggered the change, and may be an "unavailable" presence.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_EntitySet">
+        <a name="jabberwerx.EntitySet"/>
+        <h3><a href="symbols/jabberwerx.EntitySet.html">jabberwerx.EntitySet</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>entityAdded</td>
+                <td><a href="symbols/jabberwerx.Entity.html">jabberwerx.Entity</a></td>
+                <td>Triggered when an entity is added to the source entitySet.</td>
+            </tr>
+            <tr>
+                <td>entityRemoved</td>
+                <td><a href="symbols/jabberwerx.Entity.html">jabberwerx.Entity</a></td>
+                <td>Triggered when an entity is removed from the source entitySet.</td>
+            </tr>
+            <tr>
+                <td>entityUpdated</td>
+                <td><a href="symbols/jabberwerx.Entity.html">jabberwerx.Entity</a></td>
+                <td>Triggered when an entity's information is updated.</td>
+            </tr>
+            <tr>
+                <td>batchUpdateStarted</td>
+                <td>N/A</td>
+                <td>Triggered when a batch update to an entity set is started. <strong>Note: </strong>EntitySet events will fire normally during a batch. They can be suppressed by setting the jabberwerx.EntitySet.suppressBatchedEvents property to true</td>
+            </tr>
+            <tr>
+                <td>batchUpdateEnded</td>
+                <td><pre class="code">
+[{
+    // name of batched event
+    event: String,
+    // Data associated with the batched event
+    data: Object
+}]
+</pre></td>
+                <td>Triggered when a batch update to the entity cache is ended. The event's data is an array of all
+                    EntitySet events that fired during the batch. </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_EntitySet_Cache">
+        <a name="jabberwerx.EntitySet_Cache"/>
+        <h3>jabberwerx.EntitySet Cache Events</h3>
+        <p><strong>NOTE:</strong> These events are provided by a number of different classes:</p>
+        <ul>
+            <li><a href="symbols/jabberwerx.ClientEntityCache.html">jabberwerx.ClientEntityCache</a></li>
+            <li><a href="symbols/jabberwerx.MUCOccupantCache.html">jabberwerx.MUCOccupantCache</a></li>
+        </ul>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>entityCreated</td>
+                <td><a href="symbols/jabberwerx.Entity.html">jabberwerx.Entity</a></td>
+                <td>Triggered when an entity is created.</td>
+            </tr>
+            <tr>
+                <td>entityDestroyed</td>
+                <td><a href="symbols/jabberwerx.Entity.html">jabberwerx.Entity</a></td>
+                <td>Triggered when an entity is destroyed.</td>
+            </tr>
+            <tr>
+                <td>entityRenamed</td>
+                <td><pre class="code">{
+    // The renamed entity (the entity.jid
+    // and entity.node already updated)
+    entity: jabberwerx.Entity,
+    // The old jid (if any)
+    jid:    jabberwerx.JID,
+    // The old node (if any)
+    node:   String
+}</pre></td>
+                <td>Triggered when an entity is renamed. The <tt>jid</tt> and <tt>node</tt> properites are the previous value for <tt>entity</tt>.</td>
+            </tr>
+        </table>
+    </div>
+    <div class="events jabberwerx_RosterController">
+        <a name="jabberwerx.Client"/>
+        <h3><a href="symbols/jabberwerx.RosterController.html">jabberwerx.RosterController</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>rosterFetched</td>
+                <td>N/A</td>
+                <td>Triggered when RosterController has finished fetching and populating roster.</td>
+            </tr>
+            <tr>
+                <td>errorEncountered</td>
+                <td>error: &lt;error/&gt; element</a></td>
+                <td>An error occurred while trying to fetch the roster. The error element provides additional detail.</td>
+            </tr>
+            <tr>
+                <td>subscriptionReceived</td>
+                <td><pre class="code">{
+    // the subscription presence stanza
+    stanza: jabberwerx.Presence,
+    // was the subscription handled automatically?
+    handled: boolean
+}</pre>
+                </td>
+                <td>Triggered when a subscription request has been received. The event is triggered after automatic handling has been performed (auto accept, auto deny etc.).</td>
+            </tr>
+            <tr>
+                <td>unsubscriptionReceived</td>
+                <td><pre class="code">{
+    // the unsubscribe presence stanza
+    stanza: jabberwerx.Presence,
+    // was the unsubscription handled automatically?
+    handled: boolean
+}</pre>
+                </td>
+                <td>Triggered when a unsubscribe request has been received. The event is triggered after automatic handling has been performed (auto removal).</td>
+            </tr>
+            </table>
+    </div>
+
+    <div class="events jabberwerx_DiscoController">
+        <a name="jabberwerx.DiscoController"/>
+        <h3>jabberwerx.DiscoController Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>discoInitialized</td>
+                <td>N/A</td>
+                <td>Triggered when DiscoController has finished initializing.</td>
+            </tr>
+            </table>
+    </div>
+    <div class="events jabberwerx_MUCController">
+        <a name="jabberwerx.MUCController"/>
+        <h3><a href="symbols/jabberwerx.MUCController.html">jabberwerx.MUCController</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>mucInviteReceived</td>
+                <td><a href="symbols/jabberwerx.MUCInvite.html">jabberwerx.MUCInvite</a></td>
+                <td>
+                    Triggered when a direct (XEP-0249) or mediated (XEP-0045) MUC Room invite is
+                    received.
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_MUCRoom">
+        <a name="jabberwerx.MUCRoom"/>
+        <h3><a href="symbols/jabberwerx.MUCRoom.html">jabberwerx.MUCRoom</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>roomCreated</td>
+                <td>N/A</td>
+                <td>Triggered when a MUC room has been created but not yet configured.</td>
+            </tr>
+            <tr>
+                <td>roomEntered</td>
+                <td>N/A</td>
+                <td>Triggered when a MUC room is entered.</td>
+            </tr>
+            <tr>
+                <td>roomExited</td>
+                <td>N/A</td>
+                <td>Triggered when a MUC room is exited.</td>
+            </tr>
+            <tr>
+                <td>beforeRoomBroadcastSent</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered before a broadcast message is sent to a MUC room. This event allows callbacks to modify the stanza before delivery.</td>
+            </tr>
+            <tr>
+                <td>roomBroadcastSent</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered after a broadcast message is sent.</td>
+            </tr>
+            <tr>
+                <td>roomBroadcastReceived</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered when a broadcast message from a room is received.</td>
+            </tr>
+            <tr>
+                <td>beforeRoomSubjectChanging</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered before a MUC room subject change request is sent. This event allows callbacks to modify the stanza before delivery.</td>
+            </tr>
+            <tr>
+                <td>roomSubjectChanging</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered after a MUC room subject change request is sent.</td>
+            </tr>
+            <tr>
+                <td>roomSubjectChanged</td>
+                <td><a href="symbols/jabberwerx.Message.html">jabberwerx.Message</a></td>
+                <td>Triggered when a MUC room's subject has changed.</td>
+            </tr>
+            <tr>
+                <td>errorEncountered</td>
+                <td><pre class="code">{
+    // operation method name
+    operation: String,
+    // error details
+    error: &lt;error/&gt; element,
+    // true if error due to user aborting action
+    aborted: Boolean
+}</pre></td>
+                <td>
+                    Triggered when an error is encountered requesting a MUC room operation. The <tt>error</tt> is the XMPP &lt;error/&gt; child element describing the failure. The <tt>operation</tt> may be one of:
+                    <ul>
+                        <li>"changeNickname"</li>
+                        <li>"changeSubject"</li>
+                        <li>"enter"</li>
+                        <li>"sendBroadcast"</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_PubSubNode">
+        <a name="jabberwerx.PubSubNode"/>
+        <h3><a href="symbols/jabberwerx.PubSubNode.html">jabberwerx.PubSubNode</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>pubsubNodeCreated</td>
+                <td>N/A</td>
+                <td>Triggered when a PubSubNode is created.</td>
+            </tr>
+            <tr>
+                <td>pubsubNodeDeleted</td>
+                <td>N/A</td>
+                <td>Triggered when a PubSubNode is deleted.</td>
+            </tr>
+            <tr>
+                <td>pubsubItemsChanged</td>
+                <td><pre class="code">{
+    // operation that caused the change
+    operation: String,
+    // list of affected items
+    items: PubSubItems[]
+}</pre></td>
+                <td>
+                    Triggered when one or more items within a PubSubNode are changed. The <tt>items</tt> is an array of changed PubSubItems. The <tt>operation</tt> is one of:
+                    <ul>
+                        <li>"added"</li>
+                        <li>"updated"</li>
+                        <li>"removed"</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>errorEncountered</td>
+                <td><pre class="code">{
+    // operation method name
+    operation: String,
+    // error details
+    error: &lt;error/&gt; element
+}</pre></td>
+                <td>
+                    Triggered when an error is encountered requesting a PubSub node operation. The <tt>error</tt> is the XMPP &lt;error/&gt; child element describing the failure. The <tt>operation</tt> may be one of:
+                    <ul>
+                        <li>"createNode"</li>
+                        <li>"deleteNode"</li>
+                        <li>"publish"</li>
+                        <li>"retract"</li>
+                        <li>"retrieve"</li>
+                        <li>"subscribe"</li>
+                        <li>"unsubscribe"</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_PrivacyListController">
+        <a name="jabberwerx.PrivacyListController"/>
+        <h3><a href="symbols/jabberwerx.PrivacyListController.html">jabberwerx.PrivacyListController</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>errorEncountered</td>
+                <td><pre class="code">{
+    // operation method name
+    operation: String,
+    // error details
+    error: &lt;error/&gt; element,
+    // The privacy list targeted by the operation (if any)
+    target: jabberwerx.PrivacyList
+</pre></td>
+                <td>
+                    Triggered when an error is encountered requesting a privacy list operation. The <tt>error</tt> is the XMPP &lt;error/&gt; child element describing the failure. The <tt>operation</tt> may be one of:
+                    <ul>
+                        <li>"apply"</li>
+                        <li>"fetch"</li>
+                        <li>"remove"</li>
+                        <li>"update"</li>
+                    </ul>
+                    For all operations except "apply", <tt>target</tt> is the PrivacyList object the operation targeted.
+                </td>
+            </tr>
+            <tr>
+                <td>privacyListApplied</td>
+                <td><pre class="code">{
+    // name of applied list
+    // or undefined if there is no active list
+    name: String
+}</pre></td>
+                <td>Triggered when the active list for this resource is changed or removed.</td>
+            </tr>
+            <tr>
+                <td>privacyListUpdated</td>
+                <td><a href="symbols/jabberwerx.PrivacyList.html">jabberwerx.PrivacyList</a></td>
+                <td>Triggered when a privacy list is created or changed.</td>
+            </tr>
+            <tr>
+                <td>privacyListRemoved</td>
+                <td><a href="symbols/jabberwerx.PrivacyList.html">jabberwerx.PrivacyList</a></td>
+                <td>Triggered when a privacy list has been deteled from the server.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_RosterController">
+        <a name="jabberwerx.RosterController"/>
+        <h3><a href="symbols/jabberwerx.RosterController.html">jabberwerx.RosterController</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>subscriptionReceived</td>
+                <td><pre class="code">{
+    // &lt;presence/&gt; stanza of the request
+    stanza: <a href="symbols/jabberwerx.Presence.html">jabberwerx.Presence</a>,
+    // &lt;true&gt; if the request has been
+    // auto accepted
+    handled: Boolean
+}</pre></td>
+                <td>Triggered when a subscription request is received. The &lt;handled&gt; flag indicates if the auto-accept logic has already accepted and handled the subscription request.</td>
+            </tr>
+            <tr>
+                <td>unsubscriptionReceived</td>
+                <td><pre class="code">{
+    // &lt;presence/&gt; stanza of the request
+    stanza: <a href="symbols/jabberwerx.Presence.html">jabberwerx.Presence</a>,
+    // &lt;true&gt; if the request has been
+    // auto removed
+    handled: Boolean
+}</pre></td>
+                <td>Triggered when an unsubscription request is received. The &lt;handled&gt; flag indicates if the auto-remove logic has already acknowledged and handled the unsubscription request.</td>
+            </tr>
+            <tr>
+                <td>errorEncountered</td>
+                <td><pre class="code">{
+    operation: "fetch",
+    error: &lt;error/&gt; element
+}</pre></td>
+                <td>Triggered when an error is encountered fetching the roster. The <tt>error</tt> is the XMPP &lt;error/&gt; child element describing the failure.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_Stream">
+        <a name="{jabberwerx.Stream}"/>
+        <h3><a href="symbols/{jabberwerx.Stream}.html">{jabberwerx.Stream}</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>streamClosed</td>
+                <td>&lt;stream:error/&gt; element</td>
+                <td>
+                    <p>Triggered when a stream is closed. The data is present if the stream did not close gracefully.</p>
+                    <p><b>NOTE:</b> This event may be triggered before the stream is opened, e.g. there are network errors opening the stream.</p>
+                </td>
+            </tr>
+            <tr>
+                <td>streamElementsReceived</td>
+                <td>jQuery-wrapped array of elements</td>
+                <td>Triggered when elements are received from the remote endpoint. The event data always contains at least one element.</td>
+            </tr>
+            <tr>
+                <td>streamElementsSent</td>
+                <td>jQuery-wrapped array of elements</td>
+                <td>Triggered when elements are sent to the remote endpoint. The event data always contains at least one element.</td>
+            </tr>
+            <tr>
+                <td>streamOpened</td>
+                <td>&lt;stream:features/&gt; element</td>
+                <td>Triggered when the stream is opened. The event data is the set of features reported by the remote endpoint.</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="ui">
+    <h2><a name="events_ui" />UI Events</h2>
+    <div class="events JWView">
+        <a name="jabberwerx.ui.JWView"/>
+        <h3><a href="symbols/jabberwerx.ui.JWView.html">JWView</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>viewRendered</td>
+                <td>jQuery(Element)</td>
+                <td>Triggered after the view is rendered, but before it is placed into the document. This event allows callbacks to modify the view.</td>
+            </tr>
+            <tr>
+                <td>viewRemoved</td>
+                <td>jQuery(Element)</td>
+                <td>Triggered after the view is removed from the document.</td>
+            </tr>
+            <tr>
+                <td>viewActivated</td>
+                <td><pre class="code">{
+    //Type of activation
+    type: String
+}</pre></td>
+                <td>Triggered when a view is activated. The &lt;type&gt; depends on the browser event that initiated it, typically "click" (mouse click on the view).</td>
+            </tr>
+            <tr>
+                <td>viewDeactivated</td>
+                <td><pre class="code">{
+    //Type of deactivation
+    type: String
+}</pre></td>
+                <td>Triggered when a view is deactivated. The &lt;type&gt; depends on the browser event that initiated it, typically "blur" (focus moved to a different widget/view).</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_ui_MUCInviteView">
+        <a name="jabberwerx.ui.MUCInviteView"/>
+        <h3><a href="symbols/jabberwerx.ui.MUCInviteView.html">jabberwerx.ui.MUCInviteView</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>actionComplete</td>
+                <td><pre class="code">{
+    // The user's action
+    action: String,
+    [error]: &lt;error/&gt; element
+}</pre></td>
+                <td>Triggered when a user chooses an action to complete the MUC invite request. This value is one of:
+                <ul>
+                    <li><a href="symbols/jabberwerx.ui.MUCInviteView.html#.ACTION_JOIN">jabberwerx.ui.MUCInviteView.ACTION_JOIN</a></li>
+                    <li><a href="symbols/jabberwerx.ui.MUCInviteView.html#.ACTION_IGNORE">jabberwerx.ui.MUCInviteView.ACTION_IGNORE</a></li>
+                </ul><br>
+                If the action is ACTION_JOIN, an optional error property may be present. If present,
+                an error occurred while trying to join the room and this object describes the error.
+                The <tt>error</tt> is the XMPP &lt;error/&gt; child element describing the failure.
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_ui_RosterView">
+        <a name="jabberwerx.ui.RosterView"/>
+        <h3><a href="symbols/jabberwerx.ui.RosterView.html">jabberwerx.ui.RosterView</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>rosterGroupingRendered</td>
+                <td><pre class="code">{
+    // The rendered Grouping
+    grouping: jabberwerx.ui.RosterView.Grouping,
+    // The rendered Grouping's DOM
+    dom: jQuery
+}</pre></td>
+                <td>Triggered when a Grouping (not an item) in the roster is rendered.</td>
+            </tr>
+            <tr>
+                <td>rosterItemRendered</td>
+                <td><pre class="code">{
+    // The rendered Item
+    item: jabberwerx.ui.ContactPresenceView,
+    // The rendered item's DOM
+    dom: jQuery
+}</pre></td>
+                <td>Triggered when an item (not a Grouping) in the roster is rendered.</td>
+            </tr>
+            <tr>
+                <td>rosterItemSelected</td>
+                <td><pre class="code">{
+    // The type of selection
+    type: String,
+    // The selected item
+    item: jabberwerx.ui.ContactPresenceView
+}</pre></td>
+                <td>Triggered when an item (not a Grouping) in the roster is selected. &lt;type&gt; denotes how the selection was made; this is one of:
+                    <ul>
+                        <li>click</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_ui_SelfPresenceView">
+        <a name="jabberwerx.ui.SelfPresenceView"/>
+        <h3><a href="symbols/jabberwerx.ui.SelfPresenceView.html">jabberwerx.ui.SelfPresenceView</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>presenceSelected</td>
+                <td><pre class="code">{
+    //selected show value
+    show: {String},
+    //selected status value
+    status: {String},
+     //priority value (defaults to null)
+    priority: {Number|null}
+}</pre></td>
+                <td>
+                    <p>Triggered when a choice is selected, but before any &lt;presence/&gt; is sent out. Callbacks may change any or all of these values, and the changes will be included in the &lt;presence/&gt; that is sent.</p>
+                    <p>Any callback returning <tt>true</tt> will prevent this SelfPresenceView from sending a &lt;presence/&gt;, allowing callbacks to perform specialized handling (e.g. adding "Custom..." to prompt the user to enter a new status value).</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events {event_source}">
+        <a name="jabberwerx.ui.SubscriptionView"/>
+        <h3><a href="symbols/jabberwerx.ui.SubscriptionView.html">jabberwerx.ui.SubscriptionView</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>actionComplete</td>
+                <td><pre class="code">{
+    // The user's action
+    action: String
+}</pre></td>
+                <td>Triggered when a user chooses an action to complete the subscription request. This value is one of:
+                <ul>
+                    <li><a href="symbols/jabberwerx.ui.SubscriptionView.html#.ACTION_ACCEPT">jabberwerx.ui.SubscriptionView.ACTION_ACCEPT</a></li>
+                    <li><a href="symbols/jabberwerx.ui.SubscriptionView.html#.ACTION_DENY">jabberwerx.ui.SubscriptionView.ACTION_DENY</a></li>
+                    <li><a href="symbols/jabberwerx.ui.SubscriptionView.html#.ACTION_IGNORE">jabberwerx.ui.SubscriptionView.ACTION_IGNORE</a></li>
+                </ul></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_ui_TabbedView">
+        <a name="jabberwerx.ui.TabbedView"/>
+        <h3><a href="symbols/jabberwerx.ui.TabbedView.html">jabberwerx.ui.TabbedView</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>tabActivated</td>
+                <td><pre class="code"><a href="symbols/jabberwerx.ui.TabbedView.Tab.html">jabberwerx.ui.TabbedView.Tab</a></td>
+                <td>Triggered when a tab was activated. This event is usually preceeded by a "tabDeactivated" event.</td>
+            </tr>
+            <tr>
+                <td>tabDeactivated</td>
+                <td><pre class="code"><a href="symbols/jabberwerx.ui.TabbedView.Tab.html">jabberwerx.ui.TabbedView.Tab</a></td>
+                <td>Triggered when a tab was deactivated. This event is usually succeeded by a "tabActivated" event.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_ui_XDataFormView">
+        <a name="jabberwerx.ui.XDataFormView"/>
+        <h3><a href="symbols/jabberwerx.ui.XDataFormView.html">jabberwerx.ui.XDataFormView</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>xdataItemSelected</td>
+                <td><pre class="code">
+{
+    // The selected item
+    selected: jabberwerx.XDataFormItem
+}</pre>
+                <td>Triggered when item in the result set is clicked on.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx.ui.TextInput">
+        <a name="jabberwerx.ui.TextInput"/>
+        <h3><a href="symbols/jabberwerx.ui.TextInput.html">jabberwerx.ui.TextInput</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>textSend</td>
+                <td>String</td>
+                <td>Triggered when a text is to be processed for sending. Any callback that returns <tt>true</tt> has indicated the sent data is processed, which causes any outstanding idle timers to be cancelled and the typed input to be cleared.</td>
+            </tr>
+            <tr>
+                <td>textTypingStarted</td>
+                <td>String</td>
+                <td>
+                    <p>Triggered when it is determined the user has started typing.</p>
+                    <p>This condition would equate to the "composing" chat state.</p>
+                </td>
+            </tr>
+            <tr>
+                <td>textTypingEnded</td>
+                <td>N/A</td>
+                <td>
+                    <p>Triggered when it is detemrined the user stopped typing, but did not request data to be sent (e.g. cleared out the text area).</p>
+                    <p>This condition would equate to the "active" chat state, without sending any chat body.</p>
+                </td>
+            </tr>
+            <tr>
+                <td>textTypingIdled</td>
+                <td>N/A</td>
+                <td>
+                    <p>Triggered when it is determined the user has suspended typing for an extended amount of time.</p>
+                    <p>This condition would equate to the "paused" chat state.</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_ui_MessageHistory">
+        <a name="jabberwerx.ui.MessageHistory"/>
+        <h3><a href="symbols/jabberwerx.ui.MessageHistory.html">jabberwerx.ui.MessageHistory</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>historyMessageAppended</td>
+                <td>jQuery(Element)</td>
+                <td>Triggered when a message is about to be added to the MessageHistory window. You can change the jQuery object in place and those changes will be reflected in the MessageHistory window.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="events jabberwerx_ui_MUCSearchView">
+        <a name="jabberwerx.ui.MUCSearchView"/>
+        <h3><a href="symbols/jabberwerx.ui.MUCSearchView.html">jabberwerx.ui.MUCSearchView</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>actionComplete</td>
+                <td>
+<pre class="code">{
+    // The user's action
+    action: String,
+    submitted: jabberwerx.MUCRoom
+}</pre>
+                </td>
+                <td>Triggered when a user has selected a room and clicked the 'join' button:<br>
+                    The 'action' property will be the following value:
+                    <ul>
+                        <li>
+                            <a href="symbols/jabberwerx.ui.MUCSearchView.html#.ACTION_SUBMITTED">
+                                jabberwerx.ui.MUCSearchView.ACTION_SUBMITTED
+                            </a>
+                        </li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="jabberwerx-cisco">
+    <h2><a name="events_ciasco" />jabberwerx.cisco Events</h2>
+    <div class="events DirectoryGroupsController">
+        <h3><a href="symbols/jabberwerx.cisco.DirectoryGroupsController.html">DirectoryGroupsController</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>LDAPContactAdded</td>
+                <td>
+                <pre class="code">{
+    // Group user name
+    username: String,
+    // Group's ID
+    groupid: String,
+    // How user should be displayed
+    displayName: String
+}</pre></td>
+                <td>Triggered when a user is added to a group or as each new user is added during a member fetch.</td>
+            </tr>
+            <tr>
+                <td>LDAPContactRemoved</td>
+                <td><pre class="code">{
+    // The node ID of the removed contact
+    id: String,
+    // Group's ID
+    groupid: String
+}</pre></td>
+                <td>Triggered after the view is removed from the document.</td>
+            </tr>
+            <tr>
+                <td>LDAPGroupRemoved</td>
+                <td><pre class="code">{
+    // ID of removed group
+    groupid: String
+}</pre></td>
+                <td>Triggered when an entire group has been deleted.</td>
+            </tr>
+            <tr>
+                <td>LDAPGroupNameUpdated</td>
+                <td><pre class="code">{
+    // ID of upgraded group
+    groupid: String,
+    // Group's new name
+    groupname: String
+}</pre></td>
+                <td>Triggered when a group has changed names.</td>
+            </tr>
+            <tr>
+                <td>LDAPGroupSearchResults</td>
+                <td><pre class="code">{
+    // ID of the current search (see xep-0055)
+    resultid: String,
+    // Result fields
+    ldapGroups: Array of {
+        // One Group's ID
+        groupid: String,
+        // And its name
+        groupname: String
+    }
+}</pre></td>
+                <td>Triggered when the results of requested group search are returned.</td>
+            </tr>
+            <tr>
+                <td>LDAPUserSearchResults</td>
+                <td><pre class="code">{
+    // ID of the current search (see xep-0055)
+    resultid: String,
+    // Result fields
+    ldapUsers: Array of {
+        // Member's name
+        username: String,
+        // Member's display name
+        displayname: String,
+        // Other metadata
+        email: String,
+        jobtitle: String,
+        phone: String
+    }
+}</pre></td>
+                <td>Triggered when the results of a requested user search are returned.</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="templates">
+    <div class="events {event_source}">
+        <a name="{event.source}"/>
+        <h3><a href="symbols/{event.source}.html">{event.source}</a> Events</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Data Details</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>{event.name}</td>
+                <td>{event.data}</td>
+                <td>{event.desc}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<br/>
+<hr/>
+<h5>
+    <p>THE SPECIFICATIONS AND INFORMATION REGARDING THE PRODUCTS IN THIS
+      MANUAL ARE SUBJECT TO CHANGE WITHOUT NOTICE. ALL STATEMENTS, INFORMATION, AND
+      RECOMMENDATIONS IN THIS MANUAL ARE BELIEVED TO BE ACCURATE BUT ARE PRESENTED
+      WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. USERS MUST TAKE FULL
+      RESPONSIBILITY FOR THEIR APPLICATION OF ANY PRODUCTS.
+    </p>
+        <p>THE SOFTWARE LICENSE AND LIMITED WARRANTY FOR THE ACCOMPANYING PRODUCT
+      ARE SET FORTH IN THE INFORMATION PACKET THAT SHIPPED WITH THE PRODUCT AND ARE
+      INCORPORATED HEREIN BY THIS REFERENCE. IF YOU ARE UNABLE TO LOCATE THE SOFTWARE
+      LICENSE OR LIMITED WARRANTY, CONTACT YOUR CISCO REPRESENTATIVE FOR A COPY.
+    </p>
+        <p>The Cisco implementation of TCP header compression is an adaptation of
+      a program developed by the University of California, Berkeley (UCB) as part of
+      UCB's public domain version of the UNIX operating system. All rights reserved.
+      Copyright &#169; 1981, Regents of the University of California.
+    </p>
+        <p>NOTWITHSTANDING ANY OTHER WARRANTY HEREIN, ALL DOCUMENT FILES AND
+      SOFTWARE OF THESE SUPPLIERS ARE PROVIDED "AS IS" WITH ALL FAULTS. CISCO AND THE
+      ABOVE-NAMED SUPPLIERS DISCLAIM ALL WARRANTIES, EXPRESSED OR IMPLIED, INCLUDING,
+      WITHOUT LIMITATION, THOSE OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+      AND NONINFRINGEMENT OR ARISING FROM A COURSE OF DEALING, USAGE, OR TRADE
+      PRACTICE.
+    </p>
+        <p>IN NO EVENT SHALL CISCO OR ITS SUPPLIERS BE LIABLE FOR ANY INDIRECT,
+      SPECIAL, CONSEQUENTIAL, OR INCIDENTAL DAMAGES, INCLUDING, WITHOUT LIMITATION,
+      LOST PROFITS OR LOSS OR DAMAGE TO DATA ARISING OUT OF THE USE OR INABILITY TO
+      USE THIS MANUAL, EVEN IF CISCO OR ITS SUPPLIERS HAVE BEEN ADVISED OF THE
+      POSSIBILITY OF SUCH DAMAGES.
+    </p><p>Any Internet Protocol (IP) addresses and phone numbers used in this document are not intended to be actual addresses and phone numbers. Any examples, command display output, network topology diagrams, and other figures included in the document are shown for illustrative purposes only. Any use of actual IP addresses or phone numbers in illustrative content is unintentional and coincidental.</p>
+    <p>
+        <p>Cisco and the Cisco logo are trademarks or registered trademarks of Cisco and/or its affiliates in the U.S. and other countries. To view a list of Cisco trademarks, go to this URL:<a href='http://www.cisco.com/go/trademarks' target='blank'>http://www.cisco.com/go/trademarks</a>. Third-party trademarks mentioned are the property of their respective owners. The use of the word partner does not imply a partnership relationship between Cisco and any other company. (1110R)</p>
+        &#169; 2014 Cisco Systems, Inc. All rights reserved.
+    </p>
+</h5>
+    </body>
+</html>

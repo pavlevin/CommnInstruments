@@ -1,0 +1,265 @@
+<!--
+/**
+ * filename:        pepexample.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--    This is a simple example that demonstrates a Jabberwerx client
+                connecting to a server, subscribing to a User Activity and receiving Activity
+                items that are published.
+        -->
+        <title>PEP PubSub Example</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <script type='text/javascript' src='../../jabberwerx.js'></script>
+        <script type='text/javascript' src='./jabberwerxexamples.js'></script>
+
+        <script type="text/javascript">
+        (function() { //wrapped in an anon function to avoid polluting global namespace
+            // Map the global jQuery symbol to jabberwerx's jquery for convenience.
+            var $ = jabberwerx.$;
+
+            /**
+             * Configuration information including
+             *   httpBindingURL - the BOSH binding URL.
+             *   domain - The user's domain (domain part of the connected JID)
+             *   username - The user (local part of connected JID)
+             *   password - The account password.
+             *   pubSubService - The server pubsub component
+             */
+            var demo_config = {
+                httpBindingURL: "/httpbinding",
+                domain: "example.com",
+                username: "jwtest0",
+                password: "test"
+            };
+
+            /**
+             * Instantiate the Jabberwerx Client, the main access and routing
+             * object. Clients define a connection and session.
+             *
+             * see ../api/symbols/jabberwerx.Client.html
+             */
+            var client = new jabberwerx.Client();
+
+            /**
+             * Instantiate the PEP pubsub controller. The constructor is passed the
+             * associated client and registers itself with the client. The
+             * controller is managed by the client. The PEPController allows
+             * us to manage pusub subscriptions, items etc.
+             *
+             * see ../api/symbols/jabberwerx.PEPController.html
+             */
+            var pepController = client.controllers.pep || new jabberwerx.PEPController(client);
+
+            /**
+             * Local cached subscribed PEPNode
+             *
+             * see ../api/symbols/jabberwerx.PEPNode.html
+             */
+            var pepNode = null;
+
+            /**
+             * Function called when "User Activity" dropdown is changed.
+             *
+             * Constructs the payload part of stanza using NodeBuilder and then
+             * publishes that payload to the current node.
+             *
+             * see ../api/symbols/NodeBuilder.html
+             * see ../api/symbols/PubSubNode.html#publish
+             */
+            var useractivitychange = function(event){
+                try{
+                    /**
+                     * Create Notification node as per XEP 0108.
+                     *
+                     * see http://xmpp.org/extensions/xep-0108.html
+                     */
+                    var activity = new jabberwerx.NodeBuilder("{http://jabber.org/protocol/activity}activity");
+
+                    /**
+                     * set its from attriubte to our name and its text to the
+                     * user supplied item data.
+                     * <activity from="jwtest0" xmlns="http://jabber.org/protocol/activity">foo</activity>
+                     */
+                    activity.attribute("from", $('#userNameField').val())
+                            .text($(this).find('option:selected').text());
+
+                    /**
+                     * Publish the payload. publish is passed an optional id,
+                     * the item to publish and an optinal callback fired when
+                     * the publish is complete. id and callback are ignored
+                     * in this example.
+                     *
+                     * Note the NodeBuilder's data property is the actual DOM
+                     * to be passed to publish.
+                     */
+                    pepNode.publish(null, activity.data, publishCallback);
+                }catch(e){
+                    alert("Exception trying to publish a new item: " + e.message);
+                }
+            }
+
+            /**
+             * Callback function that is called upon completion of the "publish" method
+             *
+             * see ../api/symbols/PubSubNode.html#publish
+             */
+            var publishCallback = function(err, id) {
+                if(err) {
+                    alert("Failed to publish: " + jabberwerx.errorReporter.getMessage(err.error));
+                }
+            }
+
+            /**
+             * Function called when user is connected.
+             *
+             * subscribes to the "User Activity" node by calling named node
+             * and subscribing to it. The node's
+             * subscribe method s passed a callback triggered when the
+             * subscription is complete. The callback is passed an error
+             * stanza if the sub failed for some reason.
+             *
+             * see ../api/symbols/jabberwerx.PEPSubController.html#node
+             * see ../api/symbols/jabberwerx.PEPNode.html#subscribe
+             */
+            var createNode = function(){
+                try{
+                    pepNode = pepController.node('http://jabber.org/protocol/activity');
+                    pepNode.subscribe(subscribeCallback);
+                }catch(e){
+                    alert("Error occurred while entering : " + e.message);
+                }
+            }
+
+            /**
+             * Callback triggered when a "User Activity" node subscription is complete.
+             *
+             * This callback is passed an error stanza if the subscription
+             * failed for some reason.
+             */
+            var subscribeCallback = function(err) {
+                if(err != undefined) {
+                    alert("An Error Occurred: " +
+                          jabberwerx.errorReporter.getMessage(err));
+                } else {
+                    pepNode.event("pubsubItemsChanged").bind(handleActivityItemReceived);
+                }
+            }
+
+            /**
+             * The pubsubItemsChanged event handler, bound to a node in the
+             * subscription complete callback defined below.
+             *
+             * This event is triggered when new user activity have been published to a
+             * node. The data is a node, the node's items is the list of
+             * published items. This handler simply adds the first item to a
+             * text box.
+             *
+             * see ../api/symbols/jabberwerx.PEPNode.html
+             * see ../api/jabberwerxEvents.html#jabberwerx.PubSubNode
+             */
+            var handleActivityItemReceived = function(evtObj) {
+                if (evtObj.data.operation == "added") {
+                    var payload = evtObj.data.items;
+                    $("#receivedActivityItems").val(jabberwerx.$(payload[0].data).attr('from') + ": " + jabberwerx.$(payload[0].data).text());
+                }
+            }
+
+            $(document).ready(function() {
+                /**
+                 * Add a login to this example by inserting appropriate HTML
+                 * into #conn-data. See Simple Client Connection example for extensive
+                 * details on connection.
+                 *
+                 * see ./connectexample.html
+                 */
+                jabberwerx_examples.addLogin($("#conn-data"), client, demo_config);
+
+                $('#useractivity').hide();
+
+                $('#useractivity').change(useractivitychange);
+
+                /**
+                 * The Jabberwerx API supports binding to a "clientConnected"
+                 * event. The event will automatically be triggered whenever the
+                 * client is connected. If some error caused the connect
+                 * an error stanza will be passed to the event.
+                 */
+                client.event("clientConnected").bind(function(evt) {
+                    $('#useractivity').show();
+                    createNode();
+                });
+
+                /**
+                 * The Jabberwerx API supports binding to a "clientDisconnected"
+                 * event. The event will automatically be triggered whenever the
+                 * client is disconnected. If some error caused the disconnect
+                 * an error stanza will be passed to the event.
+                 */
+                client.event("clientDisconnected").bind(function(evt){
+                    $('#useractivity').hide();
+                    $("#receivedActivityItems").val('');
+                });
+            });
+        })();
+        </script>
+    </head>
+    <body>
+        <h2>PEP PubSub Example</h2>
+        <div>An example demonstrating how to use CAXL's Client, PubSubController and PubSubNode classes to subscribe to and receive items from a forum</div>
+        <h3>How it Works</h3>
+        This example automatically performs a number of actions in the page onReady event:
+        <ol>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.Client.html' target='none'>jabberwerx.Client</a>.</li>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.PubSubController.html' target='none'>jabberwerx.PubSubController</a> for controlling the publish-subscribe.</li>
+        </ol>
+        The example also demonstrates (based on user actions like button clicks) additional PubSub functionality available within CAXL:
+        <ul>
+            <li><div>Connecting as username and password to a binding URL</div>
+                 &nbsp;&nbsp;NOTE: the <a href='./connectexample.html' target='none'>Simple Client Connection</a> example is the best source for connection information.</li>
+            <li><a href='../../doc/api/symbols/jabberwerx.PubSubNode.html#createNode' target='none'>Creating a new node.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.PubSubNode.html#subscribe' target='none'>Subscribing to a node.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.PubSubNode.html#unsubscribe' target='none'>Unsubscribing from a node.</a></li>
+            <li>Registering for the <a href='../../doc/api/jabberwerxEvents.html#jabberwerx.PubSubNode' target='none'>jabberwerx.PubSubNode pubsubItemsChanged event</a> to retrieve items that have been published to the forum.</li>
+        </ul>
+        <h3>In Action</h3>
+        <p>Instructions for using this example:</p>
+        <ul>
+            <li>Click the "Connect" button to connect the client to the server.</li>
+            <li>Change activity in User Activity dropdown.</li>
+            <li>Any items that are changed will get published under Activity Items area of this page.</li>
+        </ul>
+
+        <table align="center" border="1"><tr><td>
+            <table align="center" border="0">
+                <!-- login HTML will be inserted here -->
+                <tr><td colspan="2" id="conn-data"></td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr>
+                    <td><label for="useractivity">User Activity: </label><td>
+                    <td>
+                        <select id="useractivity">
+                            <option value="0">inactive</option>
+                            <option value="1">in a meeting</option>
+                            <option value="2">on the phone</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr><td colspan=2>Activity Items:</td></tr>
+                <tr>
+                    <td colspan=2>
+                        <textarea cols=40 rows=3 id="receivedActivityItems" readonly="readonly"></textarea>
+                    </td>
+                </tr>
+            </table>
+        </td></tr></table>
+    </body>
+</html>

@@ -1,0 +1,26 @@
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+public class Account{
+	/*
+	 * */
+	public ArrayList<User> usersCredentials = new ArrayList<User>();
+	public void addUnixUser(String username, String password){
+		this.usersCredentials.add(new User(username,password));
+	}
+	public void removeUser(UnixUser user){
+		this.usersCredentials.remove(user);
+	}
+	}
+
+class User{
+	String userName, userPassword;
+	User(String userName, String userPassword){
+		this.userName=userName;
+		this.userPassword=userPassword;
+	}
+}
+
+
+
+

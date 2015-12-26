@@ -1,0 +1,234 @@
+<!--
+/**
+ * filename:        deploymentGuide.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2012 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cisco AJAX XMPP Library Deployment Guide</title>
+    <link rel="stylesheet" type="text/css" href="jabberwerx.css" />
+</head>
+<body class="border">
+
+<table width="90%">
+<tr>
+<td><img class="summary" src="cisco.gif"/></td>
+<td class="center"><h1 class="title">Cisco AJAX XMPP Library Deployment Guide</h1></td>
+</tr>
+</table>
+<div class="summary">
+<h2 align="center">
+<br/>
+Web 2.0 library for XMPP-based Instant Messaging, Availability and Roster Management
+<br/><br/>
+</h4>
+</div>
+<br/>
+
+<h2>Overview</h2>
+<p>
+The Cisco AJAX XMPP Library is a client-side JavaScript library that runs in a browser. The BOSH server supports the client requests using the
+<a href="http://xmpp.org/extensions/xep-0124.html">BOSH</a> interface. Essentially BOSH allows for bidirectional communication between the client
+and server by efficiently using multiple synchronous HTTP request/response pairs without requiring the use of frequent polling.
+The client and server exchange data using XMPP messages that are sent as HTTP POSTs to the BOSH service.
+</p>
+
+<table width="90%">
+<tr>
+<td><img class="image" src="jwClientServer.png"/></td>
+</tr>
+<tr>
+<td class="center"><h3 class="center">Figure - Logical client/server architecture</h3></td>
+</tr>
+</table>
+
+<p>
+By default the BOSH service is available at the URL <code>http://some-bosh-server:7335/httpbinding</code> on the BOSH server. To test that the
+BOSH service is up and running, enter the BOSH URL into a browser. You should receive a HTML page with a HTTP 200 'OK' message along with information about the BOSH protocol. This indicates that
+BOSH is running. Note that you should not receive a HTTP 404 'Not Found' error.
+
+<hr/>
+<h2>Deployment</h2>
+<p>
+Cisco distributes the Cisco AJAX XMPP Library as a zip file. The doc directory contains the documentation and samples
+and the themes directory contains the default stylesheet and images for the UI library. To deploy the Cisco AJAX XMPP Library you need to package the JavaScript files and the resources directory as part of your web application and deploy it to your
+web server.
+<br><br>
+There are two deployment models:
+<br><br>CORS (recommended)
+<br>Proxy Setup
+
+<br><br>Both of these are described below:<br>
+
+<h2>CORS - (Cross Origin Resource Sharing)</h2>
+
+<p>
+If your app is running inside a web browser you will find that browsers are typically very restrictive in where they let apps connect to. In particular they honor a "same-origin" policy, and prevent apps from connecting to any domain/port other than the one they were served from.
+<p>
+This means that http://example.com/app.js can connect to a BOSH server at http://example.com/http-bind but not to http://other.example.com/http-bind and not http://example.com:5280/http-bind.
+</p>
+
+<p>
+This specification allows web servers to tell web browsers that cross-domain requests are ok and permitted.
+Support for this standard is implemented in most modern browsers (Firefox 3.5+, Safari 4+, Google Chrome 2+, and Internet Explorer 8+), and is implemented in many XMPP servers, including CUP and Connect Cloud.</p>
+</p>
+
+<p>Specify the absolute URL to the BOSH server in the "httpBindingURL" configuration properties (either globally or as passed to Client.connect):</p>
+
+<pre class="codebox">
+var connectArgs = {
+    httpBindingURL: "https://im1.ciscowebex.com/http-bind"
+};
+client.connect(userJid, password, connectArgs);
+</pre>
+
+<p>
+Note:<br>Cloud deployment uses CORS against a URL such as https://im1.ciscowebex.com/http-bind. Also, an important thing to note here is that cloud uses 'https' only.
+</p>
+
+<h4>Cloud Lookup</h4>
+<p>
+You can use the 'host' or 'dig' command to determine the approriate cluster for cloud deployment.
+Syntax:<br><br>
+host [ -aCdlnrTwv ] [ -c class ] [ -N ndots ] [ -R number ] [ -t type ] [ -W wait ] name [ server ]
+<br><br>
+dig [ @server ] [ -b address ] [ -c class ] [ -f filename ] [ -k filename ] [ -p port# ] [ -t type ] [ -x addr ] [ -y name:key ] [ name ] [ type ] [ class ] [ queryopt... ]
+
+	<pre class="codebox">
+	host -t srv _xmpp-client._tcp.&ltdomain&gt
+   	host -t a &lttarget from SRV&gt</pre>
+</p>
+
+<p style="font-size: larger">
+<strong>Note:</strong><br/>Internet Explorer requires the http binding URL must be targeted to the same scheme as the hosting page.
+This means that if your AJAX page is at http://example.com, then your httpBindingURL must also begin with HTTP. Similarly, if your AJAX page is at https://example.com, then your httpBindingURL must also begin with HTTPS. This restriction is for IE only and is resolved in IE 10.
+</p>
+
+<h2>Proxy Setup</h2>
+If the recommended CORS setup is not feasible, then you can take this approach, keep in mind that a proxy setup will not scale as well a BOSH setup.
+<br>Create a HTTP proxy on your web server to proxy all BOSH requests from the Cisco AJAX XMPP client to the BOSH server.
+The following instructions outline how to achieve this using <a href="http://httpd.apache.org/">Apache</a> and
+<a href="http://www.nginx.org/">nginx</a>.
+<h3>Configuring the Apache Web Server</h3>
+In this configuration example, we use <code>http://example.com/httpbinding</code> as the proxy URL to create for your web server. Any requests to that URL are
+forwarded to <code>http://some-bosh-server.com:7335/httpbinding</code>, and any data received because of those requests are passed on
+to the web browser as if it's coming from <code>http://example.com/httpbinding</code>.
+This procedure describes how to configure the HTTP proxy:
+<ol>
+<li>
+You need to create a reverse proxy URL on your web server to point to the BOSH URL on the BOSH server e.g.
+<br/>'<code>/httpbinding</code>' <code>==&gt;</code> '<code>http://some-bosh-server.com:7335/httpbinding</code>'.
+<p>To do so, add the following entry in the main Apache config file <code>httpd.conf</code>:</p>
+<pre class="codebox">
+ProxyPass /httpbinding http://some-bosh-server.com:7335/httpbinding keepalive=On disablereuse=Off
+</pre>
+</li>
+<li>
+Also in <code>httpd.conf</code>, enable the following modules.You can do this either by adding these lines or by removing the comment tags if they already exist but are commented out.
+<pre class="codebox">
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule rewrite_module modules/mod_rewrite.so
+</pre>
+</li>
+<li>
+Restart the Apache server for the changes to take effect.
+</li>
+</ol>
+<h4>Enabling SSL between the Proxy and the BOSH Server</h4>
+<img class="image" src="jwSSLProxy.png"/>
+<p/>
+In the case where the BOSH interface is SSL enabled, your proxy must be able to encrypt requests to and from the CUP server.
+In addition to the steps highlighted in the above section, the following steps need
+to be completed.
+<ol>
+<li>
+Modify the ProxyPass URL in the <code>httpd.conf</code> file should be modified to specify https as the
+protocol rather than http.
+<pre class="codebox">
+ProxyPass /httpbinding https://some-bosh-server.com:7335/httpbinding keepalive=On disablereuse=Off
+</pre>
+</li>
+<li>Enable the ssl module also in the <code>httpd.conf</code> file.
+<pre class="codebox">
+LoadModule proxy_module modules/mod_ssl.so
+</pre>
+</li>
+<li>
+The <code>httpd.conf</code> file should be modified to activate the SSLProxyEngine.
+<pre class="codebox">
+SSLProxyEngine on
+</pre>
+</li>
+</ol>
+Ensure you restart the Apache server for the changes to take effect.
+<h3>nginx Web Server</h3>
+nginx is a fast, lightweight web server, which is particularly easy to set up for proxying HTTP and serving simple static files. Its strengths
+match the needs of most Cisco AJAX XMPP Library deployments. To create a proxy URL, you need to add the following entry to the server configuration in the main
+nginx configuration file <code>nginx.conf</code>.
+<pre class="codebox">
+server {
+    .......
+
+    location /httpbinding {
+        access_log off;
+        proxy_pass http://some-bosh-server:7335/httpbinding;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+</pre>
+Restart the nginx server for the changes to take effect.
+
+<h3>Testing the Proxy Setup</h3>
+To test your proxy setup, go to the URL <code>http://example.com/httpbinding</code> in your web browser. You should receive a HTML page with a HTTP 200 'OK' message along with information about the BOSH protocol. This indicates that
+BOSH is running and setup correctly. You should get the same page if you try to go to the URL
+<code>http://some-bosh-server.com:7335/httpbinding</code> directly. If you get a HTTP 404 'Not Found' error, this means your
+web server is not proxying the request correctly.
+
+<br/>
+
+<hr>
+<h5>
+    <p>THE SPECIFICATIONS AND INFORMATION REGARDING THE PRODUCTS IN THIS
+      MANUAL ARE SUBJECT TO CHANGE WITHOUT NOTICE. ALL STATEMENTS, INFORMATION, AND
+      RECOMMENDATIONS IN THIS MANUAL ARE BELIEVED TO BE ACCURATE BUT ARE PRESENTED
+      WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. USERS MUST TAKE FULL
+      RESPONSIBILITY FOR THEIR APPLICATION OF ANY PRODUCTS.
+    </p>
+        <p>THE SOFTWARE LICENSE AND LIMITED WARRANTY FOR THE ACCOMPANYING PRODUCT
+      ARE SET FORTH IN THE INFORMATION PACKET THAT SHIPPED WITH THE PRODUCT AND ARE
+      INCORPORATED HEREIN BY THIS REFERENCE. IF YOU ARE UNABLE TO LOCATE THE SOFTWARE
+      LICENSE OR LIMITED WARRANTY, CONTACT YOUR CISCO REPRESENTATIVE FOR A COPY.
+    </p>
+        <p>The Cisco implementation of TCP header compression is an adaptation of
+      a program developed by the University of California, Berkeley (UCB) as part of
+      UCB's public domain version of the UNIX operating system. All rights reserved.
+      Copyright &#169; 1981, Regents of the University of California.
+    </p>
+        <p>NOTWITHSTANDING ANY OTHER WARRANTY HEREIN, ALL DOCUMENT FILES AND
+      SOFTWARE OF THESE SUPPLIERS ARE PROVIDED "AS IS" WITH ALL FAULTS. CISCO AND THE
+      ABOVE-NAMED SUPPLIERS DISCLAIM ALL WARRANTIES, EXPRESSED OR IMPLIED, INCLUDING,
+      WITHOUT LIMITATION, THOSE OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+      AND NONINFRINGEMENT OR ARISING FROM A COURSE OF DEALING, USAGE, OR TRADE
+      PRACTICE.
+    </p>
+        <p>IN NO EVENT SHALL CISCO OR ITS SUPPLIERS BE LIABLE FOR ANY INDIRECT,
+      SPECIAL, CONSEQUENTIAL, OR INCIDENTAL DAMAGES, INCLUDING, WITHOUT LIMITATION,
+      LOST PROFITS OR LOSS OR DAMAGE TO DATA ARISING OUT OF THE USE OR INABILITY TO
+      USE THIS MANUAL, EVEN IF CISCO OR ITS SUPPLIERS HAVE BEEN ADVISED OF THE
+      POSSIBILITY OF SUCH DAMAGES.
+    </p><p>Any Internet Protocol (IP) addresses and phone numbers used in this document are not intended to be actual addresses and phone numbers. Any examples, command display output, network topology diagrams, and other figures included in the document are shown for illustrative purposes only. Any use of actual IP addresses or phone numbers in illustrative content is unintentional and coincidental.</p>
+    <p>
+        <p>Cisco and the Cisco logo are trademarks or registered trademarks of Cisco and/or its affiliates in the U.S. and other countries. To view a list of Cisco trademarks, go to this URL:<a href='http://www.cisco.com/go/trademarks' target='blank'>http://www.cisco.com/go/trademarks</a>. Third-party trademarks mentioned are the property of their respective owners. The use of the word partner does not imply a partnership relationship between Cisco and any other company. (1110R)</p>
+        &#169; 2014 Cisco Systems, Inc. All rights reserved.
+    </p>
+</h5>
+<body>
+</html>

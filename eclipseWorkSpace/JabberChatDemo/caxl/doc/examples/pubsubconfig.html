@@ -1,0 +1,201 @@
+<!--
+/**
+ * filename:        pubsubconfig.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>PubSub Configuration Example</title>
+        <style>
+            .cfg_frm {
+                display: none;
+            }
+            .config_div {
+                display: none;
+            }
+            .logout {
+                display: none;
+                margin-bottom: 10px;
+            }
+        </style>
+        <script type="text/javascript" src="../../jabberwerx.js"></script>
+        <script type="text/javascript">
+            var demo_config = {
+                httpBindingURL: "/httpbinding",
+                username: "jwtest0",
+                domain: "example.com",
+                password: "test",
+                pubsub: "info-broker.example.com", //pubsub component JID
+                node: "test/bookmarks"
+            };
+
+            jabberwerx.$(document).ready(function() {
+                var client; //our JWA client
+                var exnode; //the "example" node to be configured
+
+                //helper func to update auth and fetch status
+                var logit = function(str, err) {
+                    if (err) {
+                        str += " " + jabberwerx.errorReporter.getMessage(err);
+                    }
+                    jabberwerx.$(".status").text(str);
+                    jabberwerx.util.debug.log(str);
+                };
+                //helper func to toggle between config fetching and applying states
+                var toggleFetch = function(fetch) {
+                    if (fetch) {
+                        jabberwerx.$(".cfg_frm").show();
+                        jabberwerx.$("#fetch_cfg").attr("disabled", "disabled");
+                        jabberwerx.$("#apply_cfg").removeAttr("disabled");
+                        jabberwerx.$("#cancel_cfg").removeAttr("disabled");
+                        logit("Ready to apply or cancel configuration");
+                    } else {
+                        jabberwerx.$(".cfg_frm").hide();
+                        jabberwerx.$("#fetch_cfg").removeAttr("disabled");
+                        jabberwerx.$("#apply_cfg").attr("disabled", "disabled");
+                        jabberwerx.$("#cancel_cfg").attr("disabled", "disabled");
+                        logit("Ready to fetch configuration...")
+                    }
+                }
+                //be nice and pre-populate fields from defaults
+                jabberwerx.$("#username").val(demo_config.username);
+                jabberwerx.$("#password").val(demo_config.password);
+                //create our CAXL client
+                client = new jabberwerx.Client('caxl-pubsub-example');
+                //create example node
+                exnode = new jabberwerx.PubSubController(client).
+                               node(demo_config.node, demo_config.pubsub);
+
+                //todo convert to onconnected/ondisconnected events
+                client.event("clientStatusChanged").bind(function(evt) {
+                    if (evt.data.next == jabberwerx.Client.status_connected) {
+                        toggleFetch(false);
+                        jabberwerx.$("#login_div").hide();
+                        jabberwerx.$(".config_div").show();
+                        jabberwerx.$(".logout").show();
+                    } else if (evt.data.next == jabberwerx.Client.status_disconnected) {
+                        toggleFetch(true);
+                        logit("");
+                        jabberwerx.$("#login_div").show();
+                        jabberwerx.$(".config_div").hide();
+                        jabberwerx.$(".logout").hide();
+                    }
+                });
+
+                jabberwerx.$("#login").click(function() {
+                    //connect using user supplied node and password
+                    var arg = {
+                        httpBindingURL: demo_config.httpBindingURL,
+                        successCallback: function(client) {
+                            //ensure the node we want to configure exists
+                            logit("Creating node to configure...");
+                            exnode.createNode(function (err) {
+                                //conflict error means node already exists, gtg
+                                toggleFetch(false);
+                                if (err && !jabberwerx.$(err).find("conflict").length) {
+                                    logit("An error ocurred when creating the node", err);
+                                }
+                            });
+                        },
+                        errorCallback: function(err) {
+                            logit("Login error:", err);
+                        }
+                    };
+                    client.connect(jabberwerx.$("#username").val() + "@" + demo_config.domain,
+                                   jabberwerx.$("#password").val(),
+                                   arg);
+                });
+
+                jabberwerx.$("#logout").click(function() {
+                    //disconnect
+                    client.disconnect();
+                });
+
+                jabberwerx.$("#fetch_cfg").click(function(e) {
+                    //fetch the nodes configuration
+                    logit("Fetching configuration...");
+                    exnode.fetchConfig(function(frm, err) {
+                        if (frm) {
+                            toggleFetch(true);
+                            jabberwerx.$("#frm").val(frm.getDOM().xml);
+                        } else {
+                            logit("Error fetching configuration", err);
+                        }
+                    });
+                });
+
+                jabberwerx.$("#apply_cfg").click(function(e) {
+                    //applyCOnfig requires an XDataForm. Build one from the
+                    //contents of the text area by parsing and passing DOM
+                    //through XDataForm constructor
+                    logit("Applying configuration...");
+                    try {
+                        var nb = new jabberwerx.NodeBuilder("wrapper");
+                        nb.xml(jabberwerx.$("#frm").val());
+                    } catch (ex) {
+                        logit("Configuration is not valid XML");
+                        return;
+                    }
+                    var fdom = jabberwerx.$(nb.data).find("x")[0];
+                    var xfrm = new jabberwerx.XDataForm("submit", fdom);
+
+                    exnode.applyConfig(xfrm, function(err) {
+                        if (err) {
+                            logit("An error occured attempting to apply configuration", err);
+                        } else {
+                            toggleFetch(false);
+                        }
+                    });
+                });
+
+                jabberwerx.$("#cancel_cfg").click(function(e) {
+                    //passing null to applyConfig forces a cancel
+                    logit("Canceling configuration...");
+                    exnode.applyConfig(null, function(err) {
+                        toggleFetch(false);
+                        if (err) {
+                            logit("An error ocurred canceling configuration " +
+                                  jabberwerx.errorReporter.getMessage(err) +
+                                  " Ready to fetch configuration...");
+                        }
+                    });
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <h1>PubSub Configuration Example</h1>
+        <div id="login_div">
+            <div>
+                <label for="username">Username:</label>
+                <input type="text" id="username"/>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password"/>
+            </div>
+            <div>
+                <label for="login"></label>
+                <button id="login">Login</button>
+            </div>
+        </div>
+        <div class="logout">
+            <button id="logout">Logout</button>
+        </div>
+        <div class="status">&nbsp</div>
+        <div class="config_div">
+            <button id="fetch_cfg" disabled="disabled" >Fetch</button>
+            <button id="apply_cfg"disabled="disabled" >Apply</button>
+            <button id="cancel_cfg" disabled="disabled" >Cancel</button>
+
+            <div class="cfg_frm">
+                <textarea id="frm" cols="60" rows="25"></textarea>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,118 @@
+<!--
+/**
+ * filename:        persistselfpresencedemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ Persistent Self Presence</title>
+        <link rel="stylesheet" href="../../resources/themes/default/css/styles.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+
+var demo_config = {
+    httpBindingURL: "/httpbinding",
+    domain: "example.com",
+    username: "jwtest1",
+    password: "test",
+    maxGraphAge: 30,
+    unsecureAllowed: false,
+    logPersistence: false
+};
+
+jabberwerx.util.config.logPersistence = demo_config.logPersistence;
+jabberwerx.util.setMaxGraphAge(demo_config.maxGraphAge);
+jabberwerx._config.unsecureAllowed = demo_config.unsecureAllowed;
+
+jabberwerx.ui.SelfPresenceDemo = jabberwerx.ui.JWApp.extend({
+    appCreate: function() {
+        this.client = new jabberwerx.Client("" + new Date().getTime());
+
+        this.client.event("clientStatusChanged").bind(this.invocation("_onClientStatusChanged"));
+
+        this.prsView = new jabberwerx.ui.SelfPresenceView(this.client);
+        this.prsView.allowUnavailable = true;
+
+        this.prsView.setStatusChoices(
+                "available",
+                this.prsView.getStatusChoices("available").concat("Custom..."));
+        this.prsView.setStatusChoices(
+                "away",
+                this.prsView.getStatusChoices("away").concat("Custom..."));
+        this.prsView.setStatusChoices(
+                "dnd",
+                this.prsView.getStatusChoices("dnd").concat("Custom..."));
+
+        this.prsView.event("presenceSelected").bind(this.invocation("_onPresenceSelected"));
+    },
+
+    appInitialize: function() {
+        // iterate through the entity set
+        this.prsView.render().appendTo("div#my_presence");
+        this.prsView.width(250);
+    },
+
+    destroy: function() {
+        this.client.destroy();
+        this.client = null;
+    },
+
+    _onClientStatusChanged: function(evt) {
+        var data = evt.data;
+        switch (evt.data.next) {
+            case jabberwerx.Client.status_connected:
+                this.prsView._sendPresence(data.show, data.status, data.priority);
+                // fall through
+            case jabberwerx.Client.status_disconnected:
+                evt.notifier.unbind(arguments.callee);
+        }
+    },
+
+    _onPresenceSelected: function(evt) {
+        var view = evt.source;
+        var client = view.client;
+        var data = evt.data;
+        var login = evt.data.status != "unavailable" && !evt.source.client.isConnected();
+
+        if (data.status == "Custom...") {
+            var status = prompt("Enter status message for " + evt.data.show, "");
+
+            if (!status) {
+                view.update();
+                return true;
+            }
+            var choices = view.getStatusChoices(evt.data.show);
+            var pos = jabberwerx.$.inArray("Custom...", choices);
+            if (pos > 0) {
+                choices.splice(pos, 0, status);
+            } else if (jabberwerx.$.inArray(status, choices) == -1) {
+                choices.push(status);
+            }
+
+            view.setStatusChoices(data.show, choices);
+            data.status = status;
+        }
+
+        if (login) {
+            // connectArgs object sent through to client.connect method.
+            var connectArgs = {httpBindingURL: demo_config.httpBindingURL};
+            client.connect(demo_config.username + "@" + demo_config.domain, demo_config.password);
+        }
+    }
+}, "jabberwerx.ui.SelfPresenceDemo");
+
+jabberwerx.app.persistedApplicationClass('jabberwerx.ui.SelfPresenceDemo');
+
+        </script>
+    </head>
+    <body>
+        <h2>Demo for Self Presence</h2>
+        <div id="my_presence">&nbsp;</div>
+        <div id="countdown"/>
+    </body>
+</html>

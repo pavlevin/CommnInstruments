@@ -1,0 +1,181 @@
+<!--
+/**
+ * filename:        echoClient.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library - Echo Client Demo</title>
+        <style>
+            .demo div{
+                margin: 10px 0px;
+            }
+        </style>
+        <script src="http://code.jquery.com/jquery-1.7.1.js"></script>
+        <script type="text/javascript" src="../../jabberwerx.min.js"></script>
+        <script type="text/javascript">
+
+            // config
+            demo_config = {
+                httpBindingURL: "/httpbinding",
+                domain: "example.com",
+                username: "",
+                password: "",
+                sendee: "jwtest1"
+            };
+
+            jabberwerx.$(document).ready(function() {
+                jabberwerx.util.debug.log("CAXL echo client demo (version: " + jabberwerx.version + ")");
+                jabberwerx.$("#logout-div").hide();
+
+                jabberwerx.$("#username").val(demo_config.username);
+                jabberwerx.$("#password").val(demo_config.password);
+                jabberwerx.$("#to").val(demo_config.sendee);
+
+                var client = new jabberwerx.Client('echo client');
+
+                var connectedJID = function() {
+                    return client.connectedUser.jid + "/" + client.resourceName;
+                };
+                var enableEcho = function(enable) {
+                    if (!enable) {
+                        jabberwerx.$("#echo-to").val("");
+                        jabberwerx.$("#echo-text").val("");
+                        jabberwerx.$("#echo").attr("disabled", "true");
+                    } else {
+                        jabberwerx.$("#echo").removeAttr("disabled")
+                    }
+                };
+
+                //caxl event binding
+                client.event("clientStatusChanged").bind(function(evt) {
+                    if (evt.data.next == jabberwerx.Client.status_connected) {
+                        jabberwerx.$("#login-div").hide();
+                        enableEcho(false);
+                        jabberwerx.$("#logout-div").show();
+                        jabberwerx.$("#jid-div").text("Connected as " + connectedJID());
+                    }else if (evt.data.next == jabberwerx.Client.status_disconnected) {
+                        jabberwerx.$("#login-div").show();
+                        jabberwerx.$("#logout-div").hide();
+                        jabberwerx.$("#jid-div").html("");
+                    } else {
+                        jabberwerx.$("#jid-div").text(client.getClientStatusString(evt.data.next));
+                    }
+                });
+                client.event("messageReceived").bind(function(evt) {
+                    var message = evt.data;
+                    var body = message.getBody();
+                    if (body) {
+                        enableEcho(true);
+                        jabberwerx.$("#echo-text").val(body);
+                        jabberwerx.$("#echo-to").val(message.getFrom());
+                        jabberwerx.$("#jid-div").text("Received message from " + message.getFrom());
+                    }
+                });
+
+                //html event binding
+                jabberwerx.$("#login").click(function() {
+                    try {
+                        demo_config.username = jabberwerx.$("#username").val() + "@" + demo_config.domain;
+                        demo_config.password = jabberwerx.$("#password").val();
+
+                                    // connectArgs object sent through to client.connect method.
+                        var connectArgs = {
+                            httpBindingURL: demo_config.httpBindingURL,
+                            // When an error occurs we display it in the connection_status element
+                            errorCallback:  function(err) {
+                                var tstr = jabberwerx.util.serializeXML(err);
+                                jabberwerx.util.debug.warn(tstr);
+                                jabberwerx.$("#jid-div").text("Could not connect: " + tstr);
+                            }
+                        };
+
+                        // Attempt to connect to the XMPP/BOSH server
+                        client.connect(demo_config.username, demo_config.password, connectArgs);
+                    } catch (ex) {
+                        jabberwerx.util.debug.warn(ex.message);
+                        jabberwerx.$("#jid-div").text("Could not connect: " + ex.message);
+                    }
+                });
+                 jabberwerx.$("#logout").click(function() {
+                    client.disconnect();
+                    jabberwerx.$("#jid-div").text("");
+                });
+                jabberwerx.$("#echo").click(function () {
+                    client.sendMessage(jabberwerx.$("#echo-to").val(), jabberwerx.$("#echo-text").val());
+                    enableEcho(false);
+                    jabberwerx.$("#jid-div").text("Connected as " + connectedJID());
+                });
+                jabberwerx.$("#send").click(function () {
+                    //be nice and handle user just inputting a node.
+                    try {
+                        var jid = jabberwerx.JID.asJID(jabberwerx.$("#to").val());
+                        if (!jid.getNode() && !jid.getResource()) {
+                            jid = jabberwerx.JID.asJID(jid.toString() + '@' + demo_config.domain + '/' + client.resourceName);
+                        }
+                        if (jid.toString() != jabberwerx.$("#to").val()) {
+                            jabberwerx.$("#to").val(jid.toString());
+                        }
+                        client.sendMessage(jid.toString(), jabberwerx.$("#message").val());
+                        jabberwerx.$("#jid-div").text("Connected as " + connectedJID());
+                    } catch (ex) {
+                        jabberwerx.util.debug.warn(jabberwerx.$("#to").val() + " is not a valid JID or node");
+                    }
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="demo">
+            <div id="login-div">
+                <table><tbody>
+                    <tr>
+                        <td><label for="username">Username:</label></td>
+                        <td><input type="text" id="username"/></td>
+                    </tr>
+                    <tr>
+                        <td><label for="password">Password:</label></td>
+                        <td><input type="password" id="password"/></td>
+                    </tr>
+                </tbody></table>
+                <div>
+                    <label for="login"></label>
+                    <button id="login">Login</button>
+                </div>
+            </div>
+            <div id="logout-div">
+                <table><tbody>
+                    <tr>
+                        <td>
+                            <button id="send">Send</button>
+                            <input id="message" type="text" value="Hey Nonny Nonny"/>
+                        </td>
+                        <td>
+                            <label for="to">To</label>
+                            <input type="text" id="to"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button id="echo"  disabled="true">Echo</button>
+                            <input type="text" id="echo-text" value="" readonly="true"  disabled="true"/>
+                        </td>
+                        <td>
+                            <label for="echo-to">To</label>
+                            <input type="text" id="echo-to" value="" readonly="true" disabled="true"/>
+                        </td>
+                    </tr>
+                </tbody></table>
+                <div>
+                    <button id="logout">Logout</button>
+                </div>
+            </div>
+            <div id="jid-div">&nbsp;</div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,144 @@
+<!--
+/**
+ * filename:        ciscoExtensionGuide.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2010 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cisco AJAX XMPP Library :: Cisco-Specific Add-ons</title>
+    <link rel="stylesheet" type="text/css" href="jabberwerx.cisco.css" />
+</head>
+<body class="border">
+
+<table width="90%">
+<tr>
+<td><img class="summary" src="cisco.gif"/></td>
+<td class="center"><h1 class="title">Cisco AJAX XMPP Library :: Cisco-Specific Add-ons</h1></td>
+</tr>
+</table>
+<div class="summary">
+<h2 align="center">
+<br/>
+Web 2.0 library for XMPP-based Instant Messaging, Availability and Roster Management
+<br/><br/>
+</h4>
+</div>
+<br/>
+
+<h2>Introduction</h2>
+<p>
+This module provides a number of Cisco-specific extensions to the Cisco AJAX XMPP Library.
+</p>
+
+<br/>
+<hr/>
+<br/>
+
+<h2>Installation</h2>
+
+<p>
+To install this module, copy the "jabberwerx.cisco.js" file into the same directory that contains "jabberwerx.js" and "jabberwerx.ui.js". Then modify your HTML pages to load "jabberwerx.cisco.js" after "jabberwerx.js" or "jabberwerx.ui.js".
+</p>
+
+<br/>
+<hr/>
+<br/>
+
+<h2>Quick Contacts</h2>
+<h3>Introduction</h3>
+<p>
+The quick contacts feature provides support for managing temporary subscriptions to other contacts. This support is provided via a controller (jabberwerx.cisco.QuickContactController) and a model (jabberwerx.cisco.QuickContact). The controller provides methods for subscribing to, and unsubscribing from quick contacts. The model provides a Contact-based reprenstation of a QuickContact, allowing most other features of the Cisco AJAX XMPP Library to operate on QuickContacts as if it were another person in the roster.
+</p>
+
+<h3>Usage</h3>
+
+<p>
+To use QuickContacts, create a QuickContactController:
+<pre class="code">
+    var quickCtrl = client.controller.quickContact ||
+                    new jabberwerx.cisco.QuickContactController(client);
+</pre>
+</p>
+
+<p>
+Once the client is connected, to add a quick contact, call QuickContactController's <tt>subscribe(jid)</tt> method:
+<pre class="code">
+    quickCtrl.subscribe("user-a@example.com");
+    var contact = client.entitySet.entity("user-a@example.com");
+</pre>
+There should now be an entity for "user-a@example.com" in the client's entitySet. Usually this will be an instance of "jabberwerx.cisco.QuickContact". Now all presence changes for that contact are evented through the standard "resourcePresenceChanged" and "primaryPresenceChanged" events.
+</p>
+
+<p>
+To remove a quick contact, call the entity's <tt>remove()</tt> method:
+<pre class="code">
+    contact.remove();
+</pre>
+Alternatively, a quick contact can be removed by JID via the QuickContactController's <tt>unsubscribe(jid)</tt> method:
+<pre class="code">
+    quickCtrl.unsubscribe("user-a@example.com");
+</pre>
+</p>
+
+<p>
+Once the client disconnects, all quick contacts are removed from the client's entitySet.
+</p>
+
+<h3>Interaction with Roster</h3>
+<p>
+The quick contacts feature is meant to supplement the core roster features. As such, certain methods may behave slightly differently to accomodate roster-based contacts:
+<ul>
+    <li><tt>QuickContactController.subscribe</tt> may not always create QuickContact entities. If subscribing to an "observer" roster contact (e.g. a contact that the user does not receive presence for, but that contact receives the user's presence), the existing contact entity is updated to indicate there is also a temporary presence subscription.</li>
+    <li><tt>QuickContactController.unsubscribe</tt> may not always destroy QuickContact entities. If unsubscribing from an "observer" roster contact (e.g. a contact that the user does not receive presence for, but that contact receives the user's presence), the existing contact entity is updated to indicate there is no longer a temporary presence subscription.</li>
+    <li>Any attempts to subscribe to a durable roster contact (e.g. a contact which the user already has a persistent presence subscription to) are denied with an exception. The reason for the exception is to explicitly inform the user that a QuickContact subscription could not be made. It is up to the developer using the library to check for a roster contact that isn't a 'to' or 'both' subscription before attempting a <tt>QuickContactController.subscribe</tt>.</li>
+    <li>Quick contacts can be promoted to roster contacts by adding the quick contact to the user's roster. All temporary subscription data is maintained until the roster contact's persistent subscriptions are established.</li>
+</ul>
+
+</p>
+
+<br/>
+<hr/>
+<br/>
+<h5>
+    <p>THE SPECIFICATIONS AND INFORMATION REGARDING THE PRODUCTS IN THIS
+      MANUAL ARE SUBJECT TO CHANGE WITHOUT NOTICE. ALL STATEMENTS, INFORMATION, AND
+      RECOMMENDATIONS IN THIS MANUAL ARE BELIEVED TO BE ACCURATE BUT ARE PRESENTED
+      WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. USERS MUST TAKE FULL
+      RESPONSIBILITY FOR THEIR APPLICATION OF ANY PRODUCTS.
+    </p>
+        <p>THE SOFTWARE LICENSE AND LIMITED WARRANTY FOR THE ACCOMPANYING PRODUCT
+      ARE SET FORTH IN THE INFORMATION PACKET THAT SHIPPED WITH THE PRODUCT AND ARE
+      INCORPORATED HEREIN BY THIS REFERENCE. IF YOU ARE UNABLE TO LOCATE THE SOFTWARE
+      LICENSE OR LIMITED WARRANTY, CONTACT YOUR CISCO REPRESENTATIVE FOR A COPY.
+    </p>
+        <p>The Cisco implementation of TCP header compression is an adaptation of
+      a program developed by the University of California, Berkeley (UCB) as part of
+      UCB's public domain version of the UNIX operating system. All rights reserved.
+      Copyright &#169; 1981, Regents of the University of California.
+    </p>
+        <p>NOTWITHSTANDING ANY OTHER WARRANTY HEREIN, ALL DOCUMENT FILES AND
+      SOFTWARE OF THESE SUPPLIERS ARE PROVIDED "AS IS" WITH ALL FAULTS. CISCO AND THE
+      ABOVE-NAMED SUPPLIERS DISCLAIM ALL WARRANTIES, EXPRESSED OR IMPLIED, INCLUDING,
+      WITHOUT LIMITATION, THOSE OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+      AND NONINFRINGEMENT OR ARISING FROM A COURSE OF DEALING, USAGE, OR TRADE
+      PRACTICE.
+    </p>
+        <p>IN NO EVENT SHALL CISCO OR ITS SUPPLIERS BE LIABLE FOR ANY INDIRECT,
+      SPECIAL, CONSEQUENTIAL, OR INCIDENTAL DAMAGES, INCLUDING, WITHOUT LIMITATION,
+      LOST PROFITS OR LOSS OR DAMAGE TO DATA ARISING OUT OF THE USE OR INABILITY TO
+      USE THIS MANUAL, EVEN IF CISCO OR ITS SUPPLIERS HAVE BEEN ADVISED OF THE
+      POSSIBILITY OF SUCH DAMAGES.
+    </p><p>Any Internet Protocol (IP) addresses and phone numbers used in this document are not intended to be actual addresses and phone numbers. Any examples, command display output, network topology diagrams, and other figures included in the document are shown for illustrative purposes only. Any use of actual IP addresses or phone numbers in illustrative content is unintentional and coincidental.</p>
+    <p>
+        <p>Cisco and the Cisco logo are trademarks or registered trademarks of Cisco and/or its affiliates in the U.S. and other countries. To view a list of Cisco trademarks, go to this URL:<a href='http://www.cisco.com/go/trademarks' target='blank'>http://www.cisco.com/go/trademarks</a>. Third-party trademarks mentioned are the property of their respective owners. The use of the word partner does not imply a partnership relationship between Cisco and any other company. (1110R)</p>
+        &#169; 2014 Cisco Systems, Inc. All rights reserved.
+    </p>
+</h5>
+
+</body>
+</html>

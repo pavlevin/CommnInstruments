@@ -1,0 +1,415 @@
+import java.util.Scanner;
+import java.util.Arrays;
+import java.lang.Math;
+import javax.xml.bind.DatatypeConverter;
+
+import java.nio.ByteBuffer;
+import java.io.File;
+import java.io.IOException;
+
+
+public class Encode {
+    
+    private final static String     // Directories paths
+        dirExe = (new File("").getAbsolutePath()).replaceAll("\\\\","/") + "/",
+        dirIO = dirExe + "io/";
+    private final static File       // Input/output files
+        fileOpenText = new File(dirIO + "EncOpenText.txt"),
+        fileKey = new File(dirIO + "EncKey.txt"),
+        fileMessage = new File(dirIO + "EncMessage.txt");
+    private final static boolean
+        flagConsoleInput = false,
+        flagConsoleOutput =true,
+        flagFileInput = true,
+        flagFileOutput = true,
+        flagDecodeTest = false;
+    private final static int textWidth = 60;
+    private final static byte[][] sTab = {  // Substituttions table
+            // ID: id-Gost28147-89-CryptoPro-A-ParamSet
+        { 9, 6, 3, 2, 8,11, 1, 7,10, 4,14,15,12, 0,13, 5},
+        { 3, 7,14, 9, 8,10,15, 0, 5, 2, 6,12,11, 4,13, 1},
+        {14, 4, 6, 2,11, 3,13, 8,12,15, 5,10, 0, 7, 1, 9},
+        {14, 7,10,12,13, 1, 3, 9, 0, 2,11, 4,15, 8, 5, 6},
+        {11, 5, 1, 9, 8,13,15, 0,14, 4, 2, 3,12, 7,10, 6},
+        { 3,10,13,12, 1, 2, 0,11, 7, 5, 9, 4, 8,15,14, 6},
+        { 1,13, 2, 9, 7,10, 6, 0, 8,12, 4, 5,15, 3,11,14},
+        {11,10,15, 5, 0,12,14, 8, 6, 2, 3, 9, 1, 7,13, 4}
+    };
+
+    public static void main(String[] args) {
+        
+        /*             //    Lower-upper bits test 
+        ByteBuffer dbuf;
+        dbuf = ByteBuffer.allocate(4);
+        dbuf.putInt(700);
+        byte[] at = dbuf.array();
+        dbuf = ByteBuffer.allocate(4);
+        dbuf.putInt(118);
+        byte[] bt = dbuf.array();
+        byte[] ct = byteArraySummator(at,bt,500);
+        
+        System.out.println(Arrays.toString(at));
+        System.out.println(Arrays.toString(bt));
+        System.out.println(Arrays.toString(ct));
+        
+        ByteBuffer wrapped = ByteBuffer.wrap(ct);
+        System.out.println(wrapped.getInt());
+        */
+        
+        /*
+        byte[] at = {-100,2};
+        byte[] bt = byteSplit(at);
+        byte[] ct = byteDesplit(bt);
+        System.out.println(Arrays.toString(at));
+        System.out.println(Arrays.toString(bt));
+        System.out.println(Arrays.toString(ct));
+        */
+                
+        //Input
+        String txt = new String();
+        String key = new String();
+        String excCause = new String();     // Exception cause, if any
+        if (flagConsoleInput) {
+            // Console input
+            String[] inputTxtKey = consoleInput();
+            txt = inputTxtKey[0];
+            key = inputTxtKey[1];
+        }
+        else {
+            if (flagFileInput) {
+                // File input
+                try {
+                    excCause = fileOpenText.getName();
+                    txt = StringOperation.stringArrayStretch(
+                            FileOperation.fileInput(fileOpenText));
+                    excCause = fileKey.getName();
+                    key = StringOperation.stringArrayStretch(
+                            FileOperation.fileInput(fileKey));
+                } catch (IOException e) {
+                    System.err.println("Exception caught while scanning file \'" +
+                            excCause + "\'.\n");
+                    e.printStackTrace();
+                }
+            }
+        }
+        
+        // Encoding
+        byte[] code = encodeMy(txt,key);
+        String msg = DatatypeConverter.printBase64Binary(code);
+        String[] message = StringOperation.stringWidthLimit(msg,textWidth);
+        
+        // Answer
+        if (flagConsoleOutput) {
+            // Console output
+            System.out.println("Here is the encrypted message:\n");
+            for (String line: message)
+                System.out.println(line);
+            System.out.println();
+        }
+        if (flagFileOutput) {
+            // File output
+            try {
+                excCause = fileMessage.getName();
+                FileOperation.writeStringArrayToFile(fileMessage,message,false);
+            } catch (IOException e) {
+                System.err.println("Exception caught while writing file \'" +
+                        excCause + "\'.\n");
+                e.printStackTrace();
+            }
+        }
+        
+        // Test
+        if (flagDecodeTest)
+            decodeTest(code,key);
+
+        System.out.println("Finished.");
+    }
+    
+    private static String[] consoleInput() {
+        String[] out = new String[2];
+        Scanner sc = new Scanner(System.in);
+        
+        try {
+            System.out.println("Enter a string:");
+            System.out.print("> ");
+            out[0] = sc.nextLine(); // Open text
+            System.out.println("Enter a key:");
+            System.out.print("> ");
+            out[1] = sc.nextLine(); // Key
+            return out;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("\nInvalid input data.\n");
+        } finally {
+            sc.close();
+        }
+    }
+    
+    public static byte[] encode(String txtString, String keyString) {
+        byte[] txt = txtString.getBytes();
+        byte[] key = keyString.getBytes();
+        byte[] res = new byte[txtString.length()];
+        
+        for(int i = 0; i < txt.length; i++)
+            res[i] = (byte) (txt[i] ^ key[i%key.length]);
+        
+        return res;
+    }
+    
+    public static byte[] encodeMy(String txtString, String keyString) {
+        byte[] txt = txtString.getBytes();
+        byte[] key = keyString.getBytes();
+        byte[] kek = new byte[txt.length];
+        byte[] res = new byte[txt.length];
+        
+        // Key transformation
+        kek[0] = key[0];
+        for(int j = 1; j < 32; j++) {
+            for(int i = 1; i < txt.length; i++) {
+                kek[i] = (byte) (kek[i-1] ^ key[i%key.length]);
+            }
+        }
+        // Encoding
+        for(int i = 0; i < txt.length; i++)
+            res[i] = (byte) (txt[i] ^ kek[i]);
+        
+        return res;
+    }
+    
+    public static byte[] encodeGOSTsimple(String txtString, String keyString) {
+        int keylen = 32;    // Key required length
+        int txtlen = 8;     // Open text required length
+        byte[] txtIn = txtString.getBytes();
+        byte[] keyIn = keyString.getBytes();
+        // Lengths cast
+        byte[] txt = bytesToInts(fixLength(txtIn,txtlen), 2);   // 2x(32bit)
+        byte[] key = bytesToInts(fixLength(keyIn,keylen), 8);   // 8x(32bit)
+        
+        
+        // Algorithm
+        
+        // Split open text block
+        int subtxtlen = txtlen/2;           // Subtext length
+        byte[] A = new byte[subtxtlen];
+        byte[] B = new byte[subtxtlen];
+        for (int i = 0; i < subtxtlen; i++) {
+            A[i] = txt[i+subtxtlen];        // Lower bits
+            B[i] = txt[i];                  // Upper bits
+        }
+        // Form subkeys
+        int xNum = 8;                       // Subkeys number
+        int xLen = keylen/xNum;             // Subkey length
+        byte[][] x = new byte[xNum][xLen];
+        for (int i = 0; i < xNum; i++) {
+            for (int j = 0; j < xLen; i++) {
+                x[i][j] = key[j*xLen + i];  // 8x(32bit)
+            }
+        }
+        /* Substitution blocks (S-blocks) dimensions are 8x16 */
+        // Simple substitution iterations
+        int xi;         // Actual subkey number in a round
+        for (int i = 0; i < 32; i++) {
+            long modSM1 = (long) Math.pow(2,32);    // SM1 summator module
+            // SM1 summator, 32 bit
+            if (i < 24)
+                xi = i%x.length;
+            else
+                xi = x.length - 1 - (i%x.length);
+            byte[] sumAX = byteArraySummator(A,x[xi],modSM1);   // 4x(8bit)
+            // S-block
+            byte[] toS = byteSplit(sumAX);                      // 8x(4bit)
+            byte[] fromS = new byte[toS.length];
+            for (int j = 0; j < toS.length; j++)
+                fromS[j] = sTab[j][toS[j]];
+            // Shift register
+            byte[] toShift = byteDesplit(fromS);                // 4x(8bit)
+            byte[] fromShift = bitCyclicLeftShift(toShift,11);
+            // SM2 summator, 32 bit
+            long modSM2 = (long) 2;                 // SM2 summator module
+            byte[] sumBR = byteArraySummator(B,fromShift,modSM2);
+            // A-B switch
+            if (i != 31) {
+                B = A;
+                A = sumBR;
+            }
+            else
+                B = sumBR;
+        }
+        
+        // Encrypted block output
+        for (int i = 0; i < subtxtlen; i++) {
+            out[i] = B[i];
+            out[i+subtxtlen] = A[i];
+        }
+        return out;
+    }
+    
+    private static String intToString(int n, int bits) {
+        if (bits < 1) {
+            throw new IllegalArgumentException(
+                    "\nNegative dimension requested.");
+        }
+        String s = Integer.toBinaryString(n);
+        // Set string length
+        while (s.length() < bits)
+            s = "0" + s;
+        s = s.substring(s.length()-bits,s.length());
+        return s;
+    }
+    
+    private static int[] bytesToInts(byte[] x, int dim) {
+        if (dim < 1) {
+            throw new IllegalArgumentException(
+                    "\nNegative dimension requested.");
+        }
+        int n = x.length;
+        if (dim < n) {
+            throw new IllegalArgumentException(
+                    "\nToo short int array, cannot place all bytes.");
+        }
+        String s = new String();
+        int[] out = new int[dim];
+        for (int i = n-1; i >= 0; i--) {
+            s += intToString((int) x[i],8);
+            if (i%4 == 3) {
+                out[i/4] = Integer.parseInt(s,2);
+                s = "";
+            } 
+        }
+        return out;
+    }
+        
+    private static byte[] fixLength(byte[] x, int fixTo) {
+        if (fixTo < 1) {
+            throw new IllegalArgumentException(
+                    "\nInvalid requested length value: " + fixTo + ".");
+        }
+        byte[] out = new byte[fixTo];
+        for (int i = 0; i < fixTo; i++)
+            out[i] = x[i%x.length];
+        if (out != x)
+            System.out.println("Warning! Length of an information block " +
+                    " (text or key) has been fixed while processing.");
+        return out;
+    }
+    
+    private static byte[] byteArraySummator(byte[] a, byte[] b, long module) {
+        if (a.length != b.length) {
+            throw new IllegalArgumentException("\nUnequal byte array lengths!\n" +
+                    "a.length = " + String.valueOf(a.length) + ";\n" +
+                    "b.length = " + String.valueOf(b.length) + ".\n");
+        }
+        if (module < 2) {
+            throw new IllegalArgumentException("\nInvalid summation module");
+        }
+        
+        ByteBuffer wrapped;     // Buffer to convert byte[] to long
+        ByteBuffer dbuf;        // Buffer to convert long to byte[]
+        
+        wrapped = ByteBuffer.wrap(a);
+        long aLong = (long) wrapped.getInt();   // a as a long
+        wrapped = ByteBuffer.wrap(b);
+        long bLong = (long) wrapped.getInt();   // b as a long
+        
+        long cLong = aLong + bLong;     // summation
+        while (cLong >= module)
+            cLong -= module;
+        int cInt = (int) cLong;
+        
+        dbuf = ByteBuffer.allocate(a.length);
+        dbuf.putInt(cInt);
+        byte[] c = dbuf.array();
+        return c;
+    }
+    
+    private static byte[] byteSplit(byte[] x) {
+        int n = x.length;
+        byte[] out = new byte[2*n];
+        String app = new String();
+        for (int i = 0; i < n; i++) {
+            app = Integer.toBinaryString((int) x[i]);
+            // Set string length to 8 digits
+            while (app.length() < 8)
+                app = "0" + app;
+            app = app.substring(app.length()-8,app.length());
+            // Upper bits
+            out[2*i] = (byte) Integer.parseInt(app.substring(0,4),2);
+            // Lower bits
+            out[2*i+1] = (byte) Integer.parseInt(app.substring(4,8),2);
+        }
+        return out;
+    }
+    
+    private static byte[] byteDesplit(byte[] x) {
+        int n = x.length;
+        String a = new String();
+        String b = new String();
+        if (n%2 == 1) {
+            throw new IllegalArgumentException(
+                    "\nByte array length must be even!");
+        }
+        else {
+            byte[] out = new byte[n/2];
+            for (int i = 0; i < n/2; i++) {
+                // Upper bits
+                a = Integer.toBinaryString((int) (x[2*i]));
+                // Set string length to 4 digits
+                while (a.length() < 4)
+                    a = "0" + a;
+                a = a.substring(a.length()-4,a.length());
+                
+                //Lower bits
+                b = Integer.toBinaryString((int) (x[2*i+1]));
+                // Set string length to 4 digits
+                while (b.length() < 4)
+                    b = "0" + b;
+                b = b.substring(b.length()-4,b.length());
+                
+                out[i] = (byte) Integer.parseInt(a + b,2);
+            }
+            return out;
+        }
+    }
+    
+    private static byte[] bitCyclicLeftShift(byte[] x, int n) {
+        StringBuilder sb = new StringBuilder();
+        String app = new String();
+        // Form one binary string
+        for (int i = 0; i < x.length; i++) {
+            app = Integer.toBinaryString((int) x[i]);
+            // Leading zeros addition
+            while (app.length() < 8)
+                app = "0" + app;
+            /* Leaving only 8 lowest bits, it is necessary if the
+                byte was negative and after type cast to int
+                we have a 32 digits length string */
+            app = app.substring(app.length()-8,app.length());
+            sb.append(app);
+        }
+        // Shift
+        if (n > 0) {
+            for (int i = 0; i < n; i++) {
+                sb.insert(sb.length(),sb.charAt(0));
+                sb.delete(0,1);
+            }
+        }
+        if (n < 0) {
+            for (int i = 0; i < -n; i++) {
+                sb.insert(0, sb.charAt(sb.length()-1));
+                sb.delete(sb.length()-1, sb.length());
+            }
+        }
+        // String to byte[]
+        byte[] out = new byte[x.length];
+        String s = sb.toString();
+        for (int i = 0; i < x.length; i++) {
+            out[i] = (byte) (Integer.parseInt(s.substring(8*i,8*(i+1)),2));
+        }
+        return out;
+    }
+    
+    private static void decodeTest(byte[] code,String key) {
+        System.out.println("Decoding test:\n");
+        System.out.println(Decode.decodeMy(code,key));
+    }
+    
+}

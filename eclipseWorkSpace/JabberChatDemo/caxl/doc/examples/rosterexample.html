@@ -1,0 +1,421 @@
+<!--
+/**
+ * filename:        rosterexample.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--    This is a simple example that demonstrates accessing and
+                manipulating jabberwerx entities.
+        -->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Roster and Entities Example</title>
+
+        <script type='text/javascript' src='../../jabberwerx.js'></script>
+        <script type='text/javascript' src='./jabberwerxexamples.js'></script>
+
+        <script type="text/javascript">
+        (function(){ //wrapped in an anon function to avoid polluting global namespace
+
+            //jQuery shortcut mapped to Jabberwerx's version
+            var $ = jabberwerx.$;
+
+            /**
+             * Configuration information including
+             *   httpBindingURL - the BOSH binding URL.
+             *   domain - The user's domain (domain part of the connected JID)
+             *   username - The user (local part of connected JID)
+             *   password - The account password.
+             */
+            var demo_config = {
+                httpBindingURL: "/httpbinding",
+                domain: "example.com",
+                username: "jwtest0",
+                password: "test"
+            };
+
+            /**
+             * Instantiate the Jabberwerx Client, the main access and routing
+             * object. Clients define a connection and session.
+             *
+             * see ../api/symbols/jabberwerx.Client.html
+             */
+            var client = new jabberwerx.Client();
+
+            /**
+             * Create a roster controller responsible for managing roster
+             * Contacts in the client's entity set.
+             * NOTE the roster controller is cached in client.controllers.roster
+             *
+             * see ../api/symbols/jabberwerx.RosterController.html
+             */
+            new jabberwerx.RosterController(client);
+
+
+            $(document).ready(function() {
+                /**
+                 * Add a login to this example by inserting appropriate HTML
+                 * into #conn-data. See Simple Client Connection example for extensive
+                 * details on connection.
+                 *
+                 * see ./connectexample.html
+                 */
+                jabberwerx_examples.addLogin($("#conn-data"), client, demo_config);
+
+                /**
+                 * jabberwerx.Client caches nearly all JID addressable
+                 * objects in its entity set.
+                 * Some examples of JID addressable objects are
+                 *       Roster Contacts
+                 *       MUC rooms
+                 *       temporary Contacts
+                 *       PubSub nodes
+                 *
+                 * The Client's entity set makes objects most library users
+                 * are interested in easily available. The entity set has
+                 * events for when an entity is created, destroyed or updated.
+                 * In this example event listeners for creation and deletion
+                 * of entities are used to update a simple roster UI.
+                 */
+
+                /**
+                 * Register for an entityCreated event, triggered whenever an
+                 * entity is being created and added to the client's entity
+                 * cache for the first time.
+                 *
+                 * _roster view is updated with the new entity
+                 */
+                client.entitySet.event("entityCreated").bind(function(evt) {
+                    _roster._updateRosterItem(evt.data);
+                });
+                /**
+                 * Register for an entityDestroyed event, triggered when an
+                 * entity is being removed from the client's entity cache
+                 *
+                 * _roster view is updated by removing the entity
+                 */
+                client.entitySet.event("entityDestroyed").bind(function(evt) {
+                    _roster._removeRosterItem(evt.data);
+                });
+                /**
+                 * Register for an entityUpdated event, triggered when an
+                 * entity is modified; display name change, groups change,
+                 * subscription state change etc.
+                 *
+                 * _roster view is updated by changing the entity's information
+                 * as needed.
+                 */
+                client.entitySet.event("entityUpdated").bind(function(evt) {
+                    _roster._updateRosterItem(evt.data);
+                });
+
+                /**
+                 * All entities are available in the client's entitySet cache.
+                 * This is an example that rebuilds the roster view by clearing
+                 * and then walking the cache using the each function.
+                 *
+                 * see ../api/symbols/jabberwerx.Client.html#entitySet
+                 * see ../api/symbols/jabberwerx.EntitySet.html#each
+                 */
+                $("input:checkbox[name='filter_contacts']").click(function() {
+                    _roster._clearRoster();
+                    var checked = $(this).get(0).checked;
+                    //for each entity in the client's entitySet
+                    client.entitySet.each(function(entity) {
+                        //check the entities type, allow only jabberwerx.Contact
+                        if (!checked || (entity instanceof jabberwerx.Contact)) {
+                            _roster._updateRosterItem(entity);
+                        }
+                    });
+                });
+
+                /**
+                 * A very simplistic example of subscribing to a contact using
+                 * the RosterController  Note the roster controller is cached in
+                 * client.controllers.roster.
+                 *
+                 * updateContact is passed the bare jid of the contact we wish to
+                 * subscribe to.
+                 *
+                 * RosterController.updateContact may throw exceptions if the
+                 * jid is invalid or the client is not connected.
+                 * It should be called from within a try-catch block.
+                 *
+                 * see ../api/symbols/jabberwerx.RosterController.html#updateContact
+                 */
+                $("input.sub_btn").click(function() {
+                    var jidstr = prompt("Enter new contact username: ", "");
+                    if (jidstr) {
+                        try {
+                            client.controllers.roster.updateContact(jidstr + "@" + demo_config.domain);
+                        } catch(e) {
+                            alert("A problem occurred while trying to add " +
+                                  jidstr + ".\n Details: " + e.message);
+                        }
+                    }
+                });
+
+            });
+
+            /**
+             * A simple table roster view.
+             *
+             * A _table_entry property is added to the entity when it is added
+             * to the table. A convenient and simple way to associate an
+             * entity with its "view".
+             *
+             * Entities are guarenteed to be unique by the client so we know
+             * there is a 1-1 mapping of entities to views.
+             *
+             * Each entity view is a clone of a template defined in the HTML
+             */
+            var _roster = {
+                /**
+                 * A methods that checks to see entities are being filtered
+                 * by type.
+                 *
+                 * Checks entitie's (contact's) type to make sure it is a
+                 * jabberwerx.Contact.
+                 */
+                _showingRosterItem: function(contact) {
+                    return !$("input:checkbox[name='filter_contacts']")[0].checked ||
+                            (contact instanceof jabberwerx.Contact);
+                },
+
+                /**
+                 * Helper function that returns an existing entity view or
+                 * creates one as needed.
+                 *
+                 * Clones the roster-item template and appends it to the roster
+                 * table. If the entity is a jabberwerx.Contact an additional
+                 * action is added to enable the user to remove the contact.
+                 */
+                _entityView: function(contact) {
+                    if (!contact._table_entry) {
+                        contact._table_entry = $(".template .roster-item").clone();
+                        contact._table_entry.appendTo(".roster #roster-list");
+                        if (contact instanceof jabberwerx.Contact) {
+                            contact._table_entry.
+                                find(".actions").
+                                html('<span class="action">[ X ]</span>').
+                                /**
+                                 * contact.remove starts the unsubscription
+                                 * process that eventually causes an
+                                 * entityDestroyed event to be fired, where the
+                                 * row is actually removed.
+                                 */
+                                bind("click",function() {contact.remove()});
+                        }
+                    }
+                    return contact._table_entry;
+                },
+
+                /**
+                 * Update an existing or add a new table entry representing
+                 * an entity.
+                 */
+                _updateRosterItem: function(contact) {
+                    //if this entity type is being filtered from the view just return
+                    if (!this._showingRosterItem(contact)) {
+                        return;
+                    }
+
+                    var ev = this._entityView(contact);
+                    //set the jid cell using entities jid property
+                    ev.children(".jid").text(contact.jid.toString() || "\u00a0");
+                    //set the entities display name
+                    ev.children(".name").text(contact.getDisplayName() || "\u00a0");
+
+                    // create a list of groups which the contacts belong to
+                    var tstr = $.map(contact.getGroups(), function(group) {
+                        return "[" + group + "]";
+                    }).join(" ");
+                    ev.children(".groups").text(tstr || "\u00a0");
+
+                    //set the entity "type" by using its classname
+                    tstr = contact.getClassName();
+                    tstr = tstr.slice(tstr.indexOf('.') + 1);
+                    ev.children(".type").text(tstr || "\u00a0");
+
+                    //show a list of the entities "properties", an object that may
+                    //contain an arbitrary number of string:string pairs.
+                    tstr=[];
+                    for (var oneprop in contact.properties) {
+                        if (contact.properties.hasOwnProperty(oneprop)) {
+                            tstr.push(oneprop + ': "' +
+                                      contact.properties[oneprop] + '"');
+                        }
+                    }
+                    ev.children(".props").text(tstr.join(" ") || "\u00a0");
+                },
+
+                /**
+                 * Remove a table row associated with an entity
+                 */
+                _removeRosterItem: function(contact) {
+                    if (contact._table_entry) {
+                        contact._table_entry.remove();
+                        delete contact._table_entry;
+                    }
+                },
+
+                /**
+                 * Remove all rows from the roster by iterating over
+                 * an array representation of the client's entity set.
+                 *
+                 * Definitely a poor way to implement a clear, but demonstrates
+                 * another method of accessing entities in the client's cache,
+                 * by converting the set to an array.
+                 *
+                 * see ../api/symbols/jabberwerx.EntitySet.html#toArray
+                 */
+                _clearRoster: function() {
+                    var that = this;
+                    client.entitySet.toArray().forEach(function(oneEntity) {
+                        that._removeRosterItem(oneEntity);
+                    });
+                }
+            };
+        })();
+        </script>
+
+        <style type="text/css">
+            .template {
+                visibility: hidden;
+                display: none;
+            }
+            .roster-table {
+                width: 100%;
+            }
+            h2 {
+                margin-bottom: 0px;
+            }
+            h3 {
+                margin-bottom: 0px;
+            }
+            .roster-actions {
+                padding: 4px 8px;
+            }
+            .action {
+                border: 1px solid black;
+                font-weight: bold;
+                padding: 2px 4px;
+                cursor: pointer;
+            }
+            div.action {
+                clear:both;
+            }
+            div.roster {
+                margin: 4px 0px;
+                border: 2px solid grey;
+                padding: 4px;
+            }
+            .roster th {
+                background-color: grey;
+                color: white;
+            }
+            .roster-item td {
+                border: 1px solid grey;
+                padding: 2px;
+            }
+            .section-td {
+                padding-top: 10;
+            }
+            .additional-actions {
+                margin: 0px 0px;
+                border: 2px solid grey;
+                padding: 4px;
+            }
+            .additional-actions div {
+                padding-left:14;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Roster and Entities Example</h2>
+        <div>An example demonstrating how to use CAXL's entity and roster classes to fetch and display contacts.</div>
+        <h3>How it Works</h3>
+        This example automatically performs a number of actions in the page onReady event:
+        <ol>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.Client.html' target='_blank'>jabberwerx.Client</a>.</li>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.RosterController.html' target='_blank'>jabberwerx.RosterController</a> for automatic roster retrieval.</li>
+            <li>Registering for <a href='../../doc/api/jabberwerxEvents.html' target='_blank'>jabberwerx.EntitySet Cache Events</a> to handle roster updates.</li>
+        </ol>
+        The example also demonstrates (based on user actions like button clicks) additional roster functionality available within CAXL:
+        <ul>
+            <li><div>Connecting as a given username with a given password.</div>
+            &nbsp;&nbsp;NOTE: the <a href='./connectexample.html' target='_blank'>Simple Client Connection</a> example is the best source for connection information.</li>
+            <li><a href='../../doc/api/symbols/jabberwerx.Client.html#entitySet' target='_blank'>Filtering the client's Entity Set.</a>.</li>
+            <li><a href='../../doc/api/symbols/jabberwerx.RosterController.html#subscribe' target='_blank'>Adding a contact.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.RosterContact.html#remove' target='_blank'>Removing a contact.</a></li>
+        </ul>
+        <h3>In Action</h3>
+        <table align="left"><tr><td>
+            <p>The simple roster shown in this example shows the user the roster item's type, JID, display name, groups the item belongs to and type specific properties.
+            If the item (entity) is a contact an additional remove action is shown.</p>
+            <p>Instructions for using this example:</p>
+            <ul>
+                <li>Click the "Connect" button to connect the client to the server.</li>
+                <li>Observe the roster being populated after connection.</li>
+                <li>Select "Show Contacts Only" to see filtering in action.</li>
+                <li>Click the "Add a Contact" button to be prompted for a username to subscribe to.</li>
+                <li>When possible, click the "X" in the far right field of the roster to remove, or unsubscribe, from a contact.</li>
+            </ul>
+        </td></tr></table>
+
+        <table class='roster-table' align="center" border="1"><tr><td>
+            <table class='roster-table' align="center" border="0">
+                <!-- login HTML will be inserted here -->
+                <tr><td colspan="2" id="conn-data"></td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr><td>
+                    <div class="roster">
+                        <table class='roster-table' id="roster-list">
+                            <tr>
+                                <th>Entity Type</th>
+                                <th style="width:20%;">JID</th>
+                                <th>Display Name</th>
+                                <th style="width:25%;">Groups</th>
+                                <th>Properties</th>
+                                <th>Actions</th>
+                            </tr>
+                        </table>
+                    </div>
+                </tr></td>
+                <tr><td>
+                    <div class="additional-actions">
+                        <table>
+                            <tr>
+                                <td>
+                                    <input type="button" class="sub_btn" value="Add a Contact">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type='checkbox' name='filter_contacts'/> Show Contacts Only
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td></tr>
+            </table>
+        </td></tr></table>
+
+        <table class="template" id="roster-item">
+            <tr class="roster-item">
+            <td class="type"></td>
+            <td class="jid"></td>
+            <td class="name"></td>
+            <td class="groups"></td>
+            <td class="props"></td>
+            <td class="actions" style="text-align:center;"></td>
+            </tr>
+        </table>
+    </body>
+</html>

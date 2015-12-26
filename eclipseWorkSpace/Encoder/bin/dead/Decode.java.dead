@@ -1,0 +1,61 @@
+import javax.xml.bind.DatatypeConverter;
+import java.io.UnsupportedEncodingException;
+
+
+class Decode {
+    
+    public static void main() {
+    	// getEndTextSimple();
+    }
+    /*
+    public static String getEndTextSimple() {
+    	String[] inMsgKey = EncoderConsole.input();
+        String cypher = inMsgKey[0];
+        String key = inMsgKey[1];
+        
+        System.out.println("msg.length() = " + cypher.length());
+        byte[] code = DatatypeConverter.parseBase64Binary(cypher);
+        byte[] txtBytes = CryptGOST.simple(code,key.getBytes(),false);
+        
+        String endText = new String();
+        try {	// Parse as text
+            endText = new String(txtBytes,EncoderConsole.whichEncodingDoWeUse());
+        } catch (UnsupportedEncodingException uee) {
+            System.err.println("\nUnsupported encoding!");
+            uee.printStackTrace();
+        }
+        return endText;
+        // EncoderConsole.output(endText);
+    }
+    */
+    
+
+    public static String primitiveXOR(byte[] code, String keyString) {
+        byte[] key = keyString.getBytes();
+        byte[] res = new byte[code.length];
+        
+        for(int i = 0; i < code.length; i++)
+            res[i] = (byte) (code[i] ^ key[i%key.length]);
+        
+        return new String(res);
+    }
+    
+    public static String MyXOR(byte[] code, String keyString) {
+        byte[] key = keyString.getBytes();
+        byte[] res = new byte[code.length];
+        byte[] kek = new byte[code.length];
+        // Key transformation
+        kek[0] = key[0];
+        for(int j = 0; j < 32; j++) {
+            for(int i = 1; i < code.length; i++) {
+                kek[i] = (byte) (kek[i-1] ^ key[i%key.length]);
+            }
+        }
+        // Decoding     
+        for(int i = 0; i < code.length; i++)
+            res[i] = (byte) (code[i] ^ kek[i]);
+        
+        return new String(res);
+    }
+
+}

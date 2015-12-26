@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+<fullyQualifiedTypeName name="java.awt.List"/>
+<fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="javax.swing.JTextArea"/>
+<fullyQualifiedTypeName name="java.awt.event.KeyAdapter"/>
+<fullyQualifiedTypeName name="java.awt.event.KeyEvent"/>
+<fullyQualifiedTypeName name="rocks.xmpp.core.session.XmppClient"/>
+<fullyQualifiedTypeName name="rocks.xmpp.core.session.TcpConnectionConfiguration"/>
+<fullyQualifiedTypeName name="rocks.xmpp.extensions.httpbind.BoshConnectionConfiguration"/>
+<fullyQualifiedTypeName name="java.net.Proxy"/>
+<fullyQualifiedTypeName name="java.net.InetSocketAddress"/>
+<fullyQualifiedTypeName name="javax.net.ssl.SSLContext"/>
+<fullyQualifiedTypeName name="javax.net.ssl.SSLContextSpi"/>
+<fullyQualifiedTypeName name="java.security.Provider"/>
+<fullyQualifiedTypeName name="javax.net.SocketFactory"/>
+<fullyQualifiedTypeName name="rocks.xmpp.core.stanza.model.Presence"/>
+<fullyQualifiedTypeName name="rocks.xmpp.core.stanza.model.Message"/>
+<fullyQualifiedTypeName name="rocks.xmpp.im.roster.RosterManager"/>
+<fullyQualifiedTypeName name="rocks.xmpp.core.XmppException"/>
+<fullyQualifiedTypeName name="rocks.xmpp.core.sasl.AuthenticationException"/>
+<fullyQualifiedTypeName name="rocks.xmpp.addr.Jid"/>
+<fullyQualifiedTypeName name="java.lang.reflect.Array"/>
+<fullyQualifiedTypeName name="com.sun.security.auth.module.NTSystem"/>
+<fullyQualifiedTypeName name="java.util.Set"/>
+<fullyQualifiedTypeName name="java.util.HashSet"/>
+<fullyQualifiedTypeName name="java.util.Iterator"/>
+<fullyQualifiedTypeName name="java.util.TreeSet"/>
+</qualifiedTypeNameHistroy>

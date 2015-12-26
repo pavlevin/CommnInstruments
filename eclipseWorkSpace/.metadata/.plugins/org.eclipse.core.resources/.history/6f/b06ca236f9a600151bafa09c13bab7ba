@@ -1,0 +1,33 @@
+public abstract class CommonUserAction {
+	static void setLoginFor(UnixUsr unixUsr,String login) { 
+		unixUsr.login=login;	
+	}
+	
+	String getLoginFor(UnixUsr unixUsr) {
+		return unixUsr.login;
+	}
+	
+	void setLoginFor(DBUsr dbUsr,String login) {
+		dbUsr.login=login;	
+	}
+
+	String getLoginFor(DBUsr dbUsr) {
+		return dbUsr.login;
+	}
+	
+	void setPasswordFor(UnixUsr unixUsr,String password) {
+		unixUsr.password=password;
+	}
+	
+	String getPasswordFor(UnixUsr unixUsr) {
+		return unixUsr.password;
+	}
+	
+	void setPasswordFor(DBUsr dbUsr,String password) {
+		dbUsr.password=password;
+	}
+	
+	String getPasswordFor(DBUsr dbUsr) {
+		return dbUsr.password;
+	}
+}

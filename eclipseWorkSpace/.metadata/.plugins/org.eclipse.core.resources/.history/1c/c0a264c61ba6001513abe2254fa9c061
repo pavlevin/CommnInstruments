@@ -1,0 +1,41 @@
+import java.util.ArrayList;
+public class Account{
+	/*
+	 * */
+	public ArrayList<User> users= new ArrayList<User>();
+	public void addDBUser(String username, String password){
+		this.users.add(new dbUser(username,password));
+	}
+	public void addUnixUser(String username, String password){
+		this.users.add(new UnixUser(username,password));
+	}
+	
+	
+	
+	
+	public void removeUser(User user){
+		this.users.remove(user);
+	}
+	public User getUser(int id){
+		return users.get(id);
+	}
+}
+
+
+
+interface userDB{
+	void setServiceName(String serviceName);
+	String getServiceName();
+	public static final UserType userType = UserType.Database;
+}
+interface userUnix{
+	void setIdentityFile(String IdentityFilePath);
+	String getIdentityFile();
+	public final UserType userType = UserType.Unix;
+}
+	
+
+
+
+
+

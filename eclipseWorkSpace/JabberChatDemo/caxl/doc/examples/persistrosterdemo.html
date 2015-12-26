@@ -1,0 +1,167 @@
+<!--
+/**
+ * filename:        persistrosterdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ Persistent Roster</title>
+        <link rel="stylesheet" href="../../resources/themes/default/css/styles.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+
+var demo_config = {
+    httpBindingURL: "/httpbinding",
+    domain: "example.com",
+    username: "jwtest1",
+    password: "test"
+};
+
+//persistDuration should be at least 30 seconds to allow for
+//browser page loading completion
+var jabberwerx_config = {
+    persistDuration: 30
+};
+
+jabberwerx.app.RosterDemo = jabberwerx.ui.JWApp.extend({
+
+    /**
+     * Method invoked when the application is initially created.
+     * NOT invoked when application is loaded from store.
+     *
+     * Applications should create JWA objects and bind JWA
+     * events with invocations in this method.
+     */
+    appCreate: function() {
+        this._super();
+
+        this.client = new jabberwerx.Client();
+        this.client.event("clientStatusChanged").
+             bind(this.invocation('_onClientStatusChanged'));
+
+        this.roster = this.client.controllers.roster ||
+                      new jabberwerx.RosterController(this.client);
+
+        this.view = new jabberwerx.ui.RosterView(this.client.entitySet);
+
+        this.view.setDefaultGroupingName("unknown");
+
+        // connectArgs object sent through to client.connect method.
+        var connectArgs = {httpBindingURL: demo_config.httpBindingURL};
+        this.client.connect(demo_config.username + "@" + demo_config.domain, demo_config.password, connectArgs);
+    },
+
+    /**
+     * Method is invoked once the application is loaded
+     * (all JWA objects have been created/loaded and initialized.
+     * Method is also called after application creation
+     * (after appCreate has been called).
+     *
+     * Application should render it's views and rebind any HTML events
+     * JWA events *not* bound with invocations should be defined here.
+     */
+    appInitialize: function() {
+        this._super();
+
+        this.view.render().appendTo("div#roster_stuff");
+        this.view.dimensions({width:200, height:350});
+        var that = this;
+        //bind HTML events
+        jabberwerx.$("input:checkbox[name='filter_contacts']").bind("click", function() {
+           if (jabberwerx.$(this).get(0).checked) {
+               that.view.addFilter(that.view.invocation("filterByContacts"));
+           } else {
+               that.view.removeFilter(that.view.invocation("filterByContacts"));
+           }
+        });
+        jabberwerx.$("input:checkbox[name='filter_active']").bind("click", function() {
+           if (jabberwerx.$(this).get(0).checked) {
+               that.view.addFilter(that.view.invocation("filterByActive"));
+           } else {
+               that.view.removeFilter(that.view.invocation("filterByActive"));
+           }
+        });
+        //bind JWA events without invocations
+        this.view.event("rosterItemSelected").bind(function(evt) {
+           alert("selected via " + evt.data.type + ": " + evt.data.item.entity);
+        });
+        this.view.event("rosterGroupingRendered").bind(function(evt) {
+           if (evt.data.grouping.name != "") {
+               evt.data.grouping.expand();
+           }
+        });
+
+        //finally check state and set view accordingly
+        this._setState(this.client.clientStatus, false);
+    },
+
+    /**
+     * Destroy any JWA objects this application explicitly created.
+     * Unbind any JWA events bound with invocations
+     */
+    destroy: function() {
+        this.client.event("clientStatusChanged").
+             unbind(this.invocation('_onClientStatusChanged'));
+
+        this.view.destroy();
+        this.view = null;
+        this.roster.destroy();
+        this.roster = null;
+        this.client.destroy();
+        this.client = null;
+        this._super();
+    },
+
+    _onClientStatusChanged: function(evt) {
+        this._setState(this.client.clientStatus, true);
+    },
+
+    _setState: function(state, statusChanged) {
+        switch (state) {
+            case -1: //initializing
+                break;
+            case jabberwerx.Client.status_connected:
+                break;
+            case jabberwerx.Client.status_disconnected:
+                break;
+        }
+    }
+}, "jabberwerx.app.RosterDemo");
+
+/**
+ * Allow jabberwerx.app to control lifetime of application.
+ * Application is loaded from persisted store if possible
+ * otherwise a new instance is created.
+ */
+jabberwerx.app.persistedApplicationClass('jabberwerx.app.RosterDemo');
+
+        </script>
+        <style type="text/css">
+div.roster {
+    border: 1px solid #000099;
+    background: #cccccc;
+}
+
+div.roster div.group.section {
+    background: #ffffff;
+}
+div.roster .contact .status {
+    display:        block;
+    color:          #cccccc;
+}
+        </style>
+    </head>
+    <body>
+        <h2>Roster Demo</h2>
+        <div id="roster_stuff"></div>
+        <div id="roster_filters">
+            <div><input type='checkbox' name='filter_contacts'/> Contacts only</div>
+            <div><input type='checkbox' name='filter_active'/> Active only</div>
+        </div>
+    </body>
+</html>

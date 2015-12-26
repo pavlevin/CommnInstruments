@@ -1,0 +1,30 @@
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+
+import static java.lang.System.out;
+
+public class UserActions{
+	String name="Field";
+	public static void main(String[] args){
+		UserActions ua = new UserActions();
+		ua.setValue("name", "bla");
+		/*Object[] f = ua.getClass().getDeclaredFields();
+		for (Object o : f){
+			System.out.println("1 - "+f.getClass().getCanonicalName());
+			System.out.println("2 - "+f.toString());
+		}*/
+		
+		
+		
+	}
+	void setValue(String field,String value){
+		try {
+			Field nme = this.getClass().getDeclaredField(field);
+			nme.set(this, value);
+		} catch (IllegalArgumentException  | SecurityException | NoSuchFieldException | IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}

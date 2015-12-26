@@ -1,0 +1,65 @@
+class DBUser extends User {
+	protected String serviceName;
+	protected String login;
+	protected String password;
+	DBUser(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+
+}
+
+class UnixUser extends User{
+	protected String identityFile;
+	protected String login;
+	protected String password;
+	UnixUser(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+
+}
+
+class InformaticaUser {
+	
+}
+
+abstract class User{
+	void setFieldValue(String field,String value){
+		try {
+			java.lang.reflect.Field nme = this.getClass().getDeclaredField(field);
+			nme.set(this, value);
+		} catch (IllegalArgumentException  | SecurityException | NoSuchFieldException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+	}
+	Object getFieldValue(String field){
+		java.lang.reflect.Field nme;
+		try {
+			nme = this.getClass().getDeclaredField(field);	
+			return nme.get(this);
+		} catch (NoSuchFieldException e) {
+			System.err.println("Field " + field + " was not found.");
+			listOfAvailableFields(this);
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			System.err.println("Access to the field " + field + " is denied.");
+		} catch (IllegalArgumentException e) {
+			
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			
+			e.printStackTrace();
+		}
+		return null;
+	}
+	static void listOfAvailableFields(Class<?> someClass,Object[] list){
+		list = someClass.getClass().getDeclaredFields()
+		for(Object field : list)
+			System.out.println(field.toString());
+		
+	}
+}
+
+
+

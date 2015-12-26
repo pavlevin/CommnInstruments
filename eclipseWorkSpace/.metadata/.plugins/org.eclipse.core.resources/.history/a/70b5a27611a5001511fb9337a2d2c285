@@ -1,0 +1,9 @@
+
+public interface UserTypes {
+	public enum UserType {
+		Unix,
+		DataBase,
+		Informatica };
+	
+}
+

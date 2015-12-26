@@ -1,0 +1,136 @@
+<!--
+/**
+ * filename:        multirosterdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ Persistent Multi RosterViews</title>
+        <link rel="stylesheet" href="../../resources/themes/default/css/styles.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+
+var demo_config = {
+    user1: "jwtest1",
+    user2: "jwtest2",
+    password: "test",
+    domain: "example.com"
+};
+
+//persistDuration should be at least 30 seconds to allow for
+//browser page loading completion
+var jabberwerx_config = {
+    persistDuration: 30
+};
+
+jabberwerx.app.MultiRosterDemo = jabberwerx.ui.JWApp.extend({
+
+    /**
+     * Method invoked when the application is initially created.
+     * NOT invoked when application is loaded from store.
+     *
+     * Applications should create JWA objects and bind JWA
+     * events with invocations in this method.
+     */
+    appCreate: function() {
+        this._super();
+
+        this.client1 = new jabberwerx.Client("user1");
+        this.roster1 = this.client1.controllers.roster ||
+                       new jabberwerx.RosterController(this.client1);
+        this.view1 = new jabberwerx.ui.RosterView(this.client1.entitySet);
+        this.view1.setDefaultGroupingName("unknown");
+
+        this.client2 = new jabberwerx.Client("user2");
+        this.roster2 = this.client2.controllers.roster ||
+                       new jabberwerx.RosterController(this.client2);
+        this.view2 = new jabberwerx.ui.RosterView(this.client2.entitySet);
+
+        this.client1.connect(demo_config.user1 + "@" + demo_config.domain, demo_config.password);
+        this.client2.connect(demo_config.user2 + "@" + demo_config.domain, demo_config.password);
+    },
+
+    /**
+     * Method is invoked once the application is loaded
+     * (all JWA objects have been created/loaded and initialized.
+     * Method is also called after application creation
+     * (after appCreate has been called).
+     *
+     * Application should render it's views and rebind any HTML events
+     * JWA events *not* bound with invocations should be defined here.
+     */
+    appInitialize: function() {
+        this._super();
+        jabberwerx.$("#user1").text(demo_config.user1);
+        this.view1.render().appendTo("#roster1");
+        this.view1.dimensions({width:200, height:350});
+        jabberwerx.$("#user2").text(demo_config.user2);
+        this.view2.render().appendTo("#roster2");
+        this.view2.dimensions({width:200, height:350});
+    },
+
+    /**
+     * Destroy any JWA objects this application explicitly created.
+     * Unbind any JWA events bound with invocations
+     */
+    destroy: function() {
+        this.view1.destroy(), this.view2.destroy();
+        this.view1 = null, this.view2 = null;
+        this.roster1.destroy(), this.roster2.destroy();
+        this.roster1 = null, this.roster2 = null;
+        this.client1.destroy(), this.client2.destroy();
+        this.client1 = null, this.client2 = null;
+        this._super();
+    }
+}, "jabberwerx.app.MultiRosterDemo");
+
+/**
+ * Allow jabberwerx.app to control lifetime of application.
+ * Application is loaded from persisted store if possible
+ * otherwise a new instance is created.
+ * New instance is assigned to singleton jabberwerx.util.app._jwappinst.
+ */
+jabberwerx.app.persistedApplicationClass('jabberwerx.app.MultiRosterDemo');
+
+        </script>
+        <style type="text/css">
+div.roster {
+    border: 1px solid #000099;
+    background: #cccccc;
+}
+
+div.roster div.group.section {
+    background: #ffffff;
+}
+div.roster .contact .status {
+    display:        block;
+    color:          #cccccc;
+}
+
+h1#roster2,
+div#roster2 {
+    margin-left: 6px;
+}
+        </style>
+    </head>
+    <body>
+        <h2>Multi RosterView Demo</h2>
+        <table>
+            <tbody><tr>
+                <td>
+                    <h1 id="user1"></h1>
+                    <div id="roster1"></div>
+                </td>
+                <td>
+                    <h1 id="user2"></h1>
+                    <div id="roster2"></div>
+                </td>
+            </tr></tbody>
+        </table>
+    </body>
+</html>

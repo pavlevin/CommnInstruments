@@ -1,0 +1,677 @@
+<!--
+/**
+ * filename:        bulkqcdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library - Bulk QuickContact Demo</title>
+        <!-- load ui for jquery -->
+        <!-- NOTE references to other jwa libraries should be pathed from the "libs" directory for later build fixup -->
+        <link rel="stylesheet" href="../../resources/themes/default/css/styles.css"/>
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript" src="../../jabberwerx.cisco.js"></script>
+        <script type="text/javascript">
+            /**
+             * Demo configuration
+             */
+            var demo_config = {
+                httpBindingURL:     "/httpbinding",
+                domain:             "example.com",
+                username:           "jwtest0",
+                password:           "test",
+                baseName:           "jwtest",
+                contactCount:       10,
+                contactStart:       1,
+                pendingSlice:       4,
+                pendingInterval:    0.5,
+                manualProcess:      false,
+                logPackets:         false
+            };
+            /**
+             * shorten persistence timeout for demo
+             */
+            var jabberwerx_config = {
+                persistDuration: 30
+            };
+        </script>
+        <style>
+            .connection_view {
+                height: 80%
+            }
+            .connected_view {
+                text-align: right;
+                height: 100%;
+                display: block;
+            }
+            .auth_status_div .connect_status {
+                color: inherit;
+            }
+        </style>
+        <script type="text/javascript">
+            /**
+             * An example of extending AuthenticationView. Replacing an auth view
+             * with a logout button on connection is a re-occurring pattern in ui
+             * demos. This view encapsulates that functionality and is persistent.
+             * It is defined merely as an example.
+             *
+             * Production applications would never use this view, favoring a
+             * self presence view for disconnection and status.
+             */
+            jabberwerx.ui.ConnectionView = jabberwerx.ui.AuthenticationView.extend({
+                init: function(client, domain) {
+                    this._super(client, domain);
+                    this.client.event("clientStatusChanged").bind(this.invocation('_handleClientStatusChanged'));
+                },
+                destroy: function () {
+                    this.client.event("clientStatusChanged").unbind(this.invocation('_handleClientStatusChanged'));
+                    this._super();
+                },
+                //auth view is called on initial loads and after rehydration. OK to map
+                //html events here.
+                createDOM: function(doc) {
+                    var result = jabberwerx.$(this._super(doc)).addClass("connection_view");
+                    //adding ids to interesting auth view tags since we are sharing css classes
+                    jabberwerx.$(".auth_status_div", result).attr("id", "auth-status-div");
+                    jabberwerx.$(".auth_status", result).attr("id", "auth-status");
+
+                    jabberwerx.$(result.children()).wrapAll("<span id='auth-view'></span>");
+                    result.append("<span id='connected-view' class='connected_view'>" +
+                                     "<div id='connect-status-div' class='auth_status_div'>" +
+                                        "<span id='connect-status' class='connect_status'></span>" +
+                                     "</div>" +
+                                     "<div class='submit_div'>" +
+                                        "<button id='logout' class='auth_submit'>Logout</button>" +
+                                     "</div>" +
+                                  "</span>");
+                    var that = this;
+                    jabberwerx.$("#logout", result).click(function (evt) {
+                        that.client.disconnect();
+                        return false;
+                    });
+                    this.connectStatus("", result);
+                    this.connectState(jabberwerx.Client.status_disconnected, result);
+                    return result[0];
+                },
+                willBeSerialized: function() {
+                    if (this.connectStatus()) {
+                        this._persistedConnectStatus = this.connectStatus();
+                    }
+                    this._persistedIsConnected = (this.connectState() == jabberwerx.Client.status_connected);
+                    this._super();
+                },
+                restoreDOM: function(doc) {
+                    var result = this._super(doc);
+                    this.connectStatus(this._persistedConnectStatus ? this._persistedConnectStatus : "", result);
+                    delete this._persistedConnectStatus;
+                    this.connectState(this._persistedIsConnected ? jabberwerx.Client.status_connected : jabberwerx.Client.status_disconnected, result);
+                    delete this._persistedIsConnected;
+                    return result;
+                },
+                _handleClientStatusChanged: function(evt) {
+                    if (evt.data.next == jabberwerx.Client.status_disconnected) {
+                        if (evt.data.previous == jabberwerx.Client.status_connected && evt.data.error) {
+                            //true disconnect (not a failed auth attempt), set or clear error
+                            this.connectError(evt.data.error);
+                        }
+                        this.connectStatus(""); //clear connect status on disconnect, flag elsewhere
+                    } else {
+                        this.connectStatus(this.client.getClientStatusString(evt.data.next));
+                    }
+                    this.connectState(evt.data.next);
+                },
+                /**
+                 * Overriding private AuthenticationView method, fired after
+                 * login completes. This should probably be public in the
+                 * base class as there is no "proper" way to know when
+                 * login has completed (_login itself is a private method)
+                 */
+                _updateStatus: function(error) {
+                    if (error) {
+                        this.connectStatus("");
+                    }
+                    this._super(error);
+                },
+                connectStatus: function(status, dom) {
+                    dom = dom || this.jq;
+                    if (status === undefined) {
+                        status = jabberwerx.$("#connect-status", dom).text();
+                        return status != '\u00A0' ? status : "";
+                    }
+                    status = jabberwerx.$.trim(status) || '\u00A0';
+                    jabberwerx.$("#connect-status", dom).text(status);
+                    return this;
+                },
+                connectError: function(error, dom) {
+                    dom = dom || this.jq;
+                    if (error === undefined) {
+                        return jabberwerx.$("#auth-status", dom).text();
+                    }
+                    this.connectStatus("");
+                    jabberwerx.$("#auth-status", dom).text(jabberwerx.errorReporter.getMessage(error));
+                    return this;
+                },
+                connectState: function(state, dom) {
+                    dom = dom || this.jq;
+                    if (state === undefined) {
+                        return jabberwerx.$("#connected-view:visible", dom).length > 0 ?
+                                    jabberwerx.Client.status_connected :
+                                    jabberwerx.Client.status_disconnected;
+                    }
+                    if (state == jabberwerx.Client.status_disconnected) {
+                        jabberwerx.$("#auth-view", dom).show();
+                        jabberwerx.$("#connected-view", dom).hide();
+                        jabberwerx.$("#auth-status-div", dom).append(jabberwerx.$("#connect-status", this.jq));
+                    } else if (state == jabberwerx.Client.status_connected) {
+                        jabberwerx.$("#connected-view", dom).height(jabberwerx.$("#auth-view", dom).height());
+                        jabberwerx.$("#auth-view", dom).hide();
+                        jabberwerx.$("#auth-status", dom).text("\u00A0");
+                        jabberwerx.$("#connected-view", dom).show();
+                        jabberwerx.$("#connect-status-div", dom).append(jabberwerx.$("#connect-status", this.jq));
+                    }
+                    return this;
+                }
+            }, "jabberwerx.ui.ConnectionView");
+        </script>
+        <script type="text/javascript">
+            /**
+             * BulkQCDemo is a demonstration of QuickContactController bulk
+             * subscribe/unsubscribe methods. It is also a testbed for the same
+             * functionality and is more tightly bound to QuickContactController
+             * than a pure demostration needs to be. It is uses several different
+             * patterns to hook in, override the controller's behavior.
+             */
+            jabberwerx.app.BulkQCDemo = jabberwerx.ui.JWApp.extend( {
+                /**
+                 *  Method invoked when the application is initially created. NOT invoked when application
+                 *  is loaded from store.
+                 *
+                 *  Applications should create JWA objects and bind to JWA events in this method
+                 */
+                appCreate: function() {
+                    this._super();
+                    this.client = new jabberwerx.Client('bulk-qc-demo');
+
+                    this.connectView = new jabberwerx.ui.ConnectionView(this.client, demo_config.domain);
+                    this.jwaConsole = new jabberwerx.ui.ConsoleView(this.client);
+
+                    this.QCController = this.client.controllers.quickContact || new jabberwerx.cisco.QuickContactController(this.client);
+                    this.QCController.subscriptionInterval = demo_config.pendingInterval;
+                    this.QCController.subscriptionSlice = demo_config.pendingSlice;
+
+                    this.rosterView = new jabberwerx.ui.RosterView(this.client.entitySet);
+                    this.rosterView.setDefaultGroupingName("contacts");
+                    //persistent apps should use invocations when binding to jwa events
+                    this.rosterView.event("rosterGroupingRendered").bind(this.invocation("_expandContactGroup"));
+                    this.rosterView.addFilter(this.rosterView.invocation("filterByContacts"));
+
+                    var tdom = this.connectView.render();
+                    jabberwerx.$("input.username", tdom).val(demo_config.username);
+                    jabberwerx.$("input.password", tdom).val(demo_config.password);
+
+                    jabberwerx.$("#base-name").val(demo_config.baseName);
+                    jabberwerx.$("#contact-count").val(demo_config.contactCount);
+                    jabberwerx.$("#contact-start").val(demo_config.contactStart);
+                    jabberwerx.$("#pending-slice").val(demo_config.pendingSlice);
+                    jabberwerx.$("#pending-interval").val(demo_config.pendingInterval);
+
+                    if (demo_config.manualProcess) {
+                        jabberwerx.$("#manual-cb").prop("checked", "true");
+                    }
+                    this._loggingPackets = demo_config.logPackets;
+                    if (!this._loggingPackets) {
+                        //unbind console's stream listeners
+                        this.client._stream.event("streamOpened").unbind(this.jwaConsole.invocation("_streamOpenedHandler"));
+                        this.client._stream.event("streamClosed").unbind(this.jwaConsole.invocation("_streamClosedHandler"));
+                        this.client._stream.event("streamElementsReceived").unbind(this.jwaConsole.invocation("_streamReceivedHandler"));
+                        this.client._stream.event("streamElementsSent").unbind(this.jwaConsole.invocation("_streamSentHandler"));
+                    }
+                },
+                /**
+                *  Method is invoked once the application is loaded (all JWA objects have been created/loaded and initialized.
+                *   Method is also called after application creation (after appCreate has been called).
+                *
+                *  Application should render it's views and rebind any HTML events (these events are not persisted).
+                */
+                appInitialize: function() {
+                    jabberwerx.util.setDebugStream("quickcontact", true); //enable qc debug logging
+//                    jabberwerx.util.setDebugStream("persistence", true); //enable qc debug logging
+
+                    jabberwerx.$("#connection-view-site").empty();
+                    jabberwerx.$("#logger").empty();
+                    this._super();
+                    //render views and set dimensions as needed.
+                    this.connectView.render().appendTo("#connection-view-site");
+                    this.rosterView.render().appendTo("#roster-view");
+                    this.rosterView.height(220);
+                    this.jwaConsole.render().appendTo("#logger");
+                    this.jwaConsole.dimensions({height: jabberwerx.$("#logger").height(),
+                                                width: jabberwerx.$("#logger").width()});
+                    //add a button to the debug console to stop/start packet logging,
+                    //This was initially added to eliminate console's xmpp2html
+                    //conversion as a possible thread locking issue. The conversion
+                    //was not responsible but the code remains as an example of
+                    //manipulating existing JWViews.
+                    jabberwerx.$("#active-filters").
+                        before(jabberwerx.$("<input type='button' class='console_toolbar_btn' id='packet-logging'/>"));
+
+                    //html events
+                    var that = this;
+                    //set subscriptionSlice property if the user entered a valid integer
+                    jabberwerx.$("#pending-slice").bind("change", function (evt) {
+                        var tnum = parseInt(jabberwerx.$.trim(jabberwerx.$("#pending-slice").val()), 10);
+                        if (isNaN(tnum) || tnum <= 0) {
+                            jabberwerx.util.debug.log("Pending slice must be an integer > 0");
+                        } else {
+                            that.QCController.subscriptionSlice = tnum;
+                        }
+                    });
+                    //set subscriptionInterval property if the user entered a valid number
+                    jabberwerx.$("#pending-interval").bind("change", function (evt) {
+                        var tnum = parseFloat(jabberwerx.$.trim(jabberwerx.$("#pending-interval").val()));
+                        if (isNaN(tnum) || tnum <= 0) {
+                            jabberwerx.util.debug.log("Pending interval must be a number > 0");
+                        } else {
+                            that.QCController.subscriptionInterval = tnum;
+                        }
+                    });
+                    //toggle manual vs automatic pending queue processing
+                    jabberwerx.$("#manual-cb").click( function () {
+                        that._manualBtnClick();
+                    });
+                    jabberwerx.$("#process-btn").click( function () {
+                        that.QCController._processPending();
+                    });
+                    //subscribe to a single jid or bulk process a generated
+                    //list of jids
+                    jabberwerx.$("#subcontacts-btn").click(function (evt) {
+                        var jidList = that._genJIDList();
+                        if (jidList.length == 1) {
+                            that.QCController.subscribe(jidList[0]); //test subscribe outside of bulk
+                        } else {
+                            that.QCController.subscribeAll(jidList);
+                        }
+                    });
+                    //unsubscribe from a single jid or bulk process a generated
+                    //list of jids
+                    jabberwerx.$("#unsubcontacts-btn").click(function (evt) {
+                        var jidList = that._genJIDList();
+                        if (jidList.length == 1) {
+                            that.QCController.unsubscribe(jidList[0]); //test unsub out of bulk
+                        } else {
+                            that.QCController.unsubscribeAll(jidList);
+                        }
+                    });
+                    //clear all current subscriptions and add new generated list
+                    jabberwerx.$("#reset-btn").click(function (evt) {
+                        that.QCController.subscribeAll(that._genJIDList(), true);
+                    });
+                    //persist, load, unsub from all current and subscribe to generated list
+                    jabberwerx.$("#serialize-btn").click( function () {
+                        jabberwerx.util.debug.log("Persisting demo");
+                        that.subscribeOnLoad = true;
+                        window.location.reload();
+                    });
+
+                    //start/stop packet logging by bind/unbinding ConsoleView's invocations
+                    jabberwerx.$("#packet-logging").
+                        val(jabberwerx._((this._loggingPackets ? "Stop" : "Start") + " Packet Logging")).
+                        click(function(evt) {
+                            var func = that._loggingPackets ? "unbind" : "bind";
+                            that.client._stream.event("streamOpened")[func](that.jwaConsole.invocation("_streamOpenedHandler"));
+                            that.client._stream.event("streamClosed")[func](that.jwaConsole.invocation("_streamClosedHandler"));
+                            that.client._stream.event("streamElementsReceived")[func](that.jwaConsole.invocation("_streamReceivedHandler"));
+                            that.client._stream.event("streamElementsSent")[func](that.jwaConsole.invocation("_streamSentHandler"));
+                            that._loggingPackets = !that._loggingPackets;
+                            jabberwerx.$("#packet-logging").
+                                val(jabberwerx._((that._loggingPackets ? "Stop" : "Start") + " Packet Logging"))
+                        });
+                    //set a little state
+                    this._manualBtnClick();
+
+                    jabberwerx.util.debug.log("CAXL Bulk QC Demo (version: " + jabberwerx.version + ")");
+                    if (this.subscribeOnLoad) {
+                        delete this.subscribeOnLoad;
+                        jabberwerx.util.debug.log("onload subscribeAll with reset");
+                        that.QCController.subscribeAll(that._genJIDList(), true);
+                    }
+                },
+                _expandContactGroup: function(evt) {
+                    evt.data.grouping.expand();
+                },
+                _manualBtnClick: function() {
+                    if (jabberwerx.$("#manual-cb").prop("checked")) {
+                        jabberwerx.$("#process-btn").removeAttr("disabled");
+                        jabberwerx.$("#pending-interval").attr("disabled", "true");
+                    } else {
+                        jabberwerx.$("#process-btn").attr("disabled", "true");
+                        jabberwerx.$("#pending-interval").removeAttr("disabled");
+                    }
+                    this.QCController._checkTimer(); //see intercept below
+                },
+                /**
+                 * Before serialization. Persist application DOM data
+                 */
+                willBeSerialized: function() {
+                    this._serialized = {
+                        base: jabberwerx.$("#base-name").val(),
+                        count: jabberwerx.$("#contact-count").val(),
+                        start: jabberwerx.$("#contact-start").val(),
+                        slice: jabberwerx.$("#pending-slice").val(),
+                        interval: jabberwerx.$("#pending-interval").val(),
+                        manual: jabberwerx.$("#manual-cb").prop("checked")
+                    }
+                    this._super();
+                },
+                /**
+                 * After app has been unserialized but before appInitialized.
+                 * This unserialization could have been performed in
+                 * appInitialized. WillBeSerialized and wasUnserialized are
+                 * usually implemented in pairs
+                 */
+                wasUnserialized: function () {
+                    this._super();
+                    if (this._serialized) {
+                        jabberwerx.$("#base-name").val(this._serialized.base);
+                        jabberwerx.$("#contact-count").val(this._serialized.count);
+                        jabberwerx.$("#contact-start").val(this._serialized.start);
+                        jabberwerx.$("#pending-slice").val(this._serialized.slice);
+                        jabberwerx.$("#pending-interval").val(this._serialized.interval);
+                        if (this._serialized.manual) {
+                            jabberwerx.$("#manual-cb").prop("checked", "true");
+                        }
+                        delete this._serialized;
+                    }
+                },
+                //generate a list of jids, base + idx@domain where idx = start..(start + count)
+                _genJIDList: function () {
+                    var result = [];
+                    var count = parseInt(jabberwerx.$.trim(jabberwerx.$("#contact-count").val()), 10);
+                    if (isNaN(count) || count <= 0) {
+                        jabberwerx.util.debug.log("Contact count must be an integer > 0");
+                        return result;
+                    }
+                    var start = parseInt(jabberwerx.$.trim(jabberwerx.$("#contact-start").val()), 10);
+                    if (isNaN(start) || start < 0) {
+                        jabberwerx.util.debug.log("Contact start must be an integer >= 0");
+                        return result;
+                    }
+                    var baseName = jabberwerx.$.trim(jabberwerx.$("#base-name").val());
+                    try {
+                        jabberwerx.JID.asJID(baseName + "@" + demo_config.domian);
+                    } catch (ex) {
+                        jabberwerx.util.debug.log("base name must be a valid JID node");
+                        return result;
+                    }
+
+                    for (var currIdx = start; currIdx < (start + count); ++currIdx) {
+                        result.push(baseName + currIdx + "@" + demo_config.domain);
+                    }
+                    return result;
+                }
+            }, "jabberwerx.app.BulkQCDemo");
+
+            /**
+             * An example using intercepts of QuickContactController methods.
+             * Note these intercepts use refreshDemo, a method added to controller
+             * by a mixin defined below.
+             */
+            jabberwerx.cisco.QuickContactController.intercept({
+                /**
+                 * Add exception logging, force a refresh of the demo's
+                 * sub and unsub lists.
+                 */
+                subscribeAll: function(jids, reset) {
+                    try {
+                        this._super(jids, reset);
+                    } catch (ex) {
+                        jabberwerx.util.debug.log("Exception thrown by subscribeAll: " + ex.message);
+                    }
+                    this.refreshDemo(); //from mixin
+                },
+                /**
+                 * Add exception logging, force a refresh of the demo's
+                 * sub and unsub lists.
+                 */
+                unsubscribeAll: function(jids) {
+                    try {
+                        this._super(jids);
+                    } catch (ex) {
+                        jabberwerx.util.debug.log("Exception thrown by unsubscribeAll: " + ex.message);
+                    }
+                    this.refreshDemo();
+                },
+                /**
+                 * Add exception logging, force a refresh of the demo's
+                 * sub and unsub lists, track time between pendings to
+                 * validate timer is being fired in a "timely" fashion.
+                 */
+                _processPending: function() {
+                    if (this._lastTime) {
+                        jabberwerx.$("#last-interval").text("Last: " + (new Date() - this._lastTime));
+                    } else {
+                        jabberwerx.$("#last-interval").text("");
+                    }
+                    try {
+                        this._super();
+                    } catch (ex) {
+                        jabberwerx.util.debug.log("Exception thrown in _processPending: " + ex.message);
+                    }
+                    this.refreshDemo();
+                    this._lastTime = new Date();
+                },
+                /**
+                 * Override timer setter to allow step processing of queues.
+                 */
+                _checkTimer: function() {
+                    if (!jabberwerx.$("#manual-cb").prop("checked")) {
+                        this._super();
+                    } else if (this._pendingTimer) {
+                        clearTimeout(this._pendingTimer);
+                        delete this._pendingTimer;
+                    }
+                    if (this._pendingTimer === undefined) {
+                        delete this._lastTime;
+                    }
+                }
+            });
+
+            /**
+             * A mixin example that adds an update demo method to controller.
+             * Keeps the demo in sync with controller state without adding eventing. See
+             * intercepts defined above
+             */
+            jabberwerx.cisco.QuickContactController.mixin({
+                refreshDemo: function() {
+                    var tl = jabberwerx.$("#pending-subs");
+                    var jc = 0;
+                    tl.empty();
+                    for (var oneJID in this._pendingSubs) {
+                        if (this._pendingSubs.hasOwnProperty(oneJID)) {
+                            tl.append(jabberwerx.$("<div class='list_entry'/>").text(oneJID));
+                            ++jc;
+                        }
+                    }
+                    jabberwerx.$("#subs-title").text(jabberwerx._("Subscriptions") + (jc ? " (" + jc + ")" : ""));
+                    tl = jabberwerx.$("#pending-unsubs");
+                    tl.empty();
+                    jc = 0;
+                    for (var oneJID in this._pendingUnsubs) {
+                        if (this._pendingUnsubs.hasOwnProperty(oneJID)) {
+                            tl.append(jabberwerx.$("<div class='list_entry'/>").text(oneJID));
+                            ++jc;
+                        }
+                    }
+                    jabberwerx.$("#unsubs-title").text(jabberwerx._("Unsubs") + (jc ? " (" + jc + ")" : ""));
+                }
+            });
+
+            /**
+              *  Allow jabberwerx.app to control lifetime of application. Application is loaded from persisted store if possible
+              *  otherwise a new instance is created. New instance is assigned to singleton jabberwerx.util.app._jwappinst.
+            */
+            jabberwerx.app.persistedApplicationClass('jabberwerx.app.BulkQCDemo');
+
+        </script>
+        <style>
+            .demo {
+                width: 100%;
+                height: 400px;
+                background:             #D9E3E9;
+                border:                 1px solid #8499A2;
+            }
+            .demo td{
+                vertical-align: top;
+            }
+            .demo .lhs_table {
+                margin-top: 5px;
+            }
+            .demo .lhs_table table {
+                width: 100%;
+                height: 100%;
+            }
+            .demo table.input_table td{
+                vertical-align: middle;
+            }
+            .demo .cfg_row {
+                height: 155px;
+            }
+            .demo .list_row {
+                height: 240px;
+            }
+            .demo .action_btn {
+                width:  140px;
+                margin-bottom: 3px;
+                float: right;
+            }
+            .demo .login_div {
+                width: 330px;
+                height: 150px;
+            }
+            .demo .demo_input {
+                width: 65px;
+                float: right;
+            }
+            .demo .process_input{
+                width: 35px;
+                margin-right: 5px;
+            }
+            .demo .process_btn {
+                float: right;
+            }
+            .demo .roster_view {
+                overflow: auto;
+                border:  1px solid #8499A2;
+            }
+            .demo .list_div {
+                border:  1px solid #8499A2;
+                height: 95%;
+                overflow: hidden;
+            }
+            .demo .list {
+                overflow: auto;
+                border-top:  1px solid #8499A2;
+                background:   #feffff;
+                height: 205px;
+                width: 100%;
+            }
+            .demo .title {
+                text-align: center;
+                height: 9%;
+            }
+            .demo .logger {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Jabberwerx Bulk Add/Remove QuickContacts Demo</h1>
+        <!--
+            This is a very busy ui, table centric with lots of inputs and
+            three different JWViews. This HTML could be refined. In all honesty
+            the implementor needed css and layout practice ;-)
+        -->
+        <table class="demo"><col width="650px"/><col/><tbody><tr>
+            <td>
+                <table id="demo-cfg" class="lhs_table"><col width="330px"/><col width="320px"/><tbody>
+                    <tr class="cfg_row">
+                        <td><div id="connection-view-site" class="login_div"></div></td>
+                        <td>
+                            <table class="input_table"><tbody>
+                                <tr>
+                                    <td><label for="base-name">Base:</label></td>
+                                    <td><input class="demo_input" type="text" id="base-name"/></td>
+                                    <td rowspan="3">
+                                        <div>
+                                            <button id="unsubcontacts-btn" class="action_btn">Unsubscribe</button>
+                                            <button id="subcontacts-btn" class="action_btn">Subscribe</button>
+                                            <button id="reset-btn" class="action_btn">Reset &amp Subscribe</button>
+                                            <button id="serialize-btn" class="action_btn">Reload &amp Subscribe</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label for="contact-count">Count:</label></td>
+                                    <td><input class="demo_input" type="text" id="contact-count"/></td>
+                                </tr>
+                                <tr>
+                                    <td><label for="contact-start">Start:</label></td>
+                                    <td><input class="demo_input" type="text" id="contact-start"/></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        <div>
+                                            <label for="pending-slice">Slice:</label>
+                                            <input class="process_input" type="text" id="pending-slice"/>
+                                            <label for="pending-interval">Interval:</label>
+                                            <input class="process_input" type="text" id="pending-interval"/>
+                                            <input type="checkbox" id="manual-cb"/>
+                                            <label for="pending-interval">Manual</label>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        <span id="last-interval" class="last_interval">actual</span>
+                                    </td>
+                                    <td>
+                                        <div class="process_btn">
+                                        <button id="process-btn" disabled="true" >Process</button>
+                                    </td>
+                                </tr>
+                            </tbody></table>
+                        </td>
+                    </tr>
+                    <tr class="list_row"><td colspan="3">
+                        <table><col width="40%"/><col width="30%"/><col width="30%"/><tbody><tr>
+                            <td><div id="roster-view" class="roster_view"></div></td>
+                            <td><div class="list_div">
+                                    <div class="title" id="subs-title">Subscriptions</div>
+                                    <div id="pending-subs" class="list"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="list_div">
+                                    <div class="title" id="unsubs-title">Unsubs</div>
+                                    <div id="pending-unsubs" class="list"></div>
+                                </div>
+                            </td>
+                        </tr></tbody></table>
+                    </td></tr>
+                </tbody></table>
+            </td>
+            <td>
+                <div id="logger" class="logger"></div>
+            </td>
+        </tr></tbody></table>
+                                                <!--
+-->
+
+    </body>
+</html>

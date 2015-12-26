@@ -1,0 +1,62 @@
+import java.util.ArrayList;
+public class Account{
+	private static ArrayList<User> usersList = new ArrayList<User>();
+	private static int ID;
+	public static void main(String[] args){
+		addTestUsers();
+		User dd = getUserByName("Unix User 2");
+		DBUser 	dbUser1 = new DBUser("DB User 1", "DB Pass 1"),
+				dbUser2 = new DBUser("DB User 2", "DB Pass 2");
+		UnixUser 	unixUser1 = new UnixUser("Unix User 1", "Unix Pass 1"),
+					unixUser2 =new UnixUser("Unix User 2", "Unix Pass 2");
+		listOfAvailableFields(dbUser1.getClass().getDeclaredFields());
+		System.out.println("DB User 1: "+dbUser1.getFieldValue("login") + " / " + dbUser1.getFieldValue("password"));
+		dbUser1.setFieldValue("login","ff");
+		dbUser1.setFieldValue("password","dd");
+		System.out.println("DB User 1: "+dbUser1.getFieldValue("login") + " / " + dbUser1.getFieldValue("password"));
+		System.out.println("Unix User 1: "+unixUser1.getFieldValue("login")+ " / " + unixUser1.getFieldValue("password"));
+		unixUser1.setFieldValue("login","ff");
+		unixUser1.setFieldValue("password","dd");
+		System.out.println("Unix User 1: "+unixUser1.getFieldValue("login")+ " / " + unixUser1.getFieldValue("password"));
+	
+	}
+	static User getUserByName(String userName){
+		User user = null;
+		for (User i : usersList){
+			if (userName.equals(i.getFieldValue("login")))
+				return user=i;
+		}
+		return user;
+	}
+	
+	static void createDBUser(String username, String password){
+		DBUser user = new DBUser(username,password);
+		usersList.add(ID++,user);
+	}
+	
+	static void createUnixUser(String username, String password){
+		UnixUser user = new UnixUser(username,password);
+		usersList.add(ID++,user);
+	}
+	
+	static void addTestUsers(){
+		
+		DBUser 	dbUser1 = new DBUser("DB User 1", "DB Pass 1"),
+				dbUser2 = new DBUser("DB User 2", "DB Pass 2");
+		UnixUser 	unixUser1 = new UnixUser("Unix User 1", "Unix Pass 1"),
+					unixUser2 =new UnixUser("Unix User 2", "Unix Pass 2");
+	
+		usersList.add(ID++,dbUser1);
+		usersList.add(ID++,dbUser2);
+		usersList.add(ID++,unixUser1);
+		usersList.add(ID++,unixUser2);
+	}
+	public void removeUser(UnixUser user){
+		//this.usersCredentials.remove(user); abstract String getLogin();
+}}
+
+
+
+
+
+

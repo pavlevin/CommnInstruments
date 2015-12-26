@@ -1,0 +1,17 @@
+
+public abstract class User {
+		private String userName,userPassword;
+		User(){
+			this.userName="Default";
+			this.userPassword="NoPassword";
+		}
+		User(String userName, String pass){
+			this.userName=userName;
+			this.userPassword=pass;
+
+		}
+		void setUsername(String user){		this.userName=user;	}
+		void setPassword(String pass){		this.userPassword=pass;	}
+		String getUsername(){		return 	this.userName;}
+		String getPassword(){		return 	this.userPassword;}
+}

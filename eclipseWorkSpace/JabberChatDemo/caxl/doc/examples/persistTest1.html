@@ -1,0 +1,83 @@
+<!--
+/**
+ * filename:        persistTest1.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- script type="text/javascript" charset="utf-8" src="../../../jabberwerx.ui/jabberwerx.ui.js"></script> -->
+    <script type="text/javascript" charset="utf-8" src="../../jabberwerx.js"></script>
+    <script type="text/javascript" charset="utf-8" src="persistTest.js"></script>
+    
+    <script type="text/javascript">    
+    </script>
+    <style type="text/css">
+        .template {
+            visibility: hidden;
+            display: none;
+        }
+        .disabled {
+            font-weight: normal;
+            color:       grey;
+        }
+        
+        #client-status {
+            font-weight: bold;
+        }
+    
+        .action {
+            border: 1px solid black;
+            font-weight: bold;
+            padding: 0px 4px;
+            cursor: pointer;
+        }
+        div.action {
+            clear:both;
+        }
+        
+        .log {
+            border: 2px solid grey;
+            padding: 12px;
+            margin:  8px 0px;
+        }
+        .log .log-message .type {
+            border: 1px solid black;
+            padding: 0px 4px;
+        }
+        .log #details {
+            overflow: auto;
+            max-height: 240px;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <span style="float:left;">
+            <span id="act-login" class="action">LOGIN</span>
+            <span id="act-logout" class="action disabled">LOGOUT</span>
+        </span>
+        <span style="float:left; padding:0px 0px 0px 8px;">
+            <a href="persistTest2.html">Go to page 2</a>
+        </span>
+        
+        <span id="client-status" style="float:right; padding:2px 8px 0px 2px;">OFFLINE</span>
+        &nbsp;
+    </div>               
+    <div class="log">
+        <span id="act-clear" class="action disabled" style="float:right">clear</span>
+        <span>&nbsp;</span>
+        <div id="details"><table></table></div>
+        <table class="template" id="log-message">
+            <tr class="log-message">
+                <td class="type"></td>
+                <td class="details"></td>
+            </tr>
+        </table>
+    </div>      
+</body>
+</html>

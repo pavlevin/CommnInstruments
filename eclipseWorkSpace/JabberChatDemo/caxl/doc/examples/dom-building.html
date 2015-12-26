@@ -1,0 +1,124 @@
+<!--
+/**
+ * filename:        dom-building.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cisco AJAX XMPP Library ~ NodeBuilder Demo</title>
+    <script type="text/javascript" src="../../jabberwerx.js"></script>
+    <script type="text/javascript" >
+jabberwerx.$(document).ready(function() {
+    var count = /count=(\d+)/.exec(window.location.search);
+    count = Math.abs(count ? parseInt(count[1]) : 500);
+    
+    var doms = [];
+    var idx;
+    
+    var quotes = [
+        "Did my heart love till now? Forswear it, sight!",
+        "For I ne'er saw true beauty till this night.",
+        "It is the east, and Juliet is the sun",
+        "Good Night, Good night! Parting is such sweet sorrow, that I shall say good night till it be morrow.",
+        "What's in a name? That which we call a rose by any other name would smell as sweet.",
+        "See, how she leans her cheek upon her hand! O that I were a glove upon that hand, that I might touch that cheek!"
+    ];
+    var start, end;
+    start = new Date().getTime();
+    for (idx = 0; idx < count; idx++) {
+        var q = quotes[Math.floor(Math.random() * 4294967296) % quotes.length];
+        var builder = new jabberwerx.NodeBuilder("{jabber:client}message");
+        builder.attribute("id", "message-" + idx).
+                attribute("to", "juliet@capulet.net").
+                attribute("type", "chat").
+                element("body").
+                        text(q).parent.
+                element("{http://jabber.org/protocol/chatstates}active");
+
+        doms[idx] = builder.data;
+    }
+    end = new Date().getTime();
+    
+    var results = jabberwerx.$("table.results");
+    var summary = jabberwerx.$(".templates div.dom-summary").clone();
+    summary.find("#dom-count").text("" + count);
+    summary.find("#dom-time").text("" + ((end - start) / count));
+    results.find("th.dom-summary").
+            contents().
+            replaceWith(summary);
+
+    var fn = function() {
+        var item = doms.shift();
+        var idx = count - doms.length;
+        if (!item) {
+            return;
+        }
+    
+        var row = jabberwerx.$(".templates tr.dom-item").clone();
+        row.find(".index").text(idx);
+        row.find(".data").text(item.xml);
+        row.addClass((idx % 2) ? "odd" : "even").
+            attr("id", "cursor");
+        results.find("#cursor").
+                removeAttr("id").
+                after(row);
+        setTimeout(arguments.callee, 5);
+    };
+    fn();
+});
+    </script>
+    <style type="text/css">
+.results th.dom-summary {
+    font-size: xx-large;
+}
+
+.results tr.dom-details th {
+    text-align:     left;
+}
+.results tr.dom-details th.index {
+    width:  4em;
+}
+.results tr.dom-item td {
+    padding:    2px 8px;
+}
+.results tr.dom-item.even td {
+    background-color:   #ecffff;
+    border:             1px solid #e0f0f0;
+}
+.results tr.dom-item.odd td {
+    background-color:   #ffffec;
+    border:             1px solid #f0f0e0;
+}
+
+div.templates {
+    display: none;
+}
+    </style>
+</head>
+<body>
+    <table class="results">
+        <tr>
+            <th class="dom-summary" colspan="2">Creating...</th>
+        </tr>
+        <tr class="dom-details" id="cursor">
+            <th class="index">Item #</th>
+            <th class="data">Generated DOM</th>
+        </tr>
+    </table>
+    
+    <div class="templates">
+        <div class="dom-summary">Creating <span id="dom-count">&nbsp;</span> DOMs took ~<span id="dom-time">&nbsp;</span>ms/DOM.</div>
+        <table>
+            <tr class="dom-item">
+                <td class="index">&nbsp;</td>
+                <td class="data">&nbsp;</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

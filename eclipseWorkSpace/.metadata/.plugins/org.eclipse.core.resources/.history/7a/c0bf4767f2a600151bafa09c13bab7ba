@@ -1,0 +1,99 @@
+import java.lang.reflect.Field;
+
+public class CombinedUser{
+	private String userName;
+	CombinedUser(){
+		this.userName="NoName";
+		
+}
+	CombinedUser(String userName){
+		this.userName=userName;
+	}
+	public static void main(String[] args) {
+		CombinedUser obj = new CombinedUser();
+		obj.show();
+		UnixUsr unixUsr1 = new UnixUsr("Unix User 1", "Unix Pass 1");
+		DBUsr dbUser1 = new DBUsr("DB User 1", "DB Pass 1");
+	}
+	private void show() {
+		try {
+			System.out.println(this.getClass().getClass().getFields());
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	void setUserName(String userName) {
+		this.userName=userName;
+		
+	}
+	
+	String getUserName() {
+		return userName;
+	}
+
+	
+	
+
+}	
+class DBUsr{
+	private String serviceName, login, password;
+	DBUsr(String login, String password){
+		this.login = login;
+		this.password=password;
+		this.serviceName="jjj";
+	}
+	void setServiceName(DBUsr dbUsr,String serviceName){
+		dbUsr.serviceName=serviceName;
+	}
+	String getServiceName(DBUsr dbUsr){
+		return dbUsr.serviceName;
+	}
+	String getFieldValue(String field,String value){
+		
+		
+		return dbUsr.serviceName;
+	}
+}
+
+class UnixUsr {
+	private String identityFile, login, password;
+	UnixUsr(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setIdentityFile(UnixUsr unixUsr,String identityFile){
+		unixUsr.identityFile=identityFile;
+	}
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

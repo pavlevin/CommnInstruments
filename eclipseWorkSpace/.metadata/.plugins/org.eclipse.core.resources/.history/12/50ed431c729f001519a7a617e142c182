@@ -1,0 +1,24 @@
+
+public class DataBaseUtils {
+	public static void main(String[] args){
+		OracleUser user = new OracleUser();
+		System.out.println("Default:");
+		user.showUserInfo();
+		user=setOracleUser(user);
+		System.out.println("User:");
+		user.showUserInfo();
+		
+	}
+	static OracleUser setOracleUser(OracleUser user){
+		user.setDBHost("127.0.0.1");
+		user.setDBPassword("12345");
+		user.setDBPort(8080);
+		user.setDBServiceName("Servicename");
+		user.setUserId("ODBU01");
+		user.setUsername("rwa_owner");
+		return user;
+	}
+	
+	
+}
+

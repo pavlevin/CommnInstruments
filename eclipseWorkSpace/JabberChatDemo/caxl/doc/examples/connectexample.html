@@ -1,0 +1,207 @@
+<!--
+/**
+ * filename:        connectexample.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--    This is a simple example that demonstrates a Jabberwerx client
+                connecting to a BOSH proxy to an XMPP server.  It performs
+                simple authentication and responds to client status change events
+                that are initiated by the API
+        -->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Client Connection Example</title>
+        <script type='text/javascript' src='../../jabberwerx.js'></script>
+
+        <script type="text/javascript">
+        (function() { //wrapped in an anon function to avoid polluting global namespace
+                /**
+                  * Configuration information including
+                  *   httpBindingURL - the BOSH binding URL.
+                  *   domain - The user's domain (domain part of the connected JID)
+                  *   username - The user (local part of connected JID)
+                  *   password - The account password.
+                 */
+                var demo_config = {
+                    httpBindingURL: "/httpbinding",
+                    domain: "example.com",
+                    username: "jwtest0",
+                    password: "test"
+                };
+
+                var client = null;
+                var $ = jabberwerx.$;
+
+                // Called when the "Connect" button is pressed
+                var connect = function() {
+                    $('#connectButton').hide();
+                    $('#spacer').show();
+                    $('#errorLabel').html('None');
+                    $('#statusLabel').html('Connecting...');
+
+                    // The user name that will be used for the client authentication
+                    var username = $("#userNameField").val() + "@" + demo_config.domain;
+                    // The password that will be used for the client authentication
+                    var password = $("#passwordField").val();
+
+                    // Required connection arguments.
+                    var connectArgs = {
+                        // The proxy url to the BOSH server
+                        httpBindingURL: demo_config.httpBindingURL,
+
+                        /**
+                         * "onConnected" is the success callback method
+                         * It will automatically be called upon a successful connection.
+                         */
+                        successCallback: onConnected,
+
+                        /**
+                         * "onClientError" is the error callback method
+                         * It will automatically be called upon an unsuccessful connection.
+                         * When an error occurs we display it in the connection_status element
+                         */
+                        errorCallback: onClientError
+                    };
+
+                    /**
+                     * Function called in order to connect the Client to the XMPP server.
+                     *
+                     * see ../api/symbols/jabberwerx.Client.html#connect
+                     */
+                    client.connect(username, password, connectArgs);
+                }
+
+                // Callback fired when client is connected, after clientConnected event
+                var onConnected = function() {
+                }
+
+                // Callback fired when an error occurs during a connection attempt
+                var onClientError = function(error) {
+                    $('#connectButton').show();
+                    $('#errorLabel').html(jabberwerx.errorReporter.getMessage(error));
+                }
+
+                // Called when the "Disconnect" button is pressed
+                var disconnect = function() {
+                    $('#disconnectButton').hide();
+                    $('#spacer').show();
+                    $('#statusLabel').html('Disconnecting...');
+
+                    /**
+                     * Function called in order to disconnect the Client from the XMPP server.
+                     *
+                     * see ../api/symbols/jabberwerx.Client.html#disconnect
+                     */
+                    client.disconnect();
+                }
+
+                $(document).ready(function() {
+
+                    /**
+                     * Instantiate the Jabberwerx Client, the main access and routing
+                     * object. Clients define a connection and session.
+                     *
+                     * see ../api/symbols/jabberwerx.Client.html
+                     */
+                    client = new jabberwerx.Client();
+
+                    $("#userNameField").val(demo_config.username);
+                    $("#passwordField").val(demo_config.password);
+
+                    $('#connectButton').click(connect);
+                    $('#disconnectButton').click(disconnect);
+
+                    $('#disconnectButton').hide();
+                    $('#spacer').hide();
+
+                    /**
+                     * The Jabberwerx API supports binding to a "clientConnected"
+                     * event. The event will automatically be triggered whenever the
+                     * client is successfully connected.
+                     *
+                     * see ../api/jabberwerxEvents.html#jabberwerx.Client
+                     */
+                    client.event("clientConnected").bind(function(evt) {
+                        $('#disconnectButton').show();
+                        $('#spacer').hide();
+
+                        $('#statusLabel').html('Connected as: ' + client.connectedUser.getDisplayName());
+                    });
+
+                    /**
+                     * The Jabberwerx API supports binding to a "clientDisconnected"
+                     * event. The event will automatically be triggered whenever the
+                     * client is disconnected. If some error caused the disconnect
+                     * an error stanza will be passed to the event.
+                     *
+                     * see ../api/jabberwerxEvents.html#jabberwerx.Client
+                     */
+                    client.event("clientDisconnected").bind(function(evt) {
+                        $('#connectButton').show();
+                        $('#spacer').hide();
+
+                        $('#statusLabel').html('Disconnected');
+                    });
+                });
+            })();
+        </script>
+    </head>
+    <body>
+        <h2>Client Connection Example</h2>
+        <div>An example demonstrating how to use CAXL's Client to connect to a server.</div>
+        <h3>How it Works</h3>
+        This example automatically performs a number of actions in the page onReady event:
+        <ol>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.Client.html' target='none'>jabberwerx.Client</a></li>
+            <li>Registering for the <a href='../../doc/api/jabberwerxEvents.html#jabberwerx.Client' target='none'>jabberwerx.Client clientConnected event</a> to update the client status on the screen after the client has successfully connected to the server</li>
+            <li>Registering for the <a href='../../doc/api/jabberwerxEvents.html#jabberwerx.Client' target='none'>jabberwerx.Client clientDisconnected event</a> to update the client status on the screen after the client has successfully disconnected from the server</li>
+        </ol>
+        The example also demonstrates the following functionality:
+        <ul>
+            <li>After clicking the "Connect" button, <a href='../../doc/api/symbols/jabberwerx.Client.html#connect' target='none'>connecting as username and password to a binding URL</a></li>
+            <li>After clicking the "Disconnect" button, <a href='../../doc/api/symbols/jabberwerx.Client.html#disconnect' target='none'>disconnecting from the server</a></li>
+            <li>When an error occurs, using the <a href='../../doc/api/symbols/jabberwerx.ErrorReporter.html#getMessage' target='none'>jabberwerx.ErrorReporter</a> to retrieve a user-friendly error message</li>
+        </ul>
+        <h3>In Action</h3>
+        <p>Instructions for using this example:</p>
+        <ul>
+            <li>Enter the user name and password in the fields provided.</li>
+            <li>Click the "Connect" button to connect the client to the server.</li>
+            <li>After successfully connecting, click the "Disconnect" button to disconnect from the server.</li>
+            <li>To see an error message, simply input an incorrect user name or password and click the "Connect" button.</li>
+        </ul>
+        <table align="center" border="1"><tr><td>
+            <table align="center" border="0">
+                <tr>
+                    <td><label for="userNameField">User Name: </label></td>
+                    <td><input type="text" id="userNameField" size="30" maxLength="30"/></td>
+                </tr>
+                <tr>
+                    <td><label for="passwordField">Password: </label></td>
+                    <td><input type="text" id="passwordField" size="30" maxLength="30"/></td>
+                </tr>
+                <tr>
+                    <td><label for="statusLabel">Status: </label></td>
+                    <td><div id="statusLabel">Disconnected</div></td>
+                </tr>
+                <tr>
+                    <td><label for="errorLabel">Error: </label></td>
+                    <td><div id="errorLabel">None</div></td>
+                </tr>
+                <tr>
+                    <td colspan="2" align="center">
+                        <input type="button" id="connectButton" value="Connect"/>
+                        <input type="button" id="disconnectButton" value="Disconnect"/>
+                        <div id="spacer">&nbsp;</div>
+                    </td>
+                </tr>
+            </table>
+        </td></tr></table>
+    </body>
+</html>

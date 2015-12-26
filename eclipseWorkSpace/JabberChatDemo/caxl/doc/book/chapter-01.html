@@ -1,0 +1,256 @@
+<!--
+/**
+ * filename:        chapter-01.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2012 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>The CAXL Book :: Chapter 1 - Introduction</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" type="text/css" href="book.css" />
+  </head>
+  <body>
+    <h1><a href="index.html">The CAXL Book</a> :: Chapter 1 - Introduction</h1>
+    <nav>
+      <h2>Table of Contents</h2>
+      <ol start='0'>
+        <li><a href="#quickstart">Quick Start</a></li>
+        <li><a href="#aboutyou">About You</a></li>
+        <li><a href="#whatis">What is CAXL?</a></li>
+        <li><a href="#installing">Installing CAXL</a></li>
+        <li><a href="#deploying">Deploying CAXL-Based Applications</a></li>
+        <li><a href="#debugging">Debugging CAXL</a></li>
+      </ol>
+    </nav>
+    <section id="quickstart">
+      <h2>1.0 Quick Start</h2>
+      <p>Here is the ultra-fast guide to getting started with CAXL:</p>
+      <ol>
+        <li>Download and unzip the <a href='http://wikicentral.cisco.com/display/CODEV/JabberWerx+-+Downloads'>zipfile</a>.</li>
+        <li>Copy <code>jabberwerx.js</code>, <code>jabberwerx.cisco.js</code>, <code>jabberwerx.ui.js</code>, and the <code>resources/</code> directory to your web server.</li>
+        <li>In the <code>connectArgs</code> object of each example you use or script that you write, set the <code>httpBindingURL</code> to the BOSH URL for your XMPP server (see <a href='#deploying'>Deploying CAXL-Based Applications</a>).</li>
+        <li>Copy some of the examples to your web server to verify that your installation is working.</li>
+        <li>Write your own code using CAXL.</li>
+      </ol>
+    </section>
+    <section id="aboutyou">
+      <h2>1.1 About You</h2>
+      <p>The CAXL Book is intended for developers who want to build web applications that can interface with the messaging, presence, and other real-time features of <strong>Cisco WebEx</strong> and <strong>Cisco Unified Presence</strong>. Here is what we assume about you:</p>
+      <ul>
+        <li>You have basic knowledge of JavaScript and HTML.</li>
+        <li>You are able to set up a web server for development and deployment purposes.</li>
+        <li>You have some familiarity with the Extensible Messaging and Presence Protocol (XMPP).</li>
+      </ul>
+      <p>The last item is one that might trip up some web developers. Although CAXL shields you from many of the low-level details of XMPP, you might want to read <cite>XMPP: The Definitive Guide</cite> (O'Reilly, 2009) or visit <a href="http://xmpp.org/">xmpp.org</a> to learn more about the many powerful services that XMPP provides.</p>
+    </section>
+    <section id="whatis">
+      <h2>1.2 What is CAXL?</h2>
+      <p>This book provides a friendly introduction to the Cisco AJAX XMPP Library (CAXL). CAXL gives you the tools to add presence and real-time messaging to your web applications through JavaScript libraries and user interface components that leverage the XMPP-based features of <strong>Cisco WebEx</strong> and <strong>Cisco Unified Presence</strong>.</p> 
+      <section id="whatis-goals">
+        <h3>1.2.1 Design Goals</h3>
+        <p>CAXL was designed with the following goals in mind:</p>
+        <ul>
+          <li><p><strong>Object-oriented</strong>: CAXL follows a strict object-oriented programming model, thus making it easy for you to understand the API and build your own real-time web applications.</p></li>
+          <li><p><strong>XMPP-based</strong>: The Extensible Messaging and Presence Protocol (XMPP) is a industry-standard technology for real-time collaboration. Thoughout this book, we reference both IETF RFCs and XSF XEPs that define various aspects of the XMPP protocol stack.</p></li>
+          <li><p><strong>Client-side</strong>: XMPP is a client-server technology. CAXL is a library for building applications that function as XMPP clients, where the XMPP server is <strong>Cisco WebEx</strong> or <strong>Cisco Unified Presence (CUP)</strong>.</p></li>
+          <li><p><strong>BOSH-enabled</strong>: XMPP was originally defined to use long-lived TCP sockets. However, the XMPP Standards Foundation has also defined an HTTP long-polling technique called BOSH that is ideal for web applications (see <a href="http://xmpp.org/extensions/xep-0124.html">XEP-0124</a> and <a href="http://xmpp.org/extensions/xep-0206.html">XEP-0206</a>). CAXL uses BOSH to enable XMPP functionality in web browsers.</p></li>
+          <li><p><strong>Extensible</strong>: XMPP provides an extensible framework for real-time collaboration, and CAXL too contains many extension points.</p></li>
+        </ul>
+      </section>
+      <section id="whatis-modules">
+        <h3>1.2.2 Modules</h3>
+        <p>CAXL is comprised of four modules:</p>
+        <ul>
+          <li><p><strong>jQuery</strong>: an open-source library for searching, traversing, and manipulating the browser's Document Object Model (DOM); strictly speaking this is a dependency, not a module of CAXL itself.</p></li>
+          <li><p><strong>CAXL Minimal API</strong>: a high-level API for sending and receiving XMPP stanzas.</p></li>
+          <li><p><strong>CAXL Core API</strong>: a high-level API for messaging and presence.</p></li>
+          <li><p><strong>CAXL UI API</strong>: HTML user interface components built on top of the CAXL Core API.</p></li>
+        </ul>
+        <p>You can use CAXL as an API or as a web UI, or both. Because the CAXL Core API does not depend on the CAXL UI API, you are free to build your own user interfaces. While the internals of the library use jQuery for low-level JavaScript tasks, the UI components have no dependency on any JavaScript UI framework.</p>
+      </section>
+    </section>
+    <section id="installing">
+      <h2>1.3 Installing CAXL</h2>
+      <section id="installing-contents">
+        <h3>1.3.1 Contents</h3>
+        <p>The release version of CAXL is available at <a href='http://wikicentral.cisco.com/display/CODEV/JabberWerx+-+Downloads'>http://wikicentral.cisco.com/display/CODEV/JabberWerx+-+Downloads</a> and is distributed as a zipfile. Once you unzip the file, you will see a directory structure like this:</p>
+        <pre class="codebox">
+
+doc/
+jabberwerx.cisco.js
+jabberwerx.js
+jabberwerx.ui.js
+resources/
+tests/
+        </pre>
+        <p>The <code>doc/</code> directory contains documentation, including this book and many helpful code examples.</p>
+        <p>The <code>resources/</code> directory contains a <code>themes/</code> subdirectory, which is the home for the default stylesheet and images used by the UI components. The <code>resources/</code> directory also contains a <code>translations/</code> subdirectory, which includes code for localization into several languages.</p>
+        <p>The <code>tests/</code> directory contains HTML and JavaScript for integration tests, unit tests, and a third-party test automation framework called QUnit.</p>
+        <p>The .js files comprise the code for CAXL, bundled into three files:</p>
+        <ul>
+          <li><p><strong>jabberwerx.js</strong> contains the code for standard XMPP functionality as defined in the base RFCs and the XMPP Extension Protocols (XEPs) supported by <strong>Cisco WebEx</strong> and <strong>Cisco Unified Presence</strong>.</p></li> 
+          <li><p><strong>jabberwerx.cisco.js</strong> contains code for Cisco-specific (non-standard) XMPP extensions that are used in <strong>Cisco WebEx</strong> and <strong>Cisco Unified Presence</strong>.</p></li> 
+          <li><p><strong>jabberwerx.ui.js</strong> contains code for the user interface components.</p></li>
+        </ul>
+        <p>Both jabberwerx.js and jabberwerx.ui.js are standalone files that contain everything you need to get started (with the difference that jabberwerx.ui.js includes the UI API whereas jabberwerx.js does not). You will include one or the other of these JavaScript files, but not both. Also note that if you are using Cisco-specific extensions, you need to include jabberwerx.js or jabberwerx.ui.js <em>before</em> you include jabberwerx.cisco.js.</p>
+        <p>Note: The three .js files in the release version concatenate a large number of individual files from the CAXL source code. They are not built for readability but instead are designed as a compact representation that you can use to create or enhance your own web applications by following the code examples contained in the <code>examples/</code> subdirectory. For information about obtaining and using the debug version of CAXL, see below.</p>
+      </section>
+      <section id="installing-configuration">
+        <h3>1.3.2 Configuring Your Development Environment</h3>
+        <p>In order to start working with CAXL, you need to set up a development environment. Specifically, you will need to install a local or network-accessible web server such as Apache and then copy the three .js files and the <code>resources/</code> directory to your desired location on the web server. You will also need a backend XMPP server and a frontend BOSH service for interfacing between your web application and the XMPP server. Detailed information about configuration is provided under <a href="#deploying">Deploying CAXL-Based Applications</a> below.</p>
+      </section>
+      <section id="installing-browsers">
+        <h3>1.3.3 Supported Browsers</h3>
+        <p>Before you start developing, make sure that you have one of the following supported browsers:</p>
+        <p><strong>Windows</strong></p>
+        <ul>
+          <li>Chrome (latest two versions)</li>
+          <li>Firefox (latest two versions)</li>
+          <li>Internet Explorer 8 and above</li>
+        </ul>
+        <p><strong>Mac OS X</strong></p>
+        <ul>
+          <li>Chrome (latest two versions)</li>
+          <li>Firefox (latest two versions)</li>
+          <li>Safari 4 and above</li>
+        </ul>
+        <p><strong>Linux</strong></p>
+        <ul>
+          <li>Chrome (latest two versions)</li>
+          <li>Firefox (latest two versions)</li>
+        </ul>
+      </section>
+    </section>
+    <section id="deploying">
+      <h2>1.4 Deploying CAXL-Based Applications</h2>
+      <p>There are two deployment models for CAXL-based applications. One uses Cross-Origin Resource Sharing (CORS), and the other uses a BOSH proxy. The CORS method is recommended, but we provide documentation of the proxy method as a fallback.</p>
+      <section id="deploying-cors">
+        <h2>1.4.1 CORS</h2>
+        <p>Most CAXL-based applications run in a web browser. However, browsers have strict rules about interacting with web servers, typically referred to as the "same origin policy" (see <a href="http://www.rfc-editor.org/rfc/rfc6454.txt">RFC 6454</a>). Essentially, the browser uses the scheme, host, and port of a URI as the scope of authority, so that https://example.com/ is not the same origin as http://example.com/ or http://secure.example.com/ (and so on). For our purposes, this is important because you will be interfacing with a Cisco-hosted BOSH service (e.g., "https://im1.ciscowebex.com:5280/httpbind") but your web application will be served from a different domain (e.g., "https://webapp.example.com/"). The same-origin policy would prevent you from building a web application that uses a Cisco-hosted BOSH service.</p>
+        <p>The solution is Cross-Origin Resource Sharing (CORS), a W3C technology for allowing controlled access to client-side cross-origin requests (see <a href="http://www.w3.org/TR/cors/">http://www.w3.org/TR/cors/</a> for details). CORS allows you to specify a particular scheme-host-port combination that is authorized for BOSH connectivity, and CAXL provides a facility for doing so using the <code>connectArgs</code> object:</p>
+        <pre class="codebox">
+
+var connectArgs = {
+    httpBindingURL: "https://im1.ciscowebex.com/http-bind"
+};
+client.connect(userJid, password, connectArgs);
+        </pre>
+        <p>You might be wondering how you determine what value to specify for the httpBindingURL. For domains that are deployed in the WebEx cloud, the answer depends on what <em>cluster</em> your domain is assigned to. You can discover this using a few DNS lookups:</p>
+        <pre class="codebox">
+
+$ dig +short srv _xmpp-server._tcp.example.com.
+5 0 5269 s2s.example.com.webexconnect.com.
+
+$ dig +short s2s.example.com.webexconnect.com.
+s2s.sj2.webex.com.
+isj2jxf.webexconnect.com.
+global-isj2jxf.webexconnect.com.
+173.243.12.79
+        </pre>
+        <p>Those 'dig' commands (you can do the same with 'host' and other tools) help you discover the domain that is delegated to provide server-to-server XMPP connectivity for your source domain; here the source domain is "example.com" and the delegated domain is "s2s.example.com.webexconnect.com". Then you need to discover the exact machines that you would connect to for that delegated domain; here those machines are "s2s.sj2.webex.com." and "isj2jxf.webexconnect.com." and so on, indicating that example.com uses cluster 2 in the WebEx cloud. Thus the <code>httpBindingURL</code> for example.com would be "https://im2.ciscowebex.com/http-bind". If you specify that value in your deployed code, your CAXL-based application will be able to connect to the appropriate cluster for XMPP communication.</p>
+        <p>[[FIXME: What about connections to Cisco Unified Presence (CUP)?]]</p>
+        <p>Note: There is a bug in Internet Explorer 8 and 9, such that the URI scheme for your web application needs to be the same as the URI scheme for the CORS domain. Because the WebEx cloud serves BOSH connectivity on HTTPS for strong security, your web application will also need to be served on HTTPS (which is a good idea anyway). This bug will be fixed in Internet Explorer 10.</p>
+      </section>
+      <section id="deploying-proxy">
+        <h2>1.4.2 Proxy</h2>
+        <p>It is also possible to configure a reverse proxy to the BOSH service. Although this is not recommended, we will cover it later in the book.</p>
+        <!--
+        <p>As noted, the CORS method is recommended because it is more scalable and also easier to configure (you simply define the <code>httpBindingURL</code> in your CAXL-based code). If for some reason you cannot use the CORS method, you can configure your web server so that it acts as a reverse proxy to the BOSH service. If you do this, all HTTP requests from your CAXL-based application to a special URI on your web server will be forwarded to the BOSH service.</p>
+        <p>For example, in Apache you would add the following entry in the main configuration file <code>httpd.conf</code>:</p>
+        <pre class="codebox">
+
+ProxyPass /httpbinding http://some-bosh-server.com:5280/httpbinding keepalive=On disablereuse=Off
+        </pre>
+        <p>[[FIXME: Is "some-bosh-server.com" a good example? Can we provide more precise advice here?]]</p>
+        <p>You would also enable following modules in in <code>httpd.conf</code>:</p>
+        <pre class="codebox">
+
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule rewrite_module modules/mod_rewrite.so
+        </pre>
+        <p>As usual, you would also need to restart Apache in order for those configuration changes to take effect.</p>
+        -->
+      </section>
+    </section>
+    <section id="debugging">
+      <h2>1.5 Debugging CAXL</h2>
+      <section id="debugging-contents">
+        <h3>1.5.1 Contents</h3>
+        <p>The debug version of CAXL is available at <a href='http://wikicentral.cisco.com/display/CODEV/JabberWerx+-+Downloads'>http://wikicentral.cisco.com/display/CODEV/JabberWerx+-+Downloads</a> and is distributed as a zipfile. In practice, we have found that few developers of CAXL-based applications feel the need to use the debug version. However, we make it available so that you can perform more intensive debugging if necessary.</p>
+        <p>Although the directory structure for the debug version is the same as the release build, you will notice that the primary JavaScript files are approximately three times larger:</p>
+        <pre class="codebox">
+
+  30488 jabberwerx.cisco.js
+1042525 jabberwerx.js
+ 387393 jabberwerx.min.js
+1375184 jabberwerx.ui.js
+        </pre>
+        <p>These debug versions are not "minified" as the release versions are, making them much more readable. In addition, they contain code that enables more fine-grained control over debug data. Of special interest is the <code>jabberwerx._config.debug</code> object in the <code>jabberwerx.js</code> and <code>jabberwerx.ui.js</code> files:</p>
+        <pre class="codebox">
+
+    jabberwerx._config.debug = {
+    /*DEBUG-BEGIN*/
+        streams: {
+            rawStanzaLogging: false,
+            connectionStatus: false,
+            clientStatus: false,
+            entityLifeCycle: false,
+            stanzaSelectors: false, // a LOT of info ...
+            persistence: false,
+            observers: false,
+            collectionControllers: false 
+        },    
+    /*DEBUG-END*/
+        on: true
+    };
+        </pre>
+        <p>You will also notice a number of statements bracketed by the lines <code>/*DEBUG-BEGIN*/</code> and <code>/*DEBUG-END*/</code>, which actually generate debug data as controlled by the properies of the <code>debug</code> object.</p>
+        <p>The debug object properties are all boolean and are defined as follows:</p>
+        <dl>
+          <di>
+            <dt>clientStatus</dt>
+            <dd>If true, provides information about the availability of the client (disconnected, connected, connecting, etc.).</dd>
+          </di>
+          <di>
+            <dt>collectionControllers </dt>
+            <dd>[Currently unused.]</dd>
+          </di>
+          <di>
+            <dt>connectionStatus</dt>
+            <dd>[Currently unused.]</dd>
+          </di>
+          <di>
+            <dt>entityLifeCycle</dt>
+            <dd>[Currently unused.]</dd>
+          </di>
+          <di>
+            <dt>observers</dt>
+            <dd>[Currently unused.]</dd>
+          </di>
+          <di>
+            <dt>persistence</dt>
+            <dd>If true, provides information about the persistence status of an object. Mostly used in relation to persistent storage associated with the namespace `_js_store__`.</dd>
+          </di>
+          <di>
+            <dt>rawStanzaLogging</dt>
+            <dd>If true, provides all of the XML elements exchanged over the stream. Currently used only for inbound XML (see the <code>_handleElementsReceived</code> method). Note that enabling this property can produce a large amount of data.</dd>
+          </di>
+          <di>
+            <dt>stanzaSelectors</dt>
+            <dd>If true, provides data about jQuery selector strings that are run against XML stanzas. Currently used only in relation to the <code>selectNodes</code> method. Note that enabling this property can produce a large amount of data.</dd>
+          </di>
+        </dl>
+        <p>Naturally, enabling debug output not only can produce large amounts of data but also can slow performance. We encourage you to run the debug release only in test environments and not in production.</p>
+      </section>
+    </section>
+    <div>
+      <p>&copy; 2012 Cisco Systems, Inc. All rights reserved.</p>
+    </div>
+  </body>
+</html>

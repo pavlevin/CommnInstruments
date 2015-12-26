@@ -1,0 +1,16 @@
+interface UnixInterface{
+	String getIdentityFile();
+	void setIdentityFile(String identityFile);
+}
+
+public abstract class UnixUser implements UnixInterface{
+	private String identityFile;
+	
+	public String getIdentityFile() {
+		return identityFile;
+	}
+	public void setIdentityFile(String identityFile) {
+		this.identityFile = identityFile;
+	}
+}
+

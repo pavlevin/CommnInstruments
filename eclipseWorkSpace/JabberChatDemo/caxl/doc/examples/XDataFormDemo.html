@@ -1,0 +1,136 @@
+<!--
+/**
+ * filename:        XDataFormDemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cisco AJAX XMPP Library ~ XDataForm demo</title>
+    <style type="text/css">
+        /*
+        #XDataFormXml
+        {
+            width: 455px;
+            height: 523px;
+            margin-top: 0px;
+        }
+        */   
+    </style>
+    <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+    <script type="text/javascript">
+        var formView;
+        var demo = {
+            config: {
+                username:   "jwtest1",
+                domain:     "example.com",
+                password:   "test"
+            },
+            app: null
+        };    
+        demo.Application = jabberwerx.JWModel.extend({
+            init: function() {
+                var $ = jabberwerx.$;
+                $("#apply").bind("click", this.invocation("applyChanges"));
+                $("#submit").bind("click", this.invocation("submitChanges"));
+                $("#cancel").bind("click", this.invocation("cancelChanges"));
+                var textXml = "<x xmlns='jabber:x:data' type='form'><title>Bot Configuration</title><instructions>Fill out this form to configure your new bot!Fill out this form to configure your new bot!Fill out this form to configure your new bot!Fill out this form to configure your new bot!Fill out this form to configure your new bot!</instructions><field type='hidden' var='FORM_TYPE'><value>jabber:bot</value></field><field type='fixed'><value>Section 1: Bot Info</value></field><field type='text-single' label='The name of your bot' var='botname'/><field type='text-multi' label='Helpful description of your bot' var='description'/><field type='boolean' label='Public bot?' var='public'><required/></field><field type='text-private' label='Password for special access' var='password'><required/></field><field type='fixed'><value>Section 2: Features</value></field><field type='list-multi' label='What features will the bot support?' var='features'><option label='Contests'><value>contests</value></option><option label='News'><value>news</value></option><option label='Polls'><value>polls</value></option><option label='Reminders'><value>reminders</value></option><option label='Search'><value>search</value></option><value>news</value><value>search</value><desc>More explanations</desc></field><field type='fixed'><value>Section 3: Subscriber List</value></field><field type='list-single' label='Maximum number of subscribers' var='maxsubs'><value>20</value><option label='10'><value>10</value></option><option label='20'><value>20</value></option><option label='30'><value>30</value></option><option label='50'><value>50</value></option><option label='100'><value>100</value></option><option label='None'><value>none</value></option></field><field type='fixed'><value>Section 4: Invitations</value><value>Section 5: test</value></field><field type='jid-multi' label='People to invite' var='invitelist'><desc>Tell all your friends about your new bot!</desc></field></x>";
+                $("#XDataFormXml").text(textXml);
+                var form = jabberwerx.util.unserializeXMLDoc(textXml);
+                var elem = $(form).find("x")[0];
+                var fieldForm = new jabberwerx.XDataForm(null, elem);  
+                
+                formView = new jabberwerx.ui.XDataFormView(fieldForm);
+                formView.render().appendTo("#XDataFormView");
+                formView.dimensions({width:600, height:480});
+                formView.event("xdataItemSelected").bind(this.invocation("_itemSelected"));
+            },
+            
+            applyChanges: function() {
+                var textXml = jabberwerx.$.trim(jabberwerx.$("#XDataFormXml").val());
+                var form = jabberwerx.util.unserializeXMLDoc(textXml);
+                var elem = jabberwerx.$(form).find("x")[0];
+                var fieldForm = new jabberwerx.XDataForm(null, elem); 
+                formView.remove();               
+                formView.destroy();    
+                formView = new jabberwerx.ui.XDataFormView(fieldForm);
+                formView.render().appendTo("#XDataFormView");
+                formView.dimensions({width:600, height:480});
+                formView.event("xdataItemSelected").bind(this.invocation("_itemSelected"));
+             },
+             
+             submitChanges: function() {
+                 try {
+		             var form = formView.submit();
+	             }
+	             catch(e) {
+	                 jabberwerx.$("#XDataFormSubmit").text(e.message + ": " + e.field);
+	                 return; 
+	             }             
+                 jabberwerx.$("#XDataFormSubmit").text(form.getDOM().xml);             
+             },
+             
+             cancelChanges: function() {
+                 var form = formView.cancel();
+                 jabberwerx.$("#XDataFormSubmit").text(form.getDOM().xml);
+             },
+             
+             _itemSelected: function(evt) {
+                 var item = evt.data.selected;
+                 var fields = "";
+                 jabberwerx.$.each(item.fields, function() {
+                     fields = fields + this.getVar() + ": " + this.getValues().join(",") + " ";
+                 });
+                 jabberwerx.$("#XDataFormSubmit").text(fields);
+             }
+        });
+
+        jabberwerx.$(document).ready(function() {
+            demo.app = new demo.Application();
+        });
+    </script> 
+    <link rel="stylesheet" type="text/css" href="../../resources/themes/default/css/styles.css"/>
+</head>
+<body>
+ <h2>XDataForm Demo</h2>
+    
+        <div>
+            <table>
+                <tr>
+                   <td style="width: 600px;">Input XML</td>
+                   <td style="width: 50px;"></td>                        
+                   <td style="width: 600px;">XDataForm</td>                        
+                </tr>              
+                <tr>
+                   <td>
+                       <textarea id="XDataFormXml" style="width: 600px; height: 480px; overflow:auto;"></textarea>
+                   </td>
+                   <td style="width: 50px;">
+                   </td>                        
+                   <td id="XDataFormView">  
+                    </td>                        
+                </tr>
+                <tr>
+                   <td style="width: 600px;">
+                       <input id="apply" type="button" value="Apply" />
+                   </td>
+                   <td style="width: 50px;">
+                   </td>                        
+                   <td style="width: 600px;">
+                       <input id="submit" type="button" value="Submit" />
+                       <input id="cancel" type="button" value="Cancel" />
+                   </td>                        
+                </tr>                  
+                <tr>
+                    <td colspan=3>
+                        <textarea id="XDataFormSubmit" style="width: 1300px; height: 150px; overflow:auto;"></textarea>
+                    </td>
+                </tr>
+            </table>
+         </div>      
+</body>
+</html>

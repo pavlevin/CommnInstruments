@@ -1,0 +1,115 @@
+<!--
+/**
+ * filename:        chapter-03.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2012 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>The CAXL Book :: Chapter 3 - Login and Logout</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" type="text/css" href="book.css" />
+  </head>
+  <body>
+    <h1><a href="index.html">The CAXL Book</a> :: Chapter 3 - Login and Logout</h1>
+    <nav>
+      <h2>Table of Contents</h2>
+      <ol start='0'>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#login">Logging In</a></li>
+        <li><a href="#logout">Logging Out</a></li>
+      </ol>
+    </nav>
+    <section id="overview">
+      <h2>3.0 Overview</h2>
+      <p>Now that we understand some of the fundamentals, let's see how to log in to the XMPP server and set up the basics of an XMPP session. For typical chat clients, that involves several steps:</p>
+      <ol>
+        <li>Connect to a BOSH service</li>
+        <li>Open an XML stream to the XMPP server</li>
+        <li>Authenticate with the XMPP server</li>
+        <li>Bind a resource to the stream so that the client is identified by a full JID</li>
+      </ol>
+      <p>Thankfully, CAXL provides an abstraction from all those details, as we'll see in the next section.</p>
+    </section>
+    <section id="login">
+      <h2>3.1 Logging In</h2>
+      <p>To log in, all you need to do is call the connect() method on the jabberwerx.Client object:</p>
+      <pre>
+        client = new jabberwerx.Client();
+        client.connect(bareJID, password, arg);
+      </pre>
+      <p>The <code>bareJID</code> and <code>password</code> arguments are straightforward. Note that the <code>bareJID</code> is of the form &lt;user@host.tld&gt; (including both the localpart and the domainpart of the JID). Also note that, to simplify matters, for now we'll be covering password-based authentication methods only.</p>
+      <p>The <code>arg</code> argument is a bit more advanced. Basically it is an object that contains specific settings for connecting to the server. At a minimum, the connection arguments need to include a value for the <code>httpBindingURL</code> string, which is the path for the BOSH service (e.g., "/httpbinding") at the domain name where the user's account is registered (e.g., "example.com").</p>
+      <p>Here is an example of a basic <code>arg</code> value:</p>
+      <pre>
+        var my_config = { 
+            httpBindingURL: "/httpbinding",
+            domain: "example.com",
+            username: "someuser",
+            password: "userpass"
+        };
+        var connectArgs = {
+            httpBindingURL: my_config.httpBindingURL
+        };
+        var bareJID = my_config.username + '@' + my_config.domain;
+        var password = my_config.password;
+        client.connect(bareJID, password, connectArgs);
+      </pre>
+      <p>The <code>arg</code> object can also include the <code>successCallback</code> and <code>errorCallback</code> functions so that your code will know whether the client has successfully connected or instead has experienced an error in the connection process.</p>
+      <pre>
+        var connectArgs = {
+            httpBindingURL: my_config.httpBindingURL,
+            successCallback: onConnected,
+            errorCallback: onConnectionError
+        };
+        onConnected = function() {
+            /**
+             * take some action
+             */
+        }
+        onConnectedError = function() {
+            /**
+             * take some action
+             */
+        }
+      </pre>
+      <p>Because these callbacks are called only once, they provide only a single opportunity to obtain information about the connection state. Another approach is to register for the <code>clientConnected</code> and <code>clientDisconnected</code> events (i.e., by binding a function to the event trigger), as in the following examples.</p>
+      <pre>
+        client.event("clientConnected").bind(function(evt) {
+            /**
+             * take some action
+             */
+        });
+
+        client.event("clientDisconnected").bind(function(evt) {
+            /**
+             * take some action
+             */
+        });
+      </pre>
+      <p>Although there are subtle differences here, the choice between including a callback in the connection arguments or registering for an event is mostly a matter of coding preference.</p>
+      <p>Note that both the <code>errorCallback</code> function and the <code>clientDisconnected</code> event give your code access to detailed information about any errors that might that occur during a connection attempt. This enables the client to do things like prompt the user to retype a password, or perhaps show a notification about how to contact a support team.</p>
+      <p>Finally, we mentioned that part of connecting is binding a resource to the stream so that the client can be addressed as a full JID for purposes of stanza delivery. Typically we have the server assign a resource for us. After the client connects, the resource is the <code>client.resourceName</code> attribute. For example, you could define a function to return the full JID, such as:</p>
+      <pre>
+        var fullJID = function() {
+            return client.connectedUser.jid + "/" + client.resourceName;
+        };
+      </pre>
+    </section>
+    <section id="logout">
+      <h2>3.2 Logging Out</h2>
+      <p>Logging out is even easier than logging in, both in the XMPP protocol itself and in CAXL. In XMPP, simply send a closing stream tag, that is, <code>&lt;/stream:stream&gt;</code> (the BOSH connection will go away if you stop sending HTTP requests). In CAXL, simply call the <code>disconnect()</code> method on the jabberwerx.Client object:</p>
+      <pre>
+        client.disconnect();
+      </pre>
+      <p>CAXL handles all the cleanup of the XML stream and the BOSH connection if you call the <code>disconnect()</code> method. As a result, the <code>onDisconnect</code> event will be fired.</p>
+    </section>
+    <div>
+      <p>&copy; 2012 Cisco Systems, Inc. All rights reserved.</p>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+1449923609424	Rename type 'User'
+1449923635834	Rename field 'userName'
+1449923653362	Rename field 'userType'
+1449946825394	Encapsulate field 'accountType'
+1449948249994	Rename type 'Account'
+1449948263282	Rename type 'Account1'

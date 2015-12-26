@@ -1,0 +1,234 @@
+<!--
+/**
+ * filename:        bookmarks.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Bookmarks</title>
+        <style>
+            .title {
+                text-align: center;
+            }
+            .bookmarks {
+                float: left;
+                display: block;
+                margin: 20px;
+            }
+            .bookmark {
+                background-color:#C0C0C0;
+                border:1px solid #0000C0;
+                color:#000000;
+                cursor:pointer;
+                display:block;
+                line-height:50px;
+                text-align:center;
+                text-decoration:none;
+            }
+            .bookmark_example {
+                display: none;
+            }
+            .website {
+                float: left;
+                display: block;
+                width: 800px;
+                height: 800px;
+            }
+        </style>
+        <script type="text/javascript" src="../../jabberwerx.js"></script>
+        <script type="text/javascript">
+
+            // config
+            demo_config = {
+                httpBindingURL: "/httpbinding",
+                domain: "example.com",
+                username: "",
+                password: ""
+            };
+
+            var client;
+            var bookmarks;
+            var bookmarksReady = false;
+
+            var setWebsite = function() {
+                jabberwerx.$(".website").attr("src", jabberwerx.$(".new_url").attr("value"));
+            };
+
+            var onConnected = function() {
+                bookmarks.createNode(function() {
+                    bookmarks.subscribe(function(err) {
+                        bookmarksReady = !err;
+                    });
+                });
+            };
+
+            var bookmarksChanged = function(evt) {
+                if (evt.data.operation == "added") {
+                    for (var i = 0; i < evt.data.items.length; i++) {
+                        var item = jabberwerx.$(".bookmark_example #bookmark").clone();
+
+                        var data = evt.data.items[i];
+                        var x = jabberwerx.$(data.data);
+
+                        item.attr("id", data.id);
+
+                        item.find("button.remove_bookmark").click(function() {
+                            bookmarks.retract(data.id);
+                        });
+
+                        var itemBookmark = item.find(".bookmark")
+                        itemBookmark.attr("href", x.find('url').text());
+                        itemBookmark.text(x.find('desc').text());
+
+                        jabberwerx.$(".bookmarks").append(item);
+                    }
+                } else if (evt.data.operation == "updated") {
+                    // Go find the bookmark and update it.
+                } else if (evt.data.operation == "removed") {
+                    // Remove the bookmarks from the website.
+                    for (var i = 0; i < evt.data.items.length; i++) {
+                        var data = evt.data.items[i];
+                        var bm = jabberwerx.$(".bookmarks").find("[id='" + data.id + "']");
+                        if (bm) {
+                            bm.remove();
+                        }
+                    }
+                }
+            };
+
+            var generateId = function() {
+                var result = '';
+                for(var j=0; j<32; j++) {
+                    if( j == 8 || j == 12|| j == 16|| j == 20) {
+                        result = result + '-';
+                    }
+                    var i = Math.floor(Math.random()*16).toString(16).toUpperCase();
+                    result = result + i;
+                }
+                return result;
+            };
+
+            jabberwerx.$(document).ready(function() {
+                jabberwerx.$("#bookmarks_div").hide();
+
+                client = new jabberwerx.Client('bookmarks demo client');
+                var pubsub = new jabberwerx.PubSubController(client);
+                bookmarks = pubsub.node("test/bookmarks",
+                                        "info-broker." + demo_config.domain);
+                bookmarks.event("pubsubItemsChanged").bind(bookmarksChanged);
+                bookmarks.event("errorEncountered").bind(function(evt) {
+                    if (evt.data.operation && evt.data.operation != "createNode") {
+                        window.alert("An error in " + evt.data.operation + ".\n" +
+                            jabberwerx.errorReporter.getMessage(evt.data.error));
+                    }
+                });
+                bookmarks.autoRetrieve = true;
+
+                client.event("clientStatusChanged").bind(function(evt) {
+                    if (evt.data.next == jabberwerx.Client.status_connected) {
+                        jabberwerx.$("#login_div").hide();
+                        jabberwerx.$("#bookmarks_div").show();
+                    } else if (evt.data.next == jabberwerx.Client.status_disconnected) {
+                        jabberwerx.$("#login_div").show();
+                        jabberwerx.$("#bookmarks_div").hide();
+                    }
+                });
+
+                jabberwerx.$("#login").click(function() {
+
+										demo_config.username = jabberwerx.$("#username").val() + "@" + demo_config.domain;
+    								demo_config.password = jabberwerx.$("#password").val();
+
+										// Required connection arguments
+										// connectArgs object sent through to client.connect method.
+				            var connectArgs = {
+				            		httpBindingURL: demo_config.httpBindingURL,
+
+				            		successCallback: onConnected,
+
+												// When an error occurs we display it in the connection_status element
+				                errorCallback:  function(err) {
+				                                    jabberwerx.$("#connection_status").text(err.toString());
+				                                }
+				            };
+
+										// Attempt to connect to the XMPP/BOSH server
+                    client.connect(demo_config.username, demo_config.password, connectArgs);
+
+                });
+
+                 jabberwerx.$("#logout").click(function() {
+                    jabberwerx.$("#connection_status").text("");
+                    client.disconnect();
+                });
+
+                jabberwerx.$(".title .new_url").keypress(function(e) {
+                    if (e.keyCode == 13) {
+                        setWebsite();
+                    }
+                });
+
+                jabberwerx.$(".title #set_website").click(function(e) {
+                    setWebsite();
+                });
+
+                jabberwerx.$(".title #add_bookmark").click(function(e) {
+                    if (bookmarksReady) {
+                        var url = jabberwerx.$(".new_url").attr("value");
+                        var desc = window.prompt("Add Bookmark",
+                            "Description for bookmark.");
+
+                        if (desc != null) {
+                            var payload = new jabberwerx.NodeBuilder("{jabber:x:oob}x");
+                            payload.element("url").text(url);
+                            payload.element("desc").text(desc?desc:url);
+
+                            bookmarks.publish(generateId(), payload.data);
+                        }
+                    }
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="login_div">
+            <div>
+                <label for="username">Username:</label>
+                <input type="text" id="username"/>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password"/>
+            </div>
+            <div>
+                <label for="login"></label>
+                <button id="login">Login</button>
+            </div>
+            <div>
+                <span id="connection_status"/>
+            </div>
+        </div>
+        <div id="bookmarks_div">
+            <div class="title">
+                <h1>Bookmark Collection</h1>
+                <input type="text" class="new_url" value="http://www.cnn.com/" />
+                <button id="set_website">Go</button>
+                <button id="add_bookmark">Add Bookmark</button>
+                <button id="logout">Logout</button>
+            </div>
+            <div class="bookmarks"></div>
+            <iframe class="website" id="website" name="website"></iframe>
+        </div>
+        <div class="bookmark_example">
+            <div id="bookmark">
+                <a class="bookmark" href="http://www.cnn.com/" target="website">CNN</a>
+                <button class="remove_bookmark">Remove</button>
+            </div>
+        </div>
+    </body>
+</html>

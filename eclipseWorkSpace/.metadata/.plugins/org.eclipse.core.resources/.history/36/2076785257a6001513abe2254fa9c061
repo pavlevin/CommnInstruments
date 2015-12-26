@@ -1,0 +1,37 @@
+public abstract class UnixUser {
+	private String identityFile;
+	private String userName;
+	private String userPassword;
+	private UserType userType = UserType.Unix;
+	private final int id=this.hashCode();
+		public String getIdentityFile() {
+		return identityFile;
+	}
+
+	public void setIdentityFile(String identityFile) {
+		this.identityFile = identityFile;
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public String getUserPassword() {
+		return userPassword;
+	}
+
+	public void setUserPassword(String userPassword) {
+		this.userPassword = userPassword;
+	}
+
+	public UserType getUserType() {
+		return userType;
+	}
+	public int getHashID() {
+		return id;
+	}
+}

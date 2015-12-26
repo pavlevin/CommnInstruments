@@ -1,0 +1,160 @@
+<!--
+/**
+ * filename:        persisttabdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ Persistent Tabbing</title>
+        <link rel="stylesheet" href="../../resources/themes/default/css/styles.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+
+var demo_config = {
+    maxGraphAge: 30,
+    logPersistence: false
+};
+
+jabberwerx.util.config.logPersistence = demo_config.logPersistence;
+jabberwerx.util.setMaxGraphAge(demo_config.maxGraphAge);
+
+var TabDemoInst = null;
+var TabDemo = {};
+
+MockView = jabberwerx.ui.JWView.extend({
+    init: function(label) {
+        this._super();
+        this.label = label;
+        this.persistOptions(jabberwerx.ui.JWView.persist_html);
+    },
+    createDOM: function(doc) {
+        return jabberwerx.$("<div/>", doc).
+                text(this.label + ", world!").
+                get(0);
+    }
+}, "MockView");
+
+TabbableMockView = jabberwerx.ui.JWView.extend({
+    init: function(label, content) {
+        this._super();
+        this.label = label;
+        this.content = content;
+    },
+
+    setTabControl: function(tab) {
+        jabberwerx.ui.Tabbable.setTabControl.call(this, tab);
+
+        if (tab) {
+            tab.label(this.label);
+        }
+    },
+    createDOM: function(doc) {
+        var builder = jabberwerx.$("<div/>", doc);
+
+        jabberwerx.$("<h2/>").
+                text(this.label).
+                appendTo(builder);
+
+        var contentDOM = jabberwerx.$("<div/>").
+                appendTo(builder);
+
+        if (this.content) {
+            contentDOM.html(this.content);
+        }
+
+        return builder.get(0);
+    }
+}, "TabbableMockView");
+TabbableMockView.mixin(jabberwerx.ui.Tabbable);
+
+TabDemo.TabDemoApp = jabberwerx.ui.JWApp.extend({
+
+    appCreate: function() {
+
+        this._super();
+
+        this.tabpane = new jabberwerx.ui.TabbedView();
+        this.tabpane.event("tabActivated").bind(this.invocation("_onTabActivated"));
+        this.tabpane.event("tabDeactivated").bind(this.invocation("_onTabDeactivated"));
+
+        var tab;
+        tab = this.tabpane.addTab("hello", new MockView("Hello"));
+        tab.label("hello!");
+        tab = this.tabpane.addTab("bye", new MockView("Good-bye"));
+        tab.label("bye!");
+        tab = this.tabpane.addTab("hello2", new TabbableMockView("Sir or Madam", "Hello, <b>AGAIN</b>"));
+        tab = this.tabpane.addTab("bye2", new MockView("Good-bye again"));
+        tab.label("bye, too!");
+
+        var attTab = this.tabpane.getTab("hello2");
+        var timed = function() {
+            var data = jabberwerx.$("<img/>").
+                    attr("src", "/playground/resources/images/AlertInformation16Wht.gif").
+                    css("padding", "0px 4px");
+            attTab.requestAttention(data);
+        };
+        window.setTimeout(timed, 5000);
+    },
+
+    appInitialize: function() {
+        this._super();
+        this.tabpane.render().appendTo("div#tabbed_stuff");
+        this.tabpane.show();
+        this.tabpane.dimensions({height:350, width:500});        
+    },
+
+    destroy: function() {
+        this.tabpane.destroy();
+        this._super();
+    },
+
+    _onTabActivated: function(evt) {
+        if (evt.data.id == "hello") {
+            var placement = evt.data.content.jq.find(".actcounter");
+            var counter;
+            if (!placement.length) {
+                placement = jabberwerx.$("<div class='actcounter'/>").
+                        appendTo(evt.data.content.jq);
+                placement.append("activated: ");
+                jabberwerx.$("<span class='value'/>").
+                        appendTo(placement).
+                        text("0");
+            }
+
+            counter = parseInt(placement.find(".value").text());
+            placement.find(".value").text(counter + 1);
+        }
+    },
+
+    _onTabDeactivated: function(evt) {
+        if (evt.data.id == "hello") {
+            var placement = evt.data.content.jq.find(".deactcounter");
+            var counter;
+            if (!placement.length) {
+                placement = jabberwerx.$("<div class='deactcounter'/>").
+                        appendTo(evt.data.content.jq);
+                placement.append("deactivated: ");
+                jabberwerx.$("<span class='value'/>").
+                        appendTo(placement).
+                        text("0");
+            }
+
+            counter = parseInt(placement.find(".value").text());
+            placement.find(".value").text(counter + 1);
+        }
+    }
+}, "TabDemo.TabDemoApp");
+
+jabberwerx.app.persistedApplicationClass('TabDemo.TabDemoApp');
+        </script>
+    </head>
+    <body>
+        <h2>JWA: Tab Demo</h2>
+        <div id="tabbed_stuff">&nbsp;</div>
+    </body>
+</html>

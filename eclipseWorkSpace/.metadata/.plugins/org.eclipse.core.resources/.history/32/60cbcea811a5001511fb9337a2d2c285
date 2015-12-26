@@ -1,0 +1,9 @@
+
+public class UserType {
+	public enum UserTypes {
+		Unix,
+		DataBase,
+		Informatica };
+	
+}
+

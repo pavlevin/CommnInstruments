@@ -1,0 +1,133 @@
+<!--
+/**
+ * filename:        persistcontactdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ Persistent Contact</title>
+        <link rel="stylesheet" href="../../resources/themes/default/css/styles.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+
+var demo_config = {
+    httpBindingURL: "/httpbinding",
+    domain: "example.com",
+    username: "jwtest1",
+    password: "test",
+    maxGraphAge: 30,
+    unsecureAllowed: false,
+    logPersistence: false
+};
+
+jabberwerx.util.config.logPersistence = demo_config.logPersistence;
+jabberwerx.util.setMaxGraphAge(demo_config.maxGraphAge);
+jabberwerx._config.unsecureAllowed = demo_config.unsecureAllowed;
+
+jabberwerx.ui.ContactDemo = jabberwerx.ui.JWApp.extend({
+    appCreate: function() {
+
+        this._super();
+        this.cache = null;
+        this.rosterFetched = false;
+        this.client = new jabberwerx.Client('sampleclient');
+        this.rosterController = new jabberwerx.RosterController(this.client);
+        this.views = [];
+
+        this.client.entitySet.event("batchUpdateEnded").bind(this.invocation("onRosterFetch"));
+        this.entities = null; //eventually populated after roster fetch
+
+        var that = this;
+
+        var onConnected = function() {};
+        var onClientError = function() { alert('error: ' + that.client.getClientStatusString(that.client.clientState)); };
+
+        var connectArgs = {
+            // the proxy url to the BOSH server
+            httpBindingURL: demo_config.httpBindingURL,
+            // onConnected is the success callback method
+            successCallback: onConnected,
+            // onClientError is the error callback method
+            errorCallback: onClientError
+        };
+
+        //connect on creation
+        try {
+            this.client.connect(demo_config.username + "@" + demo_config.domain, demo_config.password, connectArgs);
+        } catch (ex) {
+            jabberwerx.util.debug.log("error authenticating: " + ex + " ::: " + (ex.stack || ""));
+        }
+    },
+
+
+    appInitialize: function() {
+        // iterate through the entity set
+        jabberwerx.$.each(this.views, function() {
+            this.render().appendTo('#contact-view');
+        });
+    },
+
+    destroy: function() {
+        this.client.destroy();
+        this.client = null;
+    },
+
+    /**
+     * Callback method for a roster fetch
+     */
+    onRosterFetch: function() {
+        jabberwerx.util.debug.log("triggering batch update");
+        /*
+         * After a fetch, the entity set will have been updated with the list of contacts
+         * so we will retrieve the entity set and iterate through looking for instances of
+         * type jabberwerx.Contact
+         */
+        //application is a singleton
+        var that = jabberwerx.util.persistedApplicationInstance();
+        that.entities = that.client.entitySet.toArray();
+        // iterate through the entity set
+        jabberwerx.$.each(that.entities, function() {
+            var entity = this;
+            that.cache = entity.cache;
+            if (entity instanceof jabberwerx.Contact) {
+                var view = new jabberwerx.ui.ContactPresenceView(entity);
+                view.render().appendTo('#contact-view');
+                that.views.push(view);
+            }
+        });
+        if (that.cache) {
+            that.addTemporaryEntity(that.cache);
+        }
+        that.rosterFetched = true;
+    },
+
+    addTemporaryEntity: function(entityCache) {
+        var jid = new jabberwerx.JID('notacontact@example.com');
+        //var entityCache = new jabberwerx.ClientEntityCache();
+        var entity = entityCache.entity(jid);
+        if (!entity) {
+            entity = new jabberwerx.TemporaryEntity(jid);
+            entity.cache = entityCache;
+        }
+        var view = new jabberwerx.ui.ContactPresenceView(entity);
+        view.render().appendTo('#contact-view');
+        this.views.push(view);
+        entity.destroy();
+    }
+
+}, "jabberwerx.ui.ContactDemo");
+
+jabberwerx.app.persistedApplicationClass('jabberwerx.ui.ContactDemo');
+
+        </script>
+    </head>
+    <body>
+        <h4>Demo Contact Presence View</h4>
+        <div id="contact-view"></div>
+    </body>
+</html>

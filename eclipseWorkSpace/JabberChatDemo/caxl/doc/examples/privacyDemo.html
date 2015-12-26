@@ -1,0 +1,301 @@
+<!--
+/**
+ * filename:        privacyDemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cisco AJAX XMPP Library ~ Privacy Lists Demo</title>
+    <script type="text/javascript" src="../../jabberwerx.js"></script>
+    <script type="text/javascript" >
+// config
+var demo_config = {
+    httpBindingURL: "/httpbinding",
+    username: "jwtest0@example.com",
+    password: "test",
+    app: null
+};
+
+DemoApplication = jabberwerx.JWModel.extend({
+    init: function() {
+        jabberwerx.$(".privacy").hide();
+        jabberwerx.$(".log #act-clear").bind("click", this.invocation("clear"));
+
+        this.client = new jabberwerx.Client("privacy");
+        this.client.event("clientStatusChanged").bind(this.invocation("_handleStatusChange"));
+        this.client.event("beforeIqReceived").bind(this.invocation("_handleStanzaReceived"));
+        this.client.event("beforeMessageReceived").bind(this.invocation("_handleStanzaReceived"));
+        this.client.event("beforePresenceReceived").bind(this.invocation("_handleStanzaReceived"));
+        this.client.event("iqSent").bind(this.invocation("_handleStanzaSent"));
+        this.client.event("messageSent").bind(this.invocation("_handleStanzaSent"));
+        this.client.event("presenceSent").bind(this.invocation("_handleStanzaSent"));
+
+        this.controller =   this.client.controllers.privacyList ||
+                            new jabberwerx.PrivacyListController(this.client);
+        this.controller.event("privacyListUpdated").bind(this.invocation("_handlePrivacyUpdated"));
+        this.controller.event("privacyListRemoved").bind(this.invocation("_handlePrivacyRemoved"));
+        this.controller.event("privacyListApplied").bind(this.invocation("_handlePrivacyApplied"));
+        this.controller.event("errorEncountered").bind(this.invocation("_handleErrorEncountered"));
+
+        jabberwerx.$(".privacy input[name='load']").bind("click", this.invocation("load"));
+
+        var connectArgs = {httpBindingURL: demo_config.httpBindingURL};
+        this.client.connect(demo_config.username, demo_config.password, connectArgs);
+    },
+
+    log: function(type, details) {
+        var log = jabberwerx.$("#log-message .log-message").clone();
+        log.children(".type").text(type);
+        log.children(".details").text(details);
+        log.appendTo(".log #details table");
+        jabberwerx.$(".log #details")[0].scrollTop = jabberwerx.$(".log #details")[0].scrollHeight;
+        jabberwerx.$("#act-clear").removeClass("disabled");
+    },
+    clear: function() {
+        jabberwerx.$(".log #details table").empty();
+        jabberwerx.$(".log #act-clear").addClass("disabled");
+    },
+
+    load: function() {
+        var name = jabberwerx.$(".privacy input[name='name']").val();
+        this.controller.fetch(name);
+    },
+
+    _handleStatusChange: function(evt) {
+        this.log("client",
+                 this.client.getClientStatusString(evt.data.previous) +
+                 " --> " +
+                 this.client.getClientStatusString(evt.data.next));
+        switch (evt.data.next) {
+            case jabberwerx.Client.status_connected:
+                jabberwerx.$(".privacy").show();
+                break;
+            case jabberwerx.Client.status_disconnected:
+                jabberwerx.$(".privacy").hide();
+                break;
+        }
+    },
+    _handleStanzaSent: function(evt) {
+        var stanza = evt.data;
+        this.log(stanza.pType(), "SENT: " + stanza.xml());
+    },
+    _handleStanzaReceived: function(evt) {
+        var stanza = evt.data;
+        this.log(stanza.pType(), "RECV: " + stanza.xml());
+    },
+
+    _updateList: function(list) {
+        list.update();
+    },
+    _removeList: function(list) {
+        list.remove();
+    },
+    _applyList: function(list) {
+        this.controller.apply(list || undefined);
+    },
+    _blockJid: function(list, jid) {
+        this._addBlocked(list, jid, true);
+    },
+
+    _clearBlocked: function() {
+        jabberwerx.$(".privacy .items table").empty();
+    },
+    _addBlocked: function(list, jid, up) {
+        var it = jabberwerx.$("#privacy-item .privacy-item").clone();
+        it.find("td.jid").text(jid);
+        it.find("td.action input[type='button'][name='unblock']").bind("click", function() {
+            list.unblockJid(jid);
+            it.remove();
+            return false;
+        });
+        it.appendTo(".privacy .items table");
+
+        if (up) {
+            list.blockJid(jid);
+        }
+    },
+
+    _handlePrivacyUpdated: function(evt) {
+        var list = evt.data;
+        var that = this;
+        var $ = jabberwerx.$;
+
+        this._clearBlocked();
+        jabberwerx.$.each(list.getBlockedJids(), function() {
+            var jid = String(this);
+            jabberwerx.util.debug.log("blocking " + jid);
+            that._addBlocked(list, jid);
+        });
+
+        if (!this._boundActs) {
+            $(".privacy #act-privlist-block").
+                    removeClass("disabled").
+                    bind("click", function() {
+                        var jid = $(".privacy input[type='text'][name='jid']").val();
+                        if (jid) {
+                            that._blockJid(list, jid);
+                        }
+                        return false;
+                    });
+            $(".privacy .action #act-privlist-update").
+                    removeClass("disabled").
+                    bind("click", function() { that._updateList(list); return false; });
+            $(".privacy .action #act-privlist-remove").
+                    removeClass("disabled").
+                    bind("click", function() { that._removeList(list); return false; });
+            $(".privacy .action #act-privlist-apply").
+                    removeClass("disabled").
+                    bind("click", function() { that._applyList(list); return false; });
+            $(".privacy .action #act-privlist-deapply").
+                    removeClass("disabled").
+                    bind("click", function() { that._applyList(); return false; });
+            this._boundActs = true;
+        }
+
+        this.log("privacy", "list '" + list.getName() + "' updated");
+    },
+    _handlePrivacyRemoved: function(evt) {
+        var list = evt.data;
+        this._clearBlocked();
+        var $ = jabberwerx.$;
+
+        $(".privacy #act-privlist-block").
+                addClass("disabled").
+                unbind("click");
+        $(".privacy .action #act-privlist-update").
+                addClass("disabled").
+                unbind("click");
+        $(".privacy .action #act-privlist-remove").
+                addClass("disabled").
+                unbind("click");
+        $(".privacy .action #act-privlist-apply").
+                addClass("disabled").
+                unbind("click");
+        $(".privacy .action #act-privlist-deapply").
+                addClass("disabled").
+                unbind("click");
+        this._boundActs = false;
+
+        this.log("privacy", "list '" + list.getName() + "' removed");
+    },
+    _handlePrivacyApplied: function(evt) {
+        var list = evt.data.list;
+        this.log("privacy",
+                (list) ?
+                        "applied '" + list + "' as active list" :
+                        "removed active list");
+    },
+    _handleErrorEncountered: function(evt) {
+        var msg;
+        msg =   "Error encountered ";
+        if (evt.data.target) {
+            msg = msg + " against list '" + evt.data.target.getName() + "' ";
+        }
+        msg =   msg + " when doing " + evt.data.operation +
+                ":  " + evt.data.error.xml;
+        this.log(   "privacy", msg);
+        evt.data = evt.data.target;
+        this._handlePrivacyUpdated(evt);
+    }
+});
+
+var client;
+jabberwerx.$(document).ready(function() {
+    demo_config.app = new DemoApplication();
+});
+    </script>
+    <style type="text/css">
+.template {
+    visibility: hidden;
+    display: none;
+}
+.disabled {
+    font-weight: normal;
+    color:       grey;
+}
+
+.action {
+    border: 1px solid black;
+    font-weight: bold;
+    padding: 0px 4px;
+    cursor: pointer;
+}
+div.action {
+    clear:both;
+}
+
+.privacy .items {
+    overflow:   auto;
+    height:     240px;
+}
+.privacy .action {
+    border:     none;
+}
+
+.log {
+    border: 2px solid grey;
+    padding: 12px;
+    margin:  8px 0px;
+}
+.log .log-message .type {
+    border: 1px solid black;
+    padding: 0px 4px;
+}
+.log #details {
+    overflow: auto;
+    height: 240px;
+}
+
+.template {
+    display:    none;
+}
+
+div.privlist_item button {
+    float:      right;
+}
+    </style>
+</head>
+<body>
+    <h2>Cisco AJAX XMPP Library - Privacy Lists Demo</h2>
+    <div class="privacy" id="privform">
+        <div>
+            <span>List: </span>
+            <input type="text" name="name" />
+            <input type="button" name="load" value="Load"/>
+        </div>
+        <h3>Privacy List <span class="privlist-name"> </span></h3>
+        <div>
+            <button id="act-privlist-block" class="disabled">Block</button> <input type="text" name="jid"/>
+        </div>
+        <div class="items"><table></table></div>
+        <div class="action">
+            <button class="disabled" id="act-privlist-update">Update</button>
+            <button class="disabled" id="act-privlist-remove">Remove</button>
+            <button class="disabled" id="act-privlist-apply">Apply</button>
+            <button class="disabled" id="act-privlist-deapply">De-apply</button>
+        </div>
+        <table class="template" id="privacy-item">
+            <tr class="privacy-item">
+                <td class="action"><input type="button" name="unblock" value="unblock"/></td>
+                <td class="jid"></td>
+            </div>
+        </table>
+    </div>
+    <div class="log">
+        <span id="act-clear" class="action disabled" style="float:right">clear</span>
+        <span>CONSOLE</span>
+        <div id="details"><table></table></div>
+        <table class="template" id="log-message">
+            <tr class="log-message">
+                <td class="type"></td>
+                <td class="details"></td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

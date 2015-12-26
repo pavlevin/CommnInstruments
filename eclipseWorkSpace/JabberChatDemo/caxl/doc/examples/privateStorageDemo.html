@@ -1,0 +1,276 @@
+<!--
+/**
+ * filename:        privateStorageDemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cisco AJAX XMPP Library ~ privateStorage Lists Demo</title>
+    <script type="text/javascript" src="../../jabberwerx.js"></script>
+    <script type="text/javascript" >
+var demo_config = {
+    httpBindingURL: "/httpbinding",
+    domain: "example.com",
+    username: "jwtest0",
+    password: "test",
+    app: null
+};
+/*
+  <query xmlns="jabber:iq:private">
+    <storage xmlns="storage:groups">
+      <group>Demo Group</group>
+      <group>Unfiled</group>
+      <group>Quick Contacts</group>
+    </storage>
+  </query>
+*/
+DemoApplication = jabberwerx.JWModel.extend({
+    init: function() {
+        var $ = jabberwerx.$;
+
+        $(".privateStorage").hide();
+        $(".log #act-clear").bind("click", this.invocation("clear"));
+
+
+        this.client = new jabberwerx.Client("privateStorage");
+        this.client.event("clientStatusChanged").bind(this.invocation("_handleStatusChange"));
+        this.client.event("beforeIqReceived").bind(this.invocation("_handleStanzaReceived"));
+        this.client.event("beforeMessageReceived").bind(this.invocation("_handleStanzaReceived"));
+        this.client.event("beforePresenceReceived").bind(this.invocation("_handleStanzaReceived"));
+        this.client.event("iqSent").bind(this.invocation("_handleStanzaSent"));
+        this.client.event("messageSent").bind(this.invocation("_handleStanzaSent"));
+        this.client.event("presenceSent").bind(this.invocation("_handleStanzaSent"));
+
+
+        $(".privateStorage input[name='load']").bind("click", this.invocation("load"));
+        $(".privateStorage input[name='save']").bind("click", this.invocation("save"));
+        $(".privateStorage input[name='add']").bind("click", this.invocation("addGroup"));
+        $(".privateStorage input[name='remove']").bind("click", this.invocation("removeGroup"));
+
+        var connectArgs = {httpBindingURL: demo_config.httpBindingURL};
+        this.client.connect(demo_config.username + "@" + demo_config.domain, demo_config.password, connectArgs);
+        this.client.controllers.privateStorage || new jabberwerx.PrivateStorageController(this.client);
+
+    },
+
+    log: function(type, details) {
+        var log = jabberwerx.$("#log-message .log-message").clone();
+        log.children(".type").text(type);
+        log.children(".details").text(details);
+        log.appendTo(".log #details table");
+        jabberwerx.$(".log #details")[0].scrollTop = scrollHeight;
+        jabberwerx.$("#act-clear").removeClass("disabled");
+    },
+
+    clear: function() {
+        jabberwerx.$(".log #details table").empty();
+        jabberwerx.$(".log #act-clear").addClass("disabled");
+    },
+
+    load: function() {
+        this._clearGroups();
+        var that = this;
+        this.client.controllers.privateStorage.fetch("{storage:groups}storage",
+            function (stanza, error) {
+                var groups = jabberwerx.$(stanza).find("group");
+                jabberwerx.$.each(groups, function() {
+                    that._addGroup(jabberwerx.$(this).text());
+                });
+            }
+        );
+    },
+
+    save: function() {
+        var prv_elem =  new jabberwerx.NodeBuilder("{storage:groups}storage");
+        //.element("group").text(group).parent;
+        var rows = jabberwerx.$(".privateStorage .groups table tr");
+        var that = this;
+        jabberwerx.$.each(rows, function() {
+            var group = jabberwerx.$(this).find("span").text();
+            prv_elem.element("group").text(group);
+        });
+        this.client.controllers.privateStorage.update(prv_elem.data);
+    },
+
+    _clearGroups: function() {
+        jabberwerx.$(".privateStorage .groups table").empty();
+    },
+
+    addGroup: function() {
+       var group = jabberwerx.$(".privateStorage input[name='group']")[0].value;
+       this._addGroup(group);
+    },
+
+    removeGroup: function() {
+        var rows = jabberwerx.$(".privateStorage .groups table tr");
+        var that = this;
+        jabberwerx.$.each(rows, function() {
+            if (that._isChecked(this)) {
+                jabberwerx.$(this).remove();
+            }
+        });
+        jabberwerx.$(".privateStorage input[name='remove']").attr("disabled","true");
+    },
+
+    _groupClicked: function() {
+         //Find out if any of the check boxes are checked
+         if (this._anyChecked()) {
+             jabberwerx.$(".privateStorage input[name='remove']").removeAttr("disabled");
+         } else {
+             jabberwerx.$(".privateStorage input[name='remove']").attr("disabled", "true");
+         }
+
+
+    },
+
+    _isChecked: function(row) {
+       var check = jabberwerx.$(row).
+                              find("input[name='chkGroup']:checked").
+                              length;
+       return (check != 0);
+    },
+
+    _anyChecked: function() {
+       var checked = false;
+       var rows = jabberwerx.$(".privateStorage .groups table tr");
+       var that = this;
+       jabberwerx.$.each(rows, function() {
+           if (that._isChecked(this)) {
+               checked = true;
+               return;
+           }
+       });
+
+       return checked;
+    },
+
+    _addGroup: function(group) {
+        var group_row = jabberwerx.$("#group-item .group-item").clone();
+        group_row.find("td.group").children("span").text(group);
+        group_row.find("input:checkbox[name='chkGroup']").bind("click", this.invocation("_groupClicked"));
+        group_row.appendTo(".privateStorage .groups table");
+    },
+
+    _handleStatusChange: function(evt) {
+        this.log("client",
+                 this.client.getClientStatusString(evt.data.previous) +
+                 " --> " +
+                 this.client.getClientStatusString(evt.data.next));
+        switch (evt.data.next) {
+            case jabberwerx.Client.status_connected:
+                jabberwerx.$(".privateStorage").show();
+                break;
+            case jabberwerx.Client.status_disconnected:
+                jabberwerx.$(".privateStorage").hide();
+                break;
+        }
+    },
+
+    _handleStanzaSent: function(evt) {
+        var stanza = evt.data;
+        this.log(stanza.pType(), "SENT: " + stanza.xml());
+    },
+
+    _handleStanzaReceived: function(evt) {
+        var stanza = evt.data;
+        this.log(stanza.pType(), "RECV: " + stanza.xml());
+    }
+
+});
+
+var client;
+jabberwerx.$(document).ready(function() {
+    demo_config.app = new DemoApplication();
+});
+
+
+    </script>
+    <style type="text/css">
+
+.template {
+    visibility: hidden;
+    display: none;
+}
+
+
+.disabled {
+    font-weight: normal;
+    color:       grey;
+            width: 85px;
+        }
+
+.action {
+    border: 1px solid black;
+    font-weight: bold;
+    padding: 0px 4px;
+    cursor: pointer;
+}
+div.action {
+    clear:both;
+}
+
+.privateStorage .groups {
+    overflow:   auto;
+    height:     240px;
+}
+
+
+.log {
+    border: 2px solid grey;
+    padding: 12px;
+    margin:  8px 0px;
+}
+.log .log-message .type {
+    border: 1px solid black;
+    padding: 0px 4px;
+}
+.log #details {
+    overflow: auto;
+    height: 240px;
+}
+
+.template {
+    display:    none;
+}
+
+    </style>
+</head>
+<body>
+    <h2>Cisco AJAX XMPP Library - Private Storage Demo</h2>
+    <div class="privateStorage" id="privateStorageForm">
+        <div>
+            <input type="button" name="load" value="Load"/>
+            <input type="button" name="save" value="Save"/>
+        </div>
+        <h3>Groups</h3>
+        <div>
+            &nbsp;<span>Group:&nbsp;<input type="text" name="group"/></span>
+            <input type="button" name="add" value="Add"/>
+            <input type="button" name="remove" value="Remove" disabled/>
+        </div>
+        <div class="groups"><table></table></div>
+        <div class="group-items">
+            <table class="template" id="group-item">
+                <tr class="group-item">
+                    <td class="group"><input name="chkGroup" type="checkbox"/><span></span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="log">
+        <span id="act-clear" class="action disabled" style="float:right">clear</span>
+        <div id="details"><table></table></div>
+        <table class="template" id="log-message">
+            <tr class="log-message">
+                <td class="type"></td>
+                <td class="details"></td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

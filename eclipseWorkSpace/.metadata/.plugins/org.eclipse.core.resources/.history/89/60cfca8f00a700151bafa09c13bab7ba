@@ -1,0 +1,23 @@
+import java.lang.reflect.Field;
+
+
+public class UserActions{
+	String name="Field";
+	public static void main(String[] args){
+		UserActions ua = new UserActions();
+		System.out.println(ua.name);
+		ua.setValue("name", "bla");
+		System.out.println(ua.name);
+		
+	}
+	void setValue(String field,String value){
+		try {
+			Field f = Field.class.getDeclaredField(field);
+			Field.class.getDeclaredField(value).set(f.get(field), value);
+		} catch (IllegalArgumentException | IllegalAccessException
+				| NoSuchFieldException | SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}

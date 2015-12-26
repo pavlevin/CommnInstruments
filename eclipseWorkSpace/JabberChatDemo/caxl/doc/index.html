@@ -1,0 +1,155 @@
+<!--
+/**
+ * filename:        index.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2012 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cisco AJAX XMPP Library Index</title>
+    <link rel="stylesheet" type="text/css" href="api/jabberwerx.css" />
+</head>
+<body class="border">
+
+<table width="90%">
+<tr>
+<td><img class="summary" src="api/cisco.gif"/></td>
+<td class="center"><h1 class="title">Cisco AJAX XMPP Library Index</h1></td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td class="center"><h5>ver. CAXL-release-2014.04.10787</h5></td>
+</tr>
+</table>
+<div class="summary">
+<h2 align="center">
+<br/>
+Web 2.0 library for XMPP-based Instant Messaging, Availability and Roster Management
+<br/><br/>
+</h2>
+
+</div>
+<br/>
+    <div style="font-size: 14">
+        <div class="p3">
+            <span class="bold">Documentation</span>
+            <ul style="margin-top:2px;margin-bottom:10px;">
+            <div><strong><a href="book/index.html" target="_blank" style="text-decoration:none">The CAXL Book</a></strong></div>
+            <span>Getting Started</span>
+            <ul style="margin-top:2px;margin-bottom:10px;">
+                <li><a href="api/developerGuide.html" target="_blank" style="text-decoration:none">Developer Guide</a></li>
+                <li><a href="api/deploymentGuide.html" target="_blank" style="text-decoration:none">Deployment Guide</a></li>
+            </ul>
+
+            <span>Supported Platforms</span>
+            <ul style="margin-top:2px;margin-bottom:10px;">
+                <li><a href="api/developerGuide.html#supportedBrowsers" target="_blank" style="text-decoration:none">Supported OS/Browsers Combinations</a></li>
+                <p style="font-size: larger"><strong>Note:</strong>When configured to use CORS an additional restriction exists. Internet Explorer requires the http binding URL must be targeted to the same scheme as the hosting page.
+                This means that if your AJAX page is at http://example.com, then your httpBindingURL must also begin with HTTP. Similarly, if your AJAX page is at https://example.com, then your httpBindingURL must also begin with HTTPS. This restriction is for IE only.</p>
+            </ul>
+
+            <span>More Information</span>
+            <ul style="margin-top:2px;margin-bottom:10px;">
+                <li><a href="api/index.html" target="_blank" style="text-decoration:none">Cisco AJAX XMPP Library API</a></li>
+                <li><a href="api/jabberwerxEvents.html" target="_blank" style="text-decoration:none">Events</a></li>
+
+                <li>Provided Extensions:
+                    <ul>
+                        <li><a href="ciscoExtensionGuide.html" target="_blank" style="text-decoration:none">Cisco-Specific Extensions (Quick Contacts, etc.)</a></li>
+                        <li><a href="api/cupIntegrationGuide.html" target="_blank" style="text-decoration:none">CUP High Availability Integration Guide</a></li>
+                    </ul>
+                </li>
+                <li>Compliance: <ul>
+                        <li><a href="supported-xeps.html" target="_blank" style="text-decoration:none">Public Protocol Compliance</a></li>
+                        <li><a href="supported-ijeps.html" target="_blank" style="text-decoration:none">Proprietary Protocol Compliance</a></li>
+                </ul> </li>
+            </ul>
+            </ul>
+        </div>
+
+        <div class="p3">
+            <span class="bold">Examples</span>
+            <ul style="margin-top:2px">
+
+            <span>Examples using 'jabberwerx'</span>
+            <ul style="margin-top:2px;margin-bottom:10px;">
+            <li><a href="examples/connectexample.html" target="_blank" style="text-decoration:none">Simple Client Connection</a></li>
+            <li><a href="examples/rosterexample.html" target="_blank" style="text-decoration:none">Using Roster and Entity Classes</a></li>
+            <li><a href="examples/chatexample.html" target="_blank" style="text-decoration:none">Using One-to-One Chat Classes</a></li>
+            <li><a href="examples/mucexample.html" target="_blank" style="text-decoration:none">Using Multi-User Chat Classes</a></li>
+            <li><a href="examples/pubsubexample.html" target="_blank" style="text-decoration:none">PubSub Classes</a></li>
+            <li><a href="examples/pubsubownerexample.html" target="_blank" style="text-decoration:none">PubSub Classes, Owner Use Cases</a></li>
+            <li><a href="examples/pepexample.html" target="_blank" style="text-decoration:none">Using PEP PubSub Classes</a></li>
+            <!--
+            <li><a href="examples/persistTest1.html" target="_blank" style="text-decoration:none">Persistence</a></li>
+            <li><a href="examples/privacyDemo.html" target="_blank" style="text-decoration:none">Privacy Lists</a></li>
+            <li><a href="examples/bookmarks.html" target="_blank" style="text-decoration:none">PubSub Bookmarks</a></li>
+            <li><a href="examples/capsDemo.html" target="_blank" style="text-decoration:none">Capabilities Demo</a></li>
+            <li><a href="examples/minDistDemo.html" target="_blank" style="text-decoration:none">Minimal Distribution Demo</a></li>
+            <li><a href="examples/l10n/translatorsample.html" target="_blank" style="text-decoration:none">Translator Example</a></li>
+            <li><a href="examples/dynamiccore.html" target="_blank" style="text-decoration:none">Dynamically Loading Core</a></li>
+            <li><a href="examples/geolocDemo.pep.html" target="_blank" style="text-decoration:none">Geoloc Demo (PEP Version)</a></li>
+            <li><a href="examples/geolocDemo.raw.html" target="_blank" style="text-decoration:none">Geoloc Demo (RAW IQ Version)</a></li>
+            </ul>
+            <span>Demos using 'jabberwerx.ui'</span>
+            <ul style="margin-top:2px;margin-bottom:10px;">
+            <li><a href="examples/persistchatdemo.html" target="_blank" style="text-decoration:none">One to One Chat</a></li>
+            <li><a href="examples/mucviewdemo.html" target="_blank" style="text-decoration:none">MUCView</a></li>
+            <li><a href="examples/persistauthdemo.html" target="_blank" style="text-decoration:none">AuthView</a></li>
+            <li><a href="examples/persistcontactdemo.html" target="_blank" style="text-decoration:none">ContactView</a></li>
+            <li><a href="examples/persistrosterdemo.html" target="_blank" style="text-decoration:none">RosterView</a></li>
+            <li><a href="examples/persistselfpresencedemo.html" target="_blank" style="text-decoration:none">SelfPresenceView</a></li>
+            <li><a href="examples/persisttabdemo.html" target="_blank" style="text-decoration:none">TabView</a></li>
+            <li><a href="examples/subscriptiondemo.html" target="_blank" style="text-decoration:none">SubscriptionView</a></li>
+            -->
+            </ul>
+            <span>Examples using 'jabberwerx.cisco'</span>
+            <ul style="margin-top:2px;margin-bottom:10px;">
+            <!--
+            <li><a href="examples/bulkqcdemo.html" target="_blank" style="text-decoration:none">QuickContact Bulk Subscribe/Unsubscribe</a></li>
+            -->
+            <li><a href="examples/presencequickcontactsexample.html" target="_blank" style="text-decoration:none">Using QuickContact Classes</a></li>
+            <li><a href="examples/webextoken.html" target="_blank" style="text-decoration:none">Example WEBEX-TOKEN Implementation</a></li>
+            <li><a href="examples/userpresenceexample.html" target="_blank" style="text-decoration:none">Example Registered RosterContact and QuickContact Presence Change</a></li>
+            </ul>
+
+            </ul>
+        </div>
+        <div class="p3">
+            <span class="bold">Test Pages</span>
+            <ul style="margin-top:0px">
+            <span>Automated Tests</span>
+            <ul style="margin-top:2px;margin-bottom:10px;">
+                <li><a href="../tests/unit-tests/index.html" target="_blank" style="text-decoration:none">Unit Tests</a></li>
+                <li><a href="../tests/integration-tests/index.html" target="_blank" style="text-decoration:none">Integration Tests</a></li>
+                <li><a href="../tests/unit-tests/jabberwerx.min.index.html" target="_blank" style="text-decoration:none">Min Unit Tests</a></li>
+                <li><a href="../tests/integration-tests/jabberwerx.min.index.html" target="_blank" style="text-decoration:none">Min Integration Tests</a></li>
+                <li><a href="../tests/unit-tests/jabberwerx.unbundled.index.html" target="_blank" style="text-decoration:none">Unbundled Unit Tests</a></li>
+                <li><a href="../tests/integration-tests/jabberwerx.unbundled.index.html" target="_blank" style="text-decoration:none">Unbundled Integration Tests</a></li>
+            </ul>
+            <span>Test pages for 'jabberwerx'</span>
+            <ul style="margin-top:2px;margin-bottom:10px;">
+                <li><a href="examples/dom-building.html" target="_blank" style="text-decoration:none">Using NodeBuilder</a></li>
+                <li><a href="examples/XHTMLIMDemo.html" target="_blank" style="text-decoration:none">XHTML-IM</a></li>
+            </ul>
+            </ul>
+        </div>
+        <div class="p3">
+        </div>
+        <div class="p3">
+        </div>
+        <div class="p3">
+        </div>
+    </div>
+<h5>
+    <p>
+        <p>Cisco and the Cisco logo are trademarks or registered trademarks of Cisco and/or its affiliates in the U.S. and other countries. To view a list of Cisco trademarks, go to this URL:<a href='http://www.cisco.com/go/trademarks' target='blank'>http://www.cisco.com/go/trademarks</a>. Third-party trademarks mentioned are the property of their respective owners. The use of the word partner does not imply a partnership relationship between Cisco and any other company. (1110R)</p>
+        &#169; 2014 Cisco Systems, Inc. All rights reserved.
+    </p>
+</h5>
+</body>
+</html>

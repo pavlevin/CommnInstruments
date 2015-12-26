@@ -1,0 +1,226 @@
+<!--
+/**
+ * filename:        dynamiccore.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Dynamically Loaded Core</title>
+
+        <script type='text/javascript'>
+// config
+demo_config = {
+    httpBindingURL: "/httpbinding",
+    domain: "example.com",
+    username: "jwtest0",
+    password: "test"
+};
+
+// placeholder for jabberwerx.Client
+var client;
+
+// loads the script when the document is ready
+var doPageLoad = function() {
+    // Create <script/>
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "../../jabberwerx.js";
+    // Setup callback when script is loaded
+
+    // for IE, notify on load/complete
+    var loaded = false;
+    script.onreadystatechange = function() {
+        if (    !loaded &&
+                (this.readyState == 'loaded' || this.readyState == 'complete')) {
+            loaded = true;
+            doScriptLoad();
+        }
+    };
+    // for !IE, notify on load
+    script.onload = doScriptLoad;
+
+    // Add to the document, causing it to be loaded
+    document.getElementsByTagName("head")[0].appendChild(script);
+};
+
+// writes to the log...
+var logit = function(type, details) {
+    var log = jabberwerx.$("div.templates div.logevent").clone();
+    log.addClass(type);
+    log.find("span.type").
+        text(type);
+    log.find("span.timestamp").
+        text(jabberwerx.generateTimestamp(new Date()));
+    log.find("span.details").
+        text(details);
+
+    var logger = jabberwerx.$("div#logger");
+    logger.append(log);
+};
+
+// logs stanza (iq/message/presence) events
+var logStanzaRx = function(evt) {
+    var stanza = evt.data;
+
+    logit("recv", stanza.xml());
+};
+var logStanzaTx = function(evt) {
+    var stanza = evt.data;
+
+    logit("sent", stanza.xml());
+};
+
+// logs client status changes
+var logClientStatus = function(evt) {
+    var prev = client.getClientStatusString(evt.data.previous);
+    var next = client.getClientStatusString(evt.data.next);
+    logit("status", prev + " --> " + next);
+
+    switch (evt.data.next) {
+        case jabberwerx.Client.status_connected:
+            jabberwerx.$("div.actions button#actConnect").
+                       attr("disabled", "disabled");
+            jabberwerx.$("div.actions button#actDisconnect").
+                       removeAttr("disabled");
+            break;
+        case jabberwerx.Client.status_disconnected:
+            jabberwerx.$("div.actions button#actConnect").
+                       removeAttr("disabled");
+            jabberwerx.$("div.actions button#actDisconnect").
+                       attr("disabled", "disabled");
+            break;
+    }
+};
+
+// called when script is loaded:
+// - creates a jabberwerx.Client
+// - configures connect and disconnect buttons
+// - logs some events to the "div#logger"
+var doScriptLoad = function() {
+    // setup the client with some basic events
+    client = new jabberwerx.Client();
+    client.event("clientStatusChanged").bind(logClientStatus);
+    client.event("iqReceived").bind(logStanzaRx);
+    client.event("messageReceived").bind(logStanzaRx);
+    client.event("presenceReceived").bind(logStanzaRx);
+    client.event("iqSent").bind(logStanzaTx);
+    client.event("messageSent").bind(logStanzaTx);
+    client.event("presenceSent").bind(logStanzaTx);
+
+    // setup connect button
+    var connectFn = function() {
+        // connectArgs object sent through to client.connect method.
+        var connectArgs = {httpBindingURL: demo_config.httpBindingURL};
+        client.connect(demo_config.username + "@" + demo_config.domain, demo_config.password, connectArgs);
+        jabberwerx.$(this).attr("disabled", "disabled");
+    };
+    jabberwerx.$("div.actions button#actConnect").
+               removeAttr("disabled").
+               bind("click", connectFn);
+
+    // setup disconnect button
+    var disconnectFn = function() {
+        client.disconnect();
+        jabberwerx.$(this).attr("disabled", "disabled");
+    };
+    jabberwerx.$("div.actions button#actDisconnect").
+               bind("click", disconnectFn);
+
+    // note well...
+    logit("app", "loaded and ready");
+};
+        </script>
+        <style type='text/css'>
+body {
+    font-family:    Arial,Helvetica,sans-serif;
+}
+div.actions {
+    position:           fixed;
+    height:             24px;
+    top:                0px;
+    left:               0px;
+    right:              0px;
+    margin:             4px 8px;
+    padding:            0px;
+    background-color:   #fefefe;
+    border:                 1px solid #efefef;
+    border-radius:          4px;
+    -moz-border-radius:     4px;
+    -webkit-border-radius:  4px;
+}
+div.actions button#actConnect {
+    position:       absolute;
+    left:           0px;
+    top:            0px;
+    margin:         2px 4px;
+}
+div.actions button#actDisconnect {
+    position:       absolute;
+    right:          0px;
+    top:            0px;
+    margin:         2px 4px;
+}
+div#logger {
+    margin-top:     32px;
+}
+
+div.logevent {
+    margin:                 2px 0px;
+    padding:                4px;
+    background-color:       #efefef;
+    border:                 1px solid #cfcfcf;
+    border-radius:          4px;
+    -moz-border-radius:     4px;
+    -webkit-border-radius:  4px;
+}
+div.logevent div.header {
+    margin:         0px 6px;
+}
+div.logevent span.type {
+    font-weight:    bold;
+    font-size:      smaller;
+}
+div.logevent span.timestamp {
+    float:          right;
+    font-size:      smaller;
+    color:          #c0c0c0;
+}
+div.logevent span.details {
+    margin:         0px 6px;
+}
+
+div.logevent.sent {
+    background-color:   #fecece;
+}
+div.logevent.recv {
+    background-color:   #ececfe;
+}
+
+div.templates {
+    display:    none;
+}
+        </style>
+    </head>
+    <body onload="doPageLoad();">
+        <div class="actions">
+            <button id="actConnect" disabled="disabled">connect</button>
+            <button id="actDisconnect" disabled="disabled">disconnect</button>
+        </div>
+        <div id="logger"></div>
+
+        <div class='templates'>
+            <div class='logevent'>
+                <div class='header'>
+                    <span class='type'></span>
+                    <span class='timestamp'></span>
+                </div>
+                <span class='details'></span>
+            </div>
+        </div>
+    </body>
+</html>

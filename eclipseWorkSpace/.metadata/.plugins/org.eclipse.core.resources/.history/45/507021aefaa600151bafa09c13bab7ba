@@ -1,0 +1,89 @@
+class DBUser extends User{
+	private String serviceName;
+	private String login;
+	private String password;
+	DBUser(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setServiceName(String serviceName) {
+		this.serviceName=serviceName;}
+	String getServiceName(){
+		return this.serviceName;}
+	@Override
+	void setLogin(String login){
+		this.login=login;	
+	}
+	@Override
+	String getLogin(){
+		return this.login;
+	}
+	@Override
+	void setPassword(String password) {
+		this.password=password;
+		
+	}
+	@Override
+	String getPassword(){
+		return password;
+	}
+}
+
+class UnixUser extends User{
+	private String identityFile;
+	private String login;
+	private String password;
+	UnixUser(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setIdentityFile(String identityFile) {
+		this.identityFile = identityFile;
+	}
+	String getIdentityFile() {
+		return identityFile;
+	}
+	@Override
+	void setLogin(String login) {
+		this.login=login;	
+	}
+	@Override
+	String getLogin() {
+		return this.login;
+	}
+	@Override
+	void setPassword(String password) {
+		this.password=password;
+		
+	}
+	@Override
+	String getPassword() {
+		return password;
+	}
+
+}
+
+abstract class User{
+	private String userName;
+	User(){
+		this.userName="NoName";
+}
+	User(String userName){
+		this.userName=userName;
+	}
+	abstract void setLogin(String login);
+	abstract String getLogin();
+	abstract void setPassword(String password);
+	abstract String getPassword();
+	void setUserName(String userName) {
+		this.userName=userName;
+		
+	}
+	String getUserName() {
+		return userName;
+	}
+
+}
+
+
+

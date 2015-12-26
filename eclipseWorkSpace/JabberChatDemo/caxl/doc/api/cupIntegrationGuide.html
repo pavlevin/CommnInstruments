@@ -1,0 +1,701 @@
+<html>
+<title>Cisco AJAX XMPP Library : Cisco Unified Presence Integration Guide</title>
+<link rel="stylesheet" type="text/css" href="jabberwerx.css" />
+<body class="border">
+
+<table width="90%">
+<tr>
+<td><img class="summary" src="cisco.gif"/></td>
+<td class="center"><h1 class="title">Cisco AJAX XMPP Library<br/>Cisco Unified Presence Integration Guide</h1></td>
+</tr>
+</table>
+<div class="summary">
+<h2 align="center">
+<br/>
+Web 2.0 library for XMPP-based Instant Messaging, Availability and Roster Management
+<br/>
+<br/>
+</h2>
+</div>
+<br/>
+
+<h2>Introduction</h2>
+<p>
+The Cisco AJAX XMPP Library is a JavaScript XMPP client library that allows you to integrate instant messaging, availability and roster management services from <b>Cisco WebEx</b> and <b>Cisco Unified Presence</b> to your web-based application.
+</p>
+<p>
+However if integrating with Cisco Unified Presence, then there are specific configuration steps that need to be performed to ensure that Cisco AJAX XMPP Library based clients interact correctly with Cisco Unified Presence.
+</p>
+<p>
+The following sections describe the configuration required:
+</p>
+
+<ul>
+<li><a href="#deployment">Deployment Considerations</a>
+<li><a href="#securityConfig">Front-end Security Configuration</a>
+<li><a href="#cupSecurityConfig">Cisco Unified Presence Security Configuration</a>
+<li><a href="#defaultRosterGroup">Default Roster Group</a>
+<li><a href="#removeRosterContact">Removing Roster Contacts</a>
+<li><a href="#inBandRegistration">In-Band Registration</a>
+<li><a href="#highAvailability">High Availability</a>
+<li><a href="#minimalAPI">Minimal API</a>
+</ul>
+
+<br/>
+<b>Note:</b> Please review the Cisco Unified Presence Release notes for the Cisco Unified Presence version(s) to which your CAXL-based application will be connected. The release notes may contain known issues that can affect CAXL integration with Cisco Unified Presence. Release notes available at <a href="http://www.cisco.com " style="text-decoration:none">cisco.com</a>
+<br/>
+<br/>
+<b>Note:</b> The Cisco AJAX XMPP Library has been verified to work with Cisco Unified Presence version 8.6, 9.1 and 10.0
+<br/>
+<hr/>
+<br/>
+
+<h2><a name="deployment" >Deployment Considerations</a></h2>
+<img class="image" src="cupDeployment.png"/>
+<h3>Description</h3>
+
+<p>
+Cisco Unified Presence provides for a multi-node/multi-cluster deployment. This feature permits the deployment of a number of Cisco Unified Presence clusters
+where each Cisco Unified Presence cluster can consist of up to six Cisco Unified Presence nodes. Cisco Unified Presence nodes within a cluster can form a
+subcluster. A subcluster is a single Cisco Unified Presence server, or a pair of Cisco Unified Presence servers operating with a shared presence database
+that is able to support common users.
+<br>
+In a single-node deployment within the subcluster, there is no high-availability failover protection for the users assigned to that node. In a dual-node deployment
+within a subcluster the system administrator can enable high-availability failover protection. Users assigned to a subcluster with the high-availability mode enabled
+have redundancy and full failover capabilities as each node acts as a backup for the other node allowing clients to fail over in case of outages of components or nodes.
+</p>
+<p>
+CAXL supports the Cisco Unified Presence multi-node/multi-cluster deployment model allowing a single CAXL-based application to be deployed that facilitates a user
+from any node or cluster (assuming that the clusters are on the same domain) to access their assigned Cisco Unified Presence node.  This support includes the
+high-availability failover protection provided by an enabled dual-node deployment within a subcluster. In such deployments a user can have two associated Cisco Unified
+Presence nodes:
+    <ul>
+        <li>home node:      This is the Cisco Unified Presence server to which a user would normally connect.</li>
+        <li>backup node:    This is the Cisco Unified Presence server to which a user would connect if their home node is unavailable.</li>
+    </ul>
+</p>
+<p>
+CAXL internally determines both home & backup nodes for a connected user using a discovery mechanism (<a href="http://xmpp.org/extensions/xep-0233.html">XEP-0233</a>), henceforth referred to as <b>Service Discovery</b>. Service Discovery requires that CAXL is configured with two Service Discovery (SD) nodes:
+    <ul>
+    <li>Primary SD Node: This is a Cisco Unified Presence server to which CAXL can connect to determine the home & backup node information for a given user.
+    The primary node is the Cisco Unified Presence server used by CAXL under normal conditions.</li>
+    <li>Secondary SD Node: This is an alternative Cisco Unified Presence server to which CAXL can connect to determine the home & backup node information for a given user.
+    The secondary node is used by CAXL if for some reason the primary node is unavailable.</li>
+    </ul>
+</p>
+<p>
+The Service Discovery mechanism on Cisco Unified Presence operates across a Cisco Unified Presence multi-cluster deployment. This means that a service discovery node in one cluster
+can provide home and backup node information for a user that exists in a different Cisco Unified Presence cluster. This allows users existing on different Cisco Unified
+Presence clusters to use a single CAXL-based client, as Service Discovery can determine a user's home & backup node across clusters.
+</p>
+<p>
+<b>Note:</b>
+Unless load considerations dedicate otherwise, the Primary & Secondary SD nodes do not need to be in a standalone cluster nor does their only function need to be Service Discovery.
+It may be the case that the SD nodes exist within any cluster within the given deployment and can also be either a user's home or backup node.
+</p>
+
+<h3>CORS Deployment Model (Recommended)</h3>
+A Cisco Unified Presence multi-node/multi-cluster deployment model utilizing CORS requires specific configuration on the CAXL-based web application.
+
+<h4>CORS - Cross Origin Resource Sharing Configuration</h4>
+<p>
+The <a href="./deploymentGuide.html" style="text-decoration:none">Cisco AJAX XMPP Library Deployment Guide</a> provides information on an alternative approach to using the HTTP Proxy
+to overcome the same-origin security policy issue. Cross Origin Resource Sharing (CORS) is a standard that allows requests made by a web page from one origin (host + port)
+to make requests to other origins. Support for the CORS standard is implemented by a number of browsers and by Cisco Unified Presence. Therefore CAXL-based clients connecting
+to Cisco Unified Presence using one of the supported browsers (See <a href="./deploymentGuide.html" style="text-decoration:none">Cisco AJAX XMPP Library Deployment Guide</a> - Cross origin policy)
+can do so without the need for a HTTP Proxy. In these circumstances the configured Primary & Secondary SD node values can be specified as the resolvable BOSH URLs of the Cisco
+Unified Presence servers acting as the Primary & Secondary SD nodes.<br>
+<br>
+<b>Note:</b> There are some limitations to be considered if using HTTPS as the protocol to connect to Cisco Unified Presence
+server. Please refer to <a href=#limithttpscors" style="text-decoration: none" >Limitations
+for HTTPS CORS Configuration.</a>
+</p>
+To configure the default Primary & Secondary SD node values for use by CAXL when using CORS:
+<pre class="codebox">
+
+    //################
+    //  Set globally
+    //################
+    // Ensure that CAXL's service discovery support is enabled
+    jabberwerx._config.serviceDiscoveryEnabled = true;
+
+    // When using CORS the primary SD node is specified as the resolvable BOSH URL of
+    // the Cisco Unified Presence server acting as the primary Service Discovery node
+    jabberwerx._config.httpBindingURL = "https://node-sd1.example.com:7335/httpbinding";
+
+    // When using CORS the secondary SD node is specified as the resolvable BOSH URL of
+    // the Cisco Unified Presence server acting as the secondary Service Discovery node
+    jabberwerx._config.httpBindingURL_secondary = "https://node-sd2.example.com:7335/httpbinding";
+
+    //##########################################
+    //  Set by passing arguments to the client
+    //##########################################
+    var connectArgs = {
+        httpBindingURL = "https://node-sd1.example.com:7335/httpbinding",
+        httpBindingURL_secondary = "https://node-sd2.example.com:7335/httpbinding",
+        serviceDiscoveryEnabled = true
+    };
+    var client = jabberwerx.Client();
+    client.connect(userJid, password, connectArgs);
+
+
+</pre>
+<p>
+<b>Note:</b>
+    <ul>
+        <li>CAXL-based clients accessing a Cisco Unified Presence multi-node/multi-cluster deployment using CORS only require that the BOSH URL for the Primary & Secondary SD nodes are specified.
+        The home & backup node BOSH URLs do not need to be specified as CAXL constructs these BOSH URLs internally using the specified Primary/Secondary SD node BOSH URLs and the home/backup node
+        values as determined by Service Discovery. The home/backup node values that are returned for a given user by Service Discovery can be inspected on <b>Cisco Unified Presence Administration</b> GUI
+        on the cluster's publisher node. To do this:</li>
+        <br>
+        <ul>
+            <li>Sign in to <b>Cisco Unified Presence Administration</b> on the cluster's publisher node</li>
+            <li>Select "System --> Cluster Topology"</li>
+            <li>Select "All Assigned Users" menu item</li>
+            <li>Search for the desired user</li>
+            <li>User's returned "Node" value is the user's home node</li>
+            <li>User's backup node is the other node in the users assigned "Subcluster"</li>
+            <li>Details on a particular subcluster can be found on "System --> Cluster Topology"</li>
+            <li>Select the desired subcluster</li>
+        </ul>
+        <br>
+        <li>Furthermore, a number of configuration settings must be set consistently across each of the Cisco Unified Presence clusters in a given deployment for CAXL-based clients
+        to utilize CORS.
+        <br>
+            <ul>
+                <li>Cisco UP XCP Web Connection Manager service parameter value <i>HTTP Binding Paths Handled - Path</i> must be the same across all Cisco Unified Presence
+                clusters. This value can be viewed/edited on the <b>Cisco Unified Presence Administration</b> GUI.
+                <ul>
+                    <li>Sign in to <b>Cisco Unified Presence Administration</b> on the cluster's publisher node</li>
+                    <li>Select "System --> Service Parameters"</li>
+                    <li>Select the desired Server</li>
+                    <li>Select "Cisco UP XCP Web Connection Manager" as the Service</li>
+                    <li>View/Edit <i>HTTP Binding Paths Handled - Path</i></li>
+                </ul>
+                </li>
+                <li>The <i>Enable Web Client to CUP Secure Mode</i> settings must be set consistently on each Cisco Unified Presence cluster in a given deployment. This setting determines
+                whether or not a secure TLS connection is established between the Cisco Unified Presence servers and XMPP-based API client applications. This value can be viewed/edited on the
+                <b>Cisco Unified Presence Administration</b> GUI.
+                <ul>
+                    <li>Sign in to <b>Cisco Unified Presence Administration</b> on the cluster's publisher node</li>
+                    <li>Select "System --> Security --> Settings"</li>
+                    <li>Under "General Settings" section, View/Edit the <i>Enable Web Client to CUP Secure Mode</i> setting</li>
+                </ul>
+                </li>
+            </ul>
+        <br>
+        </li>
+    </ul>
+</p>
+The internally constructed home/backup node BOSH URLs must be resolvable by the network. An example of how the home/backup node BOSH URLs are constructed internally is as follows:
+<pre class="codebox">
+    // A home node value can be either a hostname, an FQDN or an IPv4 address
+    // The backup node URL is constructed in the same manner
+
+    // home node value is a hostname
+    Primary SD node BOSH URL ==>                                                            "http(s)://primarySDNode:7335/httpbinding"
+    A user's home node value ==>                                                            "cupNodeA"
+    CAXL internally constructed home node BOSH URL for the connecting user ==>              "http(s)://cupNodeA:7335/httpbinding"
+
+    // home node value is a FQDN
+    Primary SD node BOSH URL ==>                                                            "http(s)://primarySDNode.example.com:7335/httpbinding"
+    A user's home node value ==>                                                            "cupNodeA.example.com"
+    CAXL internally constructed home node BOSH URL for the connecting user ==>              "http(s)://cupNodeA.example.com:7335/httpbinding"
+
+    // home node value is an IP address
+    Primary SD node BOSH URL ==>                                                            "http(s)://127.0.0.1:7335/httpbinding"
+    A user's home node value ==>                                                            "127.0.0.2"
+    CAXL internally constructed home node BOSH URL for the connecting user ==>              "http(s)://127.0.0.2:7335/httpbinding"
+</pre>
+
+
+
+<h4><a name=limithttpscors">Limitations for HTTPS CORS Configuration</a></h4>
+
+
+1. Please refer to HTTPS CORS limitations section in <a href="./deploymentGuide.html#httpslimitnote">Cisco AJAX XMPP Library Deployment Guide</a><br/><br/>
+2. The format of the Subject in the public key certificate must match that of the httpbinding URLs configured on the client, and that of the home/backup node
+names under &quot;System --&gt; Cluster Topology&quot; of
+<b>Cisco Unified Presence Administration</b>.
+<br>
+<b>Note:</b> Where the format of the Subject in the public key certificate is a FQDN, then the home/backup node names can be configured either as hostname or FQDN. In the case where  the home/backup node names are configured as a hostname, then CAXL if required will append the domain name of the primary SD node URL to the home/backup node URL.
+<br>
+<br>
+The following example shows the configuration needed if the attested (
+CA or web of trust ) public key certificate is generated for the  FQDN
+address (e.g:  &quot;node.example.com&quot;) of all Cisco Unified Presence servers
+
+<br>
+<pre class="codebox">
+    // The backup node URL is constructed in the same manner
+
+    Primary SD node BOSH URL (attested FQDN URL) ==>                                                       "https://primarySDNode.example.com:7335/httpbinding"
+    A user's home node value ==>                                                                           &quot;cupNodeA&quot; or "cupNodeA.example.com"
+    CAXL internally constructed home node BOSH URL for the connecting user  (attested FQDN URL) ==>        "https://cupNodeA.example.com:7335/httpbinding"
+ </pre>
+<br>
+
+<h3>HTTP Proxy deployment model</h3>
+A Cisco Unified Presence multi-node/multi-cluster deployment model utilizing a HTTP Proxy requires specific configuration on both the HTTP Proxy and the CAXL-based web application.
+
+<h4>HTTP Proxy Configuration</h4>
+<p>
+As mentioned in the <a href="./deploymentGuide.html" style="text-decoration:none">Cisco AJAX XMPP Library Deployment Guide</a>, browsers apply a same-origin security policy, which will prevent
+a CAXL-based web application from directly accessing the Cisco Unified Presence server. One workaround to resolve this issue is to create a HTTP Proxy on your web server to proxy all
+BOSH requests from the CAXL client to the Cisco Unified Presence server. The <a href="./deploymentGuide.html" style="text-decoration:none">Cisco AJAX XMPP Library Deployment Guide</a> provides
+the details on configuring the HTTP Proxy on your web server. In order for CAXL to support the Cisco Unified Presence multi-node/multi-cluster deployment model you must specify the
+reverse proxy URLs on your web server in the correct format. The reverse proxy URL must map the Cisco Unified Presence server node name to the complete BOSH URL for that Cisco Unified
+Presence server. A reverse proxy URL must exist for each Cisco Unified Presence server that exists in the deployment.
+</p>
+For example, add the following entries to the main Apache config file httpd.conf:
+<pre class="codebox">
+
+    # Reverse proxy URL format: /{cup-node-name} {resolvable BOSH URL}
+    # Maps 'node-a1' to its resolvable BOSH URL 'https://node-a1.example.com:7335/httpbinding'
+    ProxyPass /node-a1 https://node-a1.example.com:7335/httpbinding
+
+    # Maps 'node-b1' to its complete BOSH URL 'https://node-b1.example.com:7335/httpbinding'
+    ProxyPass /node-b1 https://node-b1.example.com:7335/httpbinding
+
+</pre>
+<h4> CAXL Client configuration for HTTP Proxy model </h4>
+To enable Service Discovery on a CAXL-based client and configure the default Primary & Secondary SD node values for use by CAXL when using a HTTP Proxy deployment:
+<pre class="codebox">
+
+    //################
+    //  Set globally
+    //################
+    // Ensure that CAXL's service discovery support is enabled
+    jabberwerx._config.serviceDiscoveryEnabled = true;
+
+    // '/node-sd1' is the primary Service Discovery node for providing user's home & backup node information.
+    // 'node-sd1' must match the node name for the Cisco Unified Presence server acting as the primary Service Discovery node
+    // A reverse proxy URL must exist in the HTTP Proxy config file for 'node-sd1'
+    jabberwerx._config.httpBindingURL = "/node-sd1";
+
+    // '/node-sd2' is the secondary Service Discovery node for providing user's home & backup node information
+    // which CAXL uses should the primary SD node be unavailable
+    // 'node-sd2' must match the node name for the Cisco Unified Presence server acting as the secondary Service Discovery node
+    // A reverse proxy URL must exist in the HTTP Proxy config file for the 'node-sd2'
+    jabberwerx._config.httpBindingURL_secondary = "/node-sd2";
+
+    //##########################################
+    //  Set by passing arguments to the client
+    //##########################################
+    var connectArgs = {
+        httpBindingURL = "/node-sd1",
+        httpBindingURL_secondary = "/node-sd2",
+        serviceDiscoveryEnabled = true
+    };
+    var client = jabberwerx.Client();
+    client.connect(userJid, password, connectArgs);
+
+</pre>
+<br>
+<p>
+<b>Backwards Compatibility:</b>
+<br>
+Previous CAXL versions did not require that the http binding URL must match the Cisco Unified Presence server node name. These versions supported
+a modifiable http binding URL (default value = '/httpbinding') that allowed CAXL-based clients to connect to a single Cisco Unified Presence server.
+The current CAXL version is backwards compatible with this behavior. The system administrator can deploy a CAXL-based client connecting to a single
+Cisco Unified Presence server where the configured http binding URL does not match the Cisco Unified Presence server node name. In such a deployment
+the CAXL configuration flag <i>serviceDiscoveryEnabled</i> must be set to false. By doing so CAXL's service discovery support is disabled and hence,
+the CAXL-based client will not support the Cisco Unified Presence multi-node/multi-cluster deployement model.
+</p>
+To disable CAXL's service discovery support and revert to the HTTP Proxy deployment models of previous CAXL versions:
+<pre class="codebox">
+
+    //################
+    //  Set globally
+    //################
+    // Disable CAXL's service discovery support
+    jabberwerx._config.serviceDiscoveryEnabled = false;
+
+    // http binding URL does not match the Cisco Unified Presence server node name
+    jabberwerx._config.httpBindingURL = "/httpbinding";
+
+    //##########################################
+    //  Set by passing arguments to the client
+    //##########################################
+    var connectArgs = {
+        httpBindingURL = "/httpbinding",
+        httpBindingURL_secondary = "/httpbinding",
+        serviceDiscoveryEnabled = false
+    };
+    var client = jabberwerx.Client();
+    client.connect(userJid, password, connectArgs);
+
+    # HTTP Proxy Config
+    # Reverse proxy URL is no longer required to map the Cisco Unified Presence server node name to the complete BOSH URL
+    # Reverse proxy URL must map the configured default http binding URL to the desired Cisco Unified Presence server BOSH URL
+    ProxyPass /httpbinding https://node-a1.example.com:7335/httpbinding
+
+</pre>
+<br>
+<p>
+<b>Note:</b> If serviceDiscoveryEnabled configuration flag is true:
+    <ul>
+        <li>The first value specified in the reverse proxy URL must match the node name for the Cisco Unified Presence server.
+            The Cisco Unified Presence server node name can be determined from the <b>Cisco Unified Presence Administration</b> GUI.
+        <br>
+        <ul>
+            <li>Sign in to <b>Cisco Unified Presence Administration</b> on the cluster's publisher node</li>
+            <li>Select "System --> Cluster Topology"</li>
+            <li>Select the desired Node</li>
+            <li>The "Name" value under "Node Configuration" section is the value that is returned by Service Discovery for that node</li>
+        </ul>
+        <br>
+        </li>
+        <li> The second value specified in the reverse proxy URL must always (even if serviceDiscoveryEnabled = false) be resolvable by the web server.</li>
+        <li> A reverse proxy URL is required for every Cisco Unified Presence server in the deployment assuming that users of your web client (that is integrating CAXL) are
+        spread across all nodes ( keeping in mind that a user's nodes can consist of both a home and/or backup node). In the event that users of your web client never
+        need to connect to a particular Cisco Unified Presence server in the deployment then a reverse proxy URL is not required for that node.</li>
+    </ul>
+</p>
+
+
+<h3>Browser Storage Considerations</h3>
+<p>
+CAXL supports the Cisco Unified Presence multi-node/multi-cluster deployment model allowing a single CAXL-based application to be deployed that
+facilitates a user from any node or cluster to access their assigned Cisco Unified Presence node. This support requires that CAXL persists a user's
+home and backup node information client-side using the browsers storage mechanism. CAXL utilises <a href="http://code.google.com/p/jquery-jstore/" style="text-decoration:none">jStore</a>
+(ver 1.2.0) to persist information to browser storage. All the CAXL supported browsers (except Internet Explorer 7) use jStore's Local Storage mechanism, allowing CAXL
+to seemlessly persist the node values. Internet Explorer 7 utilises jStore's Flash Storage Engine to persist the node values, hence it must have Adobe Flash
+Player installed for CAXL to function correctly. Please see <a href="http://www.adobe.com/" style="text-decoration:none">Adobe</a>  for details on installing Adobe Flash Player.
+</p>
+<br/>
+
+<a href="#top">Back to the top</a>
+
+<hr />
+<br />
+
+
+<h2><a name="securityConfig" >Front-end Security Configuration</a></h2>
+<h3>Description</h3>
+<p>
+As described in the <a href="./deploymentGuide.html">Cisco AJAX XMPP Library Deployment Guide</a>, a common deployment scenario for deploying the Cisco AJAX XMPP Library is to set up a HTTP proxy on a web server, which proxies all BOSH requests from the Cisco AJAX XMPP Library to the Cisco Unified Presence server. Please refer to the <a href="./deploymentGuide.html">Cisco AJAX XMPP Library Deployment Guide</a> for further details as to why a HTTP Proxy is required.
+</p>
+<p>
+It is important to be aware of the security configuration that is required by Cisco Unified Presence on the front-end. In this case, the front-end refers to the connection between the browser and the HTTP proxy server and <b>NOT</b> the connection between the HTTP Proxy and the Cisco Unified Presence server.
+Cisco AJAX XMPP Library based clients that connect to a Cisco Unified Presence server use plaintext authentication.
+</p>
+<p>
+If the HTTP Proxy server is set up to use HTTPS, then no action is required to enable the Cisco AJAX XMPP Library based client to connect successfully to the Cisco Unified Presence server. If the HTTP Proxy server is set up to use HTTP, then the Cisco AJAX XMPP Library "unsecureAllowed" flag must be set to be true, which permits plaintext authentication over an unencrypted or unsecured HTTP channel.
+</p>
+
+<h3>Usage</h3>
+
+<p>
+To set/modify any of the Cisco AJAX XMPP Library configuration options, create an object called "jabberwerx_config" in the global namespace.
+To set the unsecureAllowed flag, create the jabberwerx_config object in the global namespace and set unsecureAllowed to the desired value.
+<pre class="codebox">
+
+    // Create jabberwerx_config object in the global namespace
+    jabberwerx_config = {
+        // Set the unsecureAllowed flag to be true
+        unsecureAllowed: true
+    };
+
+</pre>
+A number of the Cisco AJAX XMPP Library configuration options can be set together as follows:
+<pre class="codebox">
+
+    // Create jabberwerx_config object in the global namespace
+    jabberwerx_config = {
+        persistDuration: 30,
+        unsecureAllowed: true,
+        capabilityFeatures: ['http://jabber.org/protocol/caps',
+                            'http://jabber.org/protocol/chatstates',
+                            'http://jabber.org/protocol/disco#info',
+                            'http://jabber.org/protocol/muc',
+                            'http://jabber.org/protocol/muc#user'],
+        capabilityIdentity: {
+                            category: 'client',
+                            type: 'pc',
+                            name: 'Cisco AJAX XMPP Library',
+                            node: 'http://jabber.cisco.com/caxl'},
+        baseReconnectCountdown: 30,
+        enabledMechanisms: ["DIGEST-MD5", "PLAIN"]
+    };
+
+</pre>
+
+For further information please refer to the <a href="./symbols/jabberwerx.html#constructor">Cisco AJAX AMPP Library API</a>.
+</p>
+
+<a href="#top">Back to the top</a>
+
+<br/>
+<hr/>
+<br/>
+
+<h2><a name="cupSecurityConfig" >Cisco Unified Presence Security Configuration</a></h2>
+
+<p>
+As part of the default configuration for Cisco Unified Presence, the BOSH interface is enabled for HTTPS communication. This can however be configured to use non-secure HTTP.
+</p>
+<p>
+Enabling HTTP via the BOSH interface can be performed as follows:
+</p>
+<ol>
+<li>Cisco Unified Presence Administration &gt; System &gt; Security &gt; Settings</li>
+<br/>
+<li>In the Security Settings window, uncheck "Enable Web Client to CUP Secure Mode" and click "Save".</li>
+<br/>
+<li>Please follow the notification instructions in the top right hand corner to restart the appropriate service. This is required for the updated configuration to take effect.</li>
+</ol>
+
+<a href="#top">Back to the top</a>
+
+<br/>
+<hr/>
+<br/>
+
+<h2><a name="defaultRosterGroup">Default Roster Group</a></h2>
+<h3>Description</h3>
+
+<p>
+By default, when a contact is added or updated using the RosterController, their group attribute is empty (i.e. they have no group). Some clients will not display
+contacts without a group attribute. Therefore, a property is defined in the RosterController class to facilitate the situation where a client using Cisco AJAX AMPP Library
+will always want contacts added or updated to be members of a group. This property is jabberwerx.RosterController.defaultGroup.
+</p>
+
+<h3>Usage</h3>
+
+<p>
+To set the default group name:
+<pre class="codebox">
+
+    // Create a jabberwerx client instance
+    var client = new jabberwerx.Client('Demo Client');
+
+    // Create a jabberwerx roster controller
+    var rosterCtrl = new jabberwerx.RosterController(client);
+
+    // Set the default group name for this roster
+    rosterCtrl.defaultGroup = "General";
+
+</pre>
+This property will take affect when an add or update contact call is made without a group
+parameter, or where the group parameter is null or empty.
+</p>
+<p>
+<i>Note: This is not the same as the default grouping name in jabberwerx.ui.RosterView. The
+RosterView default group name refers to the group display name for entities that belong to no group
+(i.e. contacts with an empty group attribute). This is purely a visual setting.</i>
+</p>
+
+<a href="#top">Back to the top</a>
+
+<br/>
+<hr/>
+<br/>
+
+<h2><a name="removeRosterContact" >Removing Roster Contacts</a></h2>
+<h3>Description</h3>
+<p>
+Any Cisco client that connects to Cisco Unified Presence is expected to remove contacts from their roster in a consistent manner. In order to maintain a consistent functionality
+across all Cisco Unified Presence clients, clients should first unsubscribe to a contact (See <a href="http://www.ietf.org/rfc/rfc3921.txt">RFC3921</a>, Section 8.4.  "Unsubscribing") as opposed to performing a roster remove (See <a href="http://www.ietf.org/rfc/rfc3921.txt">RFC3921</a>, Section 8.6.  "Removing a Roster Item and Cancelling All Subscriptions").
+</p>
+<p>
+If a client performs a roster remove, this removes the subscription in both directions, specifically
+the user's subscription to their contact is removed and the contact's subscription to the user is removed. The desired approach is for the user to unsubscribe to the contact.
+This removes the user's subscription to their contact but the contact's subscription to the user is preserved.
+</p>
+
+<h3>Usage</h3>
+
+<p>
+To remove a roster contact using unsubscribe:
+<pre class="codebox">
+
+    // Previously triggered event that contains session information
+    var session = evt.data.content.session;
+
+    if (session) {
+            // Get the current entity
+            var entity = session.getEntity();
+
+            if (entity instanceof jabberwerx.Contact) {
+                // Calls jabberwerx.RosterController.unsubscribe
+                entity.controller.unsubscribe(entity.jid);
+            }
+    }
+
+</pre>
+</p>
+
+<p>
+The above behavior only occurs if the setting for automatic authorisation is enabled on Cisco Unified Presence.
+In the event that this is disabled on Cisco Unified Presence, further Cisco AJAX AMPP Library configuration steps will need to be performed.
+To check if automatic authorization is enabled on the Cisco Unified Presence, sign in to Cisco Unified Presence Administration, and navigate to Presence &gt; Settings, and
+confirm that the setting "Allow users to view the availability of other users without being prompted for approval" is checked.
+</p>
+<p>
+If automatic authorization is disabled on Cisco Unified Presence, an unsubscribe is sent to the contact to be removed. This triggers a roster remove, which removes the subscription in both
+directions. To prevent this, set the following Cisco AJAX AMPP Library configuration items:
+</p>
+<p>
+<pre class="codebox">
+
+    // Set autoSubscription to true
+    // Default value is true, so this step may not be required
+    rosterCtrl.autoSubscription = true;
+
+    // Set autoremove to false. JabberWerx AJAX will not automatically remove the roster item
+    // Default value is true, so this step is required
+    rosterCtrl.autoremove = false;
+
+</pre>
+</p>
+
+<p>
+The procedure mentioned above for removing roster contacts is not sufficient if the roster contact is an instance of jabberwerx.cisco.QuickContact as opposed to an instance of jabberwerx.RosterContact.
+If the roster contact is an instance of jabberwerx.cisco.QuickContact, remove() (i.e jabberwerx.Entity.remove(); ) must be called as opposed to unsubscribe() (i.e. jabberwerx.cisco.QuickContactController.unsubscribe() );
+
+The following shows how to remove a contact that is an instance of jabberwerx.cisco.QuickContact:
+<pre class="codebox">
+
+    // Previously triggered event that contains session information
+    var session = evt.data.content.session;
+
+    if (session) {
+        // Get the current entity
+        var entity = session.getEntity();
+
+        if (entity instanceof jabberwerx.RosterContact) {
+            entity.controller.unsubscribe(entity.jid);
+        }
+        else if (entity instanceof jabberwerx.cisco.QuickContact) {
+            // Calls jabberwerx.Entity.remove
+            entity.remove();
+        }
+    }
+
+</pre>
+</p>
+
+<a href="#top">Back to the top</a>
+
+<br/>
+<hr/>
+<br/>
+
+<h2><a name="inBandRegistration" >In-Band Registration</a></h2>
+<h3>Description</h3>
+<p>
+As described in the <a href="../supported-xeps.html#xep-0077-in-band-registration">Cisco AJAX XMPP Library: Public Protocol Compliance</a> document,
+the Cisco AJAX XMPP Library provides very limited support for <a href="http://xmpp.org/extensions/xep-0077.html">XEP-0077: In-band registration</a>.
+</p>
+<p>
+<i>
+<b>Note: </b>This feature is not supported by Cisco Unified Presence. To create a new user account on Cisco Unified Presence, please refer to the Deployment Guide For Cisco Unified Presence.
+</i>
+</p>
+
+<a href="#top">Back to the top</a>
+
+<br/>
+<hr/>
+<br/>
+
+<h2><a name="highAvailability" >High Availability</a></h2>
+<h3>Description</h3>
+<p>CAXL supports High Availability as below:
+  <ul>
+  </br>
+     <li>Automatically connects to a user's backup node when failover occurs on Cisco Unified Presence.</li>
+     </br>
+     <li>Automatically connects to a user's home node when fallback occurs on Cisco Unified Presence.
+  </ul>
+</p>
+<p>
+<b>Note: </b>
+<p>
+<ol>
+ <li>High-availability MUST be enabled on the CAXL Client and Cisco Unified Presence Server as follows
+  <ul>
+    </br>
+    <li>On Cisco Unified Presence, High Availability must be enabled.
+       <p><i>Go to Cisco Unified Presence Administration -->"System" -->"Cluster Topology" and select the desired sub-cluster, then tick the "Enable High Availability" checkbox </i></p>
+    </li>
+    </br>
+    <li>The "jabberwerx._config.baseReconnectCountdown" must be greater than zero on the client. For further information please refer to the <a href="./symbols/jabberwerx.html#constructor">Cisco AJAX AMPP Library API</a>.</li>
+    </br>
+    <li>The "jabberwerx._config.serviceDiscoveryEnabled" flag must be set to true on the client. See the <a href="#deployment">Deployment Considerations</a>.</li>
+  </ul>
+  </li>
+  </br>
+  <li>In addition to High availability, CAXL also supports
+     <ul>
+       </br>
+       <li>Automatically connects to a user's new home node when a user is reassigned. <p><i>Note: The CAXL client may still connect to the user's old home node if the user is reassigned to the user's backup node.</i></p></li>
+       </br>
+       <li>Automatically connects to a user's backup node when the "Cisco UP XCP Web Connection Manager" service becomes unavailable on the user's home node.<p><i>Note: The 'Routing Communication Type' must be setup correctly on Cisco Unified Presence (Go to Cisco Unified Presence Administration -->"System" -->"Cluster Topology" -->"Settings" -->Select "Routing Communication Type", you may select "Help" -->"This Page" for more information).</i></p> </li>
+     </ul>
+  </li>
+</ol>
+</p>
+</p>
+
+<a href="#top">Back to the top</a>
+
+<br/>
+<hr/>
+<br/>
+
+<h2><a name="minimalAPI" >Minimal API</a></h2>
+<h3>Description</h3>
+<p>
+Cisco provides a minimal distribution of the core library for applications that do not need typical IM functionality.
+</p>
+<p>
+The minimal library, jabberwerx.min.js, provides client session management, authentication, stanza sending and eventing when a stanza is received. IM centric functionality like 1-1 chat sessions, text conferencing rooms and publish/subscribe is not available. Furthermore, Cisco Unified Presence (<a href="http://xmpp.org/extensions/xep-0233.html">XEP-0233</a>) Service Discovery is not supported by the Minimal library and is disabled by default. See the <a href="#deployment">Deployment Considerations</a> for further information on Service Discovery. A list of classes included in the minimal library can be found in the API documentation delivered with the library.
+</p>
+<br/>
+
+<a href="#top">Back to the top</a>
+
+<br/>
+<hr/>
+<br/>
+
+<h5>
+    <p>THE SPECIFICATIONS AND INFORMATION REGARDING THE PRODUCTS IN THIS
+      MANUAL ARE SUBJECT TO CHANGE WITHOUT NOTICE. ALL STATEMENTS, INFORMATION, AND
+      RECOMMENDATIONS IN THIS MANUAL ARE BELIEVED TO BE ACCURATE BUT ARE PRESENTED
+      WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. USERS MUST TAKE FULL
+      RESPONSIBILITY FOR THEIR APPLICATION OF ANY PRODUCTS.
+    </p>
+        <p>THE SOFTWARE LICENSE AND LIMITED WARRANTY FOR THE ACCOMPANYING PRODUCT
+      ARE SET FORTH IN THE INFORMATION PACKET THAT SHIPPED WITH THE PRODUCT AND ARE
+      INCORPORATED HEREIN BY THIS REFERENCE. IF YOU ARE UNABLE TO LOCATE THE SOFTWARE
+      LICENSE OR LIMITED WARRANTY, CONTACT YOUR CISCO REPRESENTATIVE FOR A COPY.
+    </p>
+        <p>The Cisco implementation of TCP header compression is an adaptation of
+      a program developed by the University of California, Berkeley (UCB) as part of
+      UCB's public domain version of the UNIX operating system. All rights reserved.
+      Copyright &#169; 1981, Regents of the University of California.
+    </p>
+        <p>NOTWITHSTANDING ANY OTHER WARRANTY HEREIN, ALL DOCUMENT FILES AND
+      SOFTWARE OF THESE SUPPLIERS ARE PROVIDED "AS IS" WITH ALL FAULTS. CISCO AND THE
+      ABOVE-NAMED SUPPLIERS DISCLAIM ALL WARRANTIES, EXPRESSED OR IMPLIED, INCLUDING,
+      WITHOUT LIMITATION, THOSE OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+      AND NONINFRINGEMENT OR ARISING FROM A COURSE OF DEALING, USAGE, OR TRADE
+      PRACTICE.
+    </p>
+        <p>IN NO EVENT SHALL CISCO OR ITS SUPPLIERS BE LIABLE FOR ANY INDIRECT,
+      SPECIAL, CONSEQUENTIAL, OR INCIDENTAL DAMAGES, INCLUDING, WITHOUT LIMITATION,
+      LOST PROFITS OR LOSS OR DAMAGE TO DATA ARISING OUT OF THE USE OR INABILITY TO
+      USE THIS MANUAL, EVEN IF CISCO OR ITS SUPPLIERS HAVE BEEN ADVISED OF THE
+      POSSIBILITY OF SUCH DAMAGES.
+    </p><p>Any Internet Protocol (IP) addresses and phone numbers used in this document are not intended to be actual addresses and phone numbers. Any examples, command display output, network topology diagrams, and other figures included in the document are shown for illustrative purposes only. Any use of actual IP addresses or phone numbers in illustrative content is unintentional and coincidental.</p>
+    <p>
+        <p>Cisco and the Cisco logo are trademarks or registered trademarks of Cisco and/or its affiliates in the U.S. and other countries. To view a list of Cisco trademarks, go to this URL:<a href='http://www.cisco.com/go/trademarks' target='blank'>http://www.cisco.com/go/trademarks</a>. Third-party trademarks mentioned are the property of their respective owners. The use of the word partner does not imply a partnership relationship between Cisco and any other company. (1110R)</p>
+        &#169; 2014 Cisco Systems, Inc. All rights reserved.
+    </p>
+</h5>
+</p>
+</body>
+</html>

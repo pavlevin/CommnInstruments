@@ -1,0 +1,41 @@
+import java.util.ArrayList;
+public class Account{
+	/*
+	 * */
+	public ArrayList<User> usersCredentials = new ArrayList<User>();
+	public void addUnixUser(String username, String password){
+		this.usersCredentials.add(new User(username,password));
+	}
+	public void removeUser(UnixUser user){
+		this.usersCredentials.remove(user);
+	}
+}
+
+class User{
+	private String userName;
+	private String userPassword;
+	User(String userName, String userPassword){
+		this.setUserName(userName);
+		this.setUserPassword(userPassword);
+	}
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public String getUserPassword() {
+		return userPassword;
+	}
+
+	public void setUserPassword(String userPassword) {
+		this.userPassword = userPassword;
+	}
+	
+}
+
+
+
+

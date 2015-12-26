@@ -1,0 +1,377 @@
+<!--
+/**
+ * filename:        index.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ Core API Sample Client</title>
+        <script type="text/javascript" src="../../../jabberwerx.js"></script>
+        <script type="text/javascript" src="../../../jabberwerx.cisco.js"></script>
+        <script type="text/javascript" src="demoClient.js"></script>
+        <script type="text/javascript">
+var chatSessions = {};
+function log(type, details) {
+    var log = jabberwerx.$("#log-message .log-message").clone();
+    log.children(".type").text(type);
+    log.children(".details").text(details);
+    log.appendTo(".log #details table");
+    jabberwerx.$(".log #details")[0].scrollTop = jabberwerx.$(".log #details")[0].scrollHeight;
+    jabberwerx.$("#act-clear").removeClass("disabled");
+}
+function chatReceived(eventObj) {
+    var msg = eventObj.data;
+    var log = jabberwerx.$("#im-message .message").clone();
+    log.children(".from").text(msg.getFrom() + ":    ");
+    log.children(".text").text(msg.getBody());
+    log.appendTo(".chat #message-display table");
+    jabberwerx.$(".chat #message-display")[0].scrollTop = jabberwerx.$(".chat #message-display")[0].scrollHeight;
+}
+function startChatSession(jid) {
+    var chatSession = chatSessions[jid];
+    if(!chatSession) {
+        chatSession = sample_app.startChat(jid);
+        chatSession.event('chatReceived').bind(chatReceived);
+        chatSessions[jid] = chatSession;
+    }
+}
+function newChatSession(eventObj) {
+    jabberwerx.$(".chat").show();
+    var chatSession = eventObj.data.chatSession;
+    var jid = chatSession.jid.getBareJIDString();
+
+    var testChatSession = chatSessions[jid];
+    if(!testChatSession) {
+        chatSession.event('chatReceived').bind(chatReceived);
+        chatSessions[jid] = chatSession;
+        jabberwerx.$(".chat #outgoing-message").find(":input[name='to']").val(jid);
+    }
+}
+
+jabberwerx.$(document).ready(function() {
+    var $ = jabberwerx.$;
+
+    $(".presence").hide();
+    $("#act-logout").hide();
+    $(".muc").hide();
+    $(".roster").hide();
+
+    $(".toolbar #act-login").bind("click", function() {
+        window.sample_app.connect();
+    });
+    $(".toolbar #act-logout").bind("click", function() {
+        window.sample_app.disconnect();
+    });
+    $(".log #act-clear").bind("click", function() {
+        $(".log #details table").empty();
+        $(".log #act-clear").addClass("disabled");
+    });
+
+    $(".log #jscons").bind("submit", function() {
+        try {
+            var stmts = $(".log #jscons #jscstmts").val();
+            var result = eval(stmts);
+            if (result !== undefined) {
+                result = " (" + result.toString() + ")";
+            } else {
+                result = "";
+            }
+            log("jsconsole", "statements executed!" + result);
+        } catch (ex) {
+            log("jsconsole", "Could not execute: " + ex.message);
+        }
+        return false;
+    });
+
+    $(".presence #my-presence").bind("submit", function() {
+        var form = $(".presence #my-presence");
+        var show = form.find(":input[name='show'] option:selected").val();
+        var status = form.find(":input[name='status']").val();
+        //var priority = form.find(":input[name='priority']").val() || "0";
+
+        log("presence", "changing presence to " + show + " and " + status);
+        sample_app.client.sendPresence(show, status);
+        return false;
+    });
+    $(".muc #enter-room").bind("submit", function() {
+        try {
+            var form = $(".muc #enter-room");
+            var jid = new jabberwerx.JID({
+                node: form.find(":input[name='room']").val(),
+                domain: "conference." + sample_app.client.connectedServer.jid,
+                resource: form.find(":input[name='nick']").val()
+            });
+            var pword = form.find(":input[name='pass']").val();
+            var args = pword ? {password: pword} : undefined;
+            var muc = sample_app.client.controllers.muc ||
+                      new jabberwerx.MUCController(sample_app.client);
+            muc.room(jid.getBareJID()).enter(jid.getResource(), args);
+        } catch (ex) {
+            jabberwerx.util.debug.log("Could not enter room: " + ex);
+        }
+
+        return false;
+    });
+
+    $("#act-login").show();
+
+    $(".chat").hide();
+
+    new jabberwerx.ChatController(sample_app.client);
+    sample_app.client.controllers.chat.event('chatSessionOpened').bind(newChatSession);
+
+    $("#outgoing-message").bind("submit", function() {
+        var form = $("#outgoing-message");
+        var to = form.find(":input[name='to']").val();
+        var message = form.find(":input[name='message']").val();
+
+        var chatSession = chatSessions[to];
+        sample_app.sendChatMessage(chatSession, message);
+
+        var log = $("#im-message .message2").clone();
+        log.children(".me").text(sample_app.client.connectedUser.jid + ":    ");
+        log.children(".text").text(message);
+        log.appendTo(".chat #message-display table");
+
+        return false;
+    });
+});
+        </script>
+        <style type="text/css">
+            .template {
+                visibility: hidden;
+                display: none;
+            }
+            .disabled {
+                font-weight: normal;
+                color:       grey;
+            }
+
+            #client-status {
+                font-weight: bold;
+            }
+
+            .action {
+                border: 1px solid black;
+                font-weight: bold;
+                padding: 0px 4px;
+                cursor: pointer;
+            }
+            div.action {
+                clear:both;
+            }
+
+            div.roster {
+                margin: 12px 0px;
+                border: 2px solid grey;
+                padding: 4px;
+            }
+            .roster th {
+                background-color: grey;
+                color: white;
+            }
+
+            .roster-item td {
+                border: 1px solid grey;
+                padding: 2px;
+            }
+
+            div.muc {
+                margin: 12px 0px;
+                border: 2px solid grey;
+                padding: 4px;
+            }
+            .muc th {
+                background-color: grey;
+                color: white;
+            }
+
+            .muc-room td {
+                border: 1px solid grey;
+                padding: 2px;
+            }
+
+            .log {
+                border: 2px solid grey;
+                padding: 12px;
+                margin:  8px 0px;
+            }
+            .log .log-message .type {
+                border: 1px solid black;
+                padding: 0px 4px;
+            }
+            .log #details {
+                overflow:   auto;
+                height:     240px;
+            }
+            .log #jscons {
+                height:     240px;
+                width:      320px;
+                float:      left;
+            }
+            .log #jscstmts {
+                height:     216px;
+                width:      320px;
+            }
+            .log #jscrun {
+                float:      left;
+            }
+            .log #jscclear {
+                float:      right;
+            }
+
+            .chat {
+                border: 2px solid grey;
+                padding: 12px;
+                margin:  8px 0px;
+            }
+            .chat .message .from {
+                color: green;
+                padding: 0px 4px;
+            }
+            .chat .message2 .me {
+                color: blue;
+                padding: 0px 4px;
+            }
+            .chat #message-display {
+                overflow: auto;
+                max-height: 240px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="toolbar">
+            <span style="float:right;">
+                <span id="act-login" class="action">LOGIN</span>
+                <span id="act-logout" class="action">LOGOUT</span>
+            </span>
+            <span id="client-status" style="float:left; padding:2px 8px 0px 2px;">OFFLINE</span>
+            <span class="presence" style="padding: 0px">
+                <form id="my-presence" action="#" method="get">
+                    Showing <select name="show">
+                        <option value="chat">Chat!</option>
+                        <option value="">Available</option>
+                        <option value="away">Away</option>
+                        <option value="xa">Extended away</option>
+                        <option value="dnd">Do Not Disturb</option>
+                    </select> with status <input type="text" name="status"/>
+                    <input type="submit" value="change presence"/>
+                </form>
+            </span>
+            &nbsp;
+        </div>
+        <div class="roster">
+            <div>ROSTER</div>
+            <table id="roster-list" style="width:100%;">
+                <tr>
+                    <th style="width:20%;">JID</th>
+                    <th>Presence</th>
+                    <th>Display Name</th>
+                    <th style="width:25%;">Groups</th>
+                    <th>Subscription/Ask</th>
+                    <th>Actions</th>
+                </tr>
+            </table>
+            <table class="template" id="roster-item">
+                <tr class="roster-item">
+                    <td class="jid"></td>
+                    <td class="presence">&nbsp;</td>
+                    <td class="name"></td>
+                    <td class="groups"></td>
+                    <td class="props"></td>
+                    <td class="actions" style="text-align:center;">
+                        <span class="action" id="delete-roster-item">[ X ]</span>
+                        <span class="action" id="im-contact">[ IM ]</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="chat">
+            <form id="outgoing-message" action="#" method="get">
+	            <span>MESSAGE</span>
+	            <table>
+	                 <tr><td>To:&nbsp;&nbsp;</td><td><input type="text" name="to" size="50"/></td></tr>
+	            </table>
+	            <p/>
+	            <p/>
+	            <div id="message-display"><table></table></div>
+	            <table class="template" id="im-message">
+	                <tr class="message">
+	                    <td class="from"></td>
+	                    <td class="text"></td>
+	                </tr>
+	                <tr class="message2">
+                        <td class="me"></td>
+                        <td class="text"></td>
+                    </tr>
+	            </table>
+	            <p/>
+                <p/>
+	            <table>
+                     <tr><td>Text:</td><td><input type="text" name="message" size="50"></textarea></td>
+                     <td><input type="submit" value="send" />
+                     </td></tr>
+                </table>
+            </form>
+        </div>
+        <div class="muc">
+            <div>MUC</div>
+            <form id="enter-room" action="#" method="get">
+                Join the room: <input type="text" name="room"/>@<span id="muc-room-server">&nbsp;</span>
+                as <input type="text" name="nick"/>
+                with password <input type="text" name="pass"/>
+                <input type="submit" value="join!"/>
+            </form>
+            <table id="muc-room-list" style="width:100%;">
+                <tr>
+                    <th style="width:20%;">JID</th>
+                    <th>Presence</th>
+                    <th>Display Name</th>
+                    <th style="width:25%;">Groups</th>
+                    <th>Subject</th>
+                    <th>Actions</th>
+                </tr>
+            </table>
+            <table class="template" id="muc-room-item">
+                <tr class="muc-room">
+                    <td class="jid"></td>
+                    <td class="presence">&nbsp;</td>
+                    <td class="name"></td>
+                    <td class="groups"></td>
+                    <td class="props"></td>
+                    <td class="actions" style="text-align:center;">
+                        <div class="action" id="delete-muc-room">[ X ]</div>
+                        <div class="action" id="change-nick">[ NICK ]</div>
+                        <div class="action" id="change-subject">[ SUBJECT ]</div>
+                        <div class="action" id="send-broadcast">[ BROADCAST ]</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="log">
+            <span id="act-clear" class="action disabled" style="float:right">clear</span>
+            <span>CONSOLE</span>
+            <div id="entry">
+                <form id="jscons">
+                    <div><textarea id="jscstmts"></textarea></div>
+                    <div>
+                        <input id="jscrun" type="submit" value="Run"/>
+                        <input id="jscclear" type="reset" value="Clear"/>
+                    </div>
+                </form>
+            </div>
+            <div id="details"><table></table></div>
+            <table class="template" id="log-message">
+                <tr class="log-message">
+                    <td class="type"></td>
+                    <td class="details"></td>
+                </tr>
+            </table>
+        </div>
+    </body>
+</html>

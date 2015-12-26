@@ -1,0 +1,67 @@
+class DBUsr extends CombinedUser{
+	private String serviceName, login, password;
+	DBUsr(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setServiceName(String serviceName) {
+		this.serviceName=serviceName;}
+	String getServiceName(){
+		return this.serviceName;
+		}
+}
+
+class UnixUsr extends CombinedUser{
+	private String identityFile, login, password;
+	UnixUsr(String login, String password){
+		this.login = login;
+		this.password=password;
+	}
+	void setIdentityFile(String identityFile) {
+		this.identityFile = identityFile;
+	}
+	String getIdentityFile() {
+		return identityFile;
+
+}
+
+
+
+class CombinedUser{
+	private String userName;
+	CombinedUser(){
+		this.userName="NoName";
+}
+	CombinedUser(String userName){
+		this.userName=userName;
+	}
+
+	void setLogin(String login) {
+		this.login=login;	
+	}
+
+	String getLogin() {
+		return this.login;
+	}
+
+	void setPassword(String password) {
+		this.password=password;
+		
+	}
+
+	String getPassword() {
+		return password;
+	}
+	void setUserName(String userName) {
+		this.userName=userName;
+		
+	}
+	String getUserName() {
+		return userName;
+	}
+
+
+}
+
+
+

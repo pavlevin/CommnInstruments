@@ -1,0 +1,23 @@
+public class UserActions{
+	String name="Field";
+	public static void main(String[] args){
+		UserActions ua = new UserActions();
+		Object[] f = ua.getClass().getDeclaredFields();
+		for (Object o : f){
+			System.out.println("1 - "+f.getClass().getCanonicalName());
+			System.out.println("2 - "+f.getClass().getSimpleName());
+		}
+		ua.setValue("name", "bla");
+		
+		
+	}
+	void setValue(String field,String value){
+		try {
+			Object[] f = this.getClass().getDeclaredFields();
+			f.toString();
+		} catch (IllegalArgumentException  | SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}

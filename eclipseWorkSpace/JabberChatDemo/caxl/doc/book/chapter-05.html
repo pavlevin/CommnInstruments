@@ -1,0 +1,118 @@
+<!--
+/**
+ * filename:        chapter-05.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2012 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>The CAXL Book :: Chapter 5 - Direct Chat</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" type="text/css" href="book.css" />
+  </head>
+  <body>
+    <h1><a href="index.html">The CAXL Book</a> :: Chapter 5 - Direct Chat</h1>
+    <nav>
+      <h2>Table of Contents</h2>
+      <ol start='0'>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#messages">Exchanging Messages</a></li>
+        <li><a href="#sessions">Chat Sessions</a></li>
+        <li><a href="#states">Chat States</a></li>
+      </ol>
+    </nav>
+    <section id="overview">
+      <h2>5.0 Overview</h2>
+      <p>The "M" in XMPP stands for "messaging", and exchanging messages is one of the core uses of an XMPP library like CAXL. In XMPP, messages come in several flavors, denoted by the 'type' attribute on the &lt;message/&gt; element. The simplest is type "normal", which is a kind of fire-and-forget message to which you don't necessarily expect a reply. Slightly more advanced is type "chat", which is used in one-to-one chat sessions between two entities. Additional message types include "groupchat" (discussed in the next chapter) and "headline" (discussed in the chapter after that). In this chapter, we first talk about the basic mechanics of sending and receiving messages, then explore two concepts related to one-to-one message exchanges: chat sessions and chat states.</p>
+    </section>
+    <section id="messages">
+      <h2>5.1 Exchanging Messages</h2>
+      <p>In CAXL, you can create XMPP messages using the <code>jabberwerx.Message</code> object. This object has several methods that correspond to standard child elements of the &lt;message/&gt; stanza defined in <a href='http://xmpp.org/rfcs/rfc6121.html'>RFC 6121</a>:</p>
+      <ul>
+        <li><strong>setBody()</strong> generates or updates the &lt;body/&gt; element.</li>
+        <li><strong>setSubject()</strong> generates or updates the &lt;subject/&gt; element.</li>
+        <li><strong>setThread()</strong> generates or updates the &lt;thread/&gt; element.</li>
+      </ul>
+      <p>The <code>jabberwerx.Message</code> object also inherits the methods defined for the <code>jabberwerx.Stanza</code> object, which means you can set the message type as well.</p>
+      <pre>
+  mymsg = new jabberwerx.Message();
+  mymsg.setBody("Hello World");
+  mymsg.setType("normal");
+      </pre>
+      <p>Naturally, there are also equivalent methods for retrieving the body, subject, and thread for a message (<code>getBody()</code>, <code>getSubject()</code>, and <code>getThread()</code>).</p>
+      <p>Once you have constructed a message, you can send it using the <code>sendMessage()</code> method on the <code>jabberwerx.Client</code> object.</p>
+      <pre>
+  client = new jabberwerx.Client();
+  mymsg = new jabberwerx.Client();
+  mymsg.setBody("Hello World");
+  mymsg.setType("normal");
+  mymsg.setTo("jwtest0@example.com");
+  client.sendMessage(mymsg);
+      </pre>
+      <p>However, in practice we typically send messages in the context of a chat session (see below) or a multi-user chatroom (see Chapter 6), so you probably won't use <code>Client.sendMessage()</code> directly. Now let's see how the chat controller provides methods for sending and receiving one-to-one messages.</p>
+    </section>
+    <section id="sessions">
+      <h2>5.2 Chat Sessions</h2>
+      <p>Although XMPP enables you to send a single message, most interactions between instant messaging users occur in bursts: you might not chat with someone for a few hours or a few days, but then exchange a fair number of messages over the span of several minutes. Such an exchange is called a chat session.</p>
+      <p>CAXL supports chat sessions through the ChatController class, which controls the creation of ChatSession objects. A ChatSession can be created directly using the <code>openChatSession()</code> method by specifying the JabberID with which to chat:</p>
+      <pre>
+  var client = new jabberwerx.Client();
+  var chatController = new jabberwerx.ChatController(client);
+  var chatSession = chatController.openSession("user@example.com");
+      </pre>
+      <p>The <code>openSession()</code> method also takes an optional <code>thread</code> argument. In CAXL this is not really necessary, since CAXL allows only one chat session per recipient JID at any one time.</p>
+      <p>Once you have instantiated a chat session with a contact, you can send messages within that session using the <code>sendMessage()</code> method:</p>
+      <pre>
+  chatSession.sendMessage("Hello World");
+      </pre>
+      <p>There are several events related to chat sessions. If you receive a message from another user, a new ChatSession object is created on your behalf and the <code>chatSessionOpened</code> event is fired. Of course, this event is also fired if you call the <code>openSession()</code> method on the ChatController.</p>
+      <p>Typically you will want to bind the <code>chatSessionOpened</code> event on the ChatController and extract the ChatSession object from that event data:</p>
+      <pre>
+  chatController.event("chatSessionOpened".bind(function(evt) {
+      var chatSession = evt.data.chatSession;
+  });
+      </pre>
+      <p>However, just finding out about a chat session is not all that useful. You also want to find out about each of the chat messsages you receive in the course of that session. You can do this by binding the <code>chatReceived</code> event on the chat session and most likely displaying to your user both the sender of the message and the message body (extracted using the <code>getFrom()</code> and <code>getBody()</code> methods on the message):</p>
+      <pre>
+  chatController.event("chatSessionOpened".bind(function(evt) {
+      var chatSession = evt.data.chatSession;
+      chatSession.event("chatReceived").bind(function(evt) {
+          var message = evt.data;
+          var sender = message.getFrom();
+          var themsg = message.getBody();
+          // display sender and message body to the user
+      });
+  });
+      </pre>
+      <p>You probably also want to know when a chat session ends. This is done by registering for the <code>chatSessionClosed</code> event. This way, if your conversation partner terminates the session or the <code>closeSession()</code> method is invoked on the ChatController, your client can react appropriately, for example so that you can change an indicator or close a tab.</p>
+    </section>
+    <section id="states">
+      <h2>5.3 Chat States</h2>
+      <p>Within a chat session, it can be helpful to know if your conversation partner is paying attention, is actively typing a reply, has temporarily paused composing, has become inactive, or has gone away entirely. XMPP includes a protocol extension called Chat State Notifications (<xref target='http://xmpp.org/extensions/xep-0085.html'>XEP-0085</a>) to communicate these different levels of involvement in the chat session.</p>
+      <p>In CAXL, chat state notifications are enabled by default, since the boolean <code>sendChatStates</code> field on the ChatController object defaults to true. If you want to disable chat state notifications, you can set this field to false:</p>
+      <pre>
+  var chatController = new jabberwerx.ChatController(client);
+  chatController.sendChatStates = false;
+      </pre>
+      <p>You can find out about chat states by binding the <code>chatStateChanged</code> event to the relevant chat session. The event data consists of a JID (null if you triggered the event) and the new state, which is one of "active", "composing", "paused", "inactive", or "gone" (see <a href="http://xmpp.org/extensions/xep-0085.html">XEP-0085</a> for a detailed description of these states). Here is an example:</p>
+      <pre>
+  chatController.event("chatSessionOpened".bind(function(evt) {
+      var chatSession = evt.data.chatSession;
+      chatSession.event("chatStateChanged").bind(function(evt) {
+          var thestate = evt.data;
+          var sender = thestate.jid;
+          var state = thestate.state;
+          // display the state of the sender, perhaps with different colors
+      });
+  });
+      </pre>
+    </section>
+    <div>
+      <p>&copy; 2012 Cisco Systems, Inc. All rights reserved.</p>
+    </div>
+  </body>
+</html>

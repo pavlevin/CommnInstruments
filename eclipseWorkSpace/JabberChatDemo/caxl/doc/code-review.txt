@@ -1,0 +1,1459 @@
+CODE REVIEW NOTES
+
+JabberWerxAJAX - 2009.12.07 - Refactor out JSJac in BOSH.
+===========================
+
+src/util/cyypto.js
+---------------------------
+MAM 2) b64Encode: add comment about input string in UTF8 format
+MAM 2) b64Decode: add comment about output string in UTF8 format
+MAM 2) utf16Encode: remove as absolete
+JJF 1) str2hex : add an optional parameter for the case
+JJF 2) make all input/output strings for encoding/decoding UTF8 strings  and
+       clean comments accordingly
+MAM 2) remove cnonce
+
+src/model/Stream.js
+---------------------------
+MAM 2) open: no assumtions should be made about httpbinding url
+MAM 2) send: should add "NotOpenError" exception to comments
+MAM 2) send: fix typo in "elem must be a DOM elmeent"
+MAM 2) _sendRequest: remove line 238
+MAM 3) _handleClose: add comments about why is this callbacked invoked twice
+MAM 3) reset: removed commented out code
+MAM 3) willBeSerialized: fix typo "Callbed"
+MAM 2) removed references to this._boshProps.maxPause
+MAM 2) removed references to abort() calls
+MAM 2) wasUnserialized: only send alone last request, not the serialized elements
+MAM 2) removed legacy: true flag
+
+src/model/SASL.js
+---------------------------
+MAM 2) _decodeData: b64Decode needs to be wrapped with UTF8 decode
+
+src/model/Client.js
+---------------------------
+JJF 2) add file header
+JJF 2) add "@private" comment to all private functions
+JJF 3) change _addStreamHandler to _setStreamHandler
+JJF 2) persist or set invocations (not function name)
+JJF 3) connect: remove line 333, 349
+JJF 2) make sure httpBindingURL is removed from jabberwerx.Server
+JJF 2) don't need to look at https when setting secure in _connectParams 
+JJF 1) connect: timeout, wait should be set with ||
+JJF 2) _handleAuthInit: namespace mechanisms
+JJF 2) _handleBind/handleSession: make ele jQuery object instead of element
+JJF 2) _handleSession: change find to children
+JJF 2) _exceptionToErrorNode: no need to change message
+
+JabberWerxAJAX - 2009.12.09 - Differentiate between offline and unknown presence
+===========================
+src/Contact.js
+---------------------------
+MJW 2) setItemNode: need to trigger "resourcePresenceChanged" and "primaryPresenceChanged"
+       events if the presence is changed
+    N) _handleUnavailable: See if there's a way to not "pollute" core with
+       knowledge of extensions??
+       
+cisco/QuickContactController.js
+---------------------------
+MJW 3) subscribe: s/unavabilable/unavailable/
+MJW 3) _handleEntityUpdated: place //DEBUG-BEING and //DEBUG-END around
+       the jw.debug.log statement
+       
+unit-tests/EntityTest.js
+---------------------------
+MJW 2) "Test resource-/primaryPresenceChanged Event Firing":
+        Update "equals()" tests against resourceFn.triggered to check for the
+        proper count
+
+JabberWerxAJAX - 2009.12.07 - Reduce Namespace Pollution
+===========================
+src/JWCore.js
+---------------------------
+YR  3) remove 'observe' method
+YR  3) remove 'tickleObservee' method
+YR  3) remove 'notifyObservers' method
+YR  3) remove 'observing_tickleOnAdd' property, observing_noTickleOnAdd
+YR  3) remove 'addObserver' method
+YR  3) remove 'removeObserver' method
+
+JabberWerxAJAX - 2009.11.20 - XML Node creation
+===========================
+src/jabberwerx.js
+---------------------------
+MAM 2) global change is not undefined to defined 
+MAM 3) constructor: move ln check to _parseName
+MAM 1) constructor: initialize pre
+MAM 1) attribute: document that we do not support ns for attributes
+MAM 2) node: move n = n.cloneNode(true) inside if isElement block
+MAM 2) xml: change doc for @returns 
+MAM 2) xml: get rid of retval
+MAM 2) _parseName: add more comments
+MAM 2) _createDoc: add DEBUG block around log
+JJF 2)  revisit unserializeXML to match _parseXML 
+
+JabberWerxAJAX - 2009.11.19 - Stanza
+===========================
+model/Stanza.js
+---------------------------
+MAM 1) xml: add documentation
+MAM 3) _setChildText:document removal of the element
+MAM 2) getFromJID/getToJID: fix iif
+MAM 2) getFromJID/getToJID: check for empty string
+MAM 2) setFrom/setTo: add check for valid jid and throw exception if not
+
+model/Stanza.js, ErrorInfo 
+---------------------------
+MAM 2) init: document optional parameters(type, cond)
+MAM 2) document: type, condition, text properties
+MAM 2) createWithNode: document
+MAM 2) createWithNode: fix typeOrNode (line 407)
+
+model/Stanza.js, jabberwerx.IQ, jabberwerx.Message, jabberwerx.Presence (node)
+---------------------------
+MAM 2) init: document param packet
+MAM 1) fix "jabberwerx;Message" line 682
+MAM 2) getPriority: fix return statement
+MAM 2) setPriority: fix doc for TypeError
+MAM 2) getShow/getStatus: add || null to return statement
+MAM 3) compareTo: add check for presence type, throw error if not Presence
+MAM 3) showStrToInt: add doc for unavailable presence
+MAM 2) setPresence: add check for priority for null
+
+JabberWerxAJAX - 2009.11.17 - Pub Sub Controller
+===========================
+controller/PubSubController.js
+---------------------------
+MJW 3) destroy: unbind event handlers
+MJW 3) node: remove declaration for var jid
+
+model/PubSubNode.js
+---------------------------
+MAM 2) PubSubItem: document id property
+MAM 2) subscribe/unsbubscribe: err;    // the stanza error if retrieve failed
+MAM 2) subscribe/ubsubscribe: change callback comments
+MAM 2) subscribe: fix error text in jQuery.isFunction
+MAM 2) subscribe: set the subscription property on success
+MAM 2) unsubscribe: remove , in line 259
+MAM 2) unsubscribe: clear unsubscribe error("not-subscribed") before invoking callback
+MAM 2) retrieve: document client not connected error
+MAM 2) retract: document id required
+MAM 2) retract: fix the code not to check for id (line 419)
+MAM 3) clear empty else statement
+MAM 3) _delete: fix operation to: "delete" (MM: fixed to "deleteNode")
+
+doc/api/jabbewerxEvents.html
+---------------------------
+MAM 2) add doc for pubSubNodeDeleted event
+
+JabberWerxAJAX - 2009.11.16 - Default Roster Group
+===========================
+controller/RosterController.js
+---------------------------
+BM  2) _updateContact: ensure that, if defaultGroup is non-empty, the contact
+       always gets a group (even if "" or [] is passed into methods)
+
+JabberWerxAJAX - 2009.11.11 - Explicit Roster Subscriptions
+===========================
+controller/RosterController.js
+---------------------------
+MJW 3) deleteContact: remove jid existence check (JID.asJID does)
+MJW 2) _autoAccept: try to use acceptSubscription
+MJW 3) _autoAccept: try to retain displayname and groups if entity already exists
+MJW 1) _handleSubscription: revert the "subscribed" and "unsubscribed" cases
+
+JabberWerxAJAX - 2009.11.16 - MUC Invite received
+===========================
+controller/MUCController.js
+---------------------------
+BM  3) add XEP 249 features to our outbound caps.
+BM  3) _handleMediatedInvite: documentation should say the invite element is the selected element.
+    N) _handleMediatedInvite: var invite = $(evtObj.selected); var reason = invite.children("reason").text() || null;
+BM  2) _handleMediatedInvite: pass 'password' into _handleInvite.
+BM  2) _handleInvite: remove exception handling
+
+model/MUCInvite.js
+---------------------------
+BM  2) use getters and setters.
+
+views/MUCInviteView.js
+---------------------------
+BM  3) remove ;(function() { file.
+BM  3) init: first TypeError should say "muc"
+BM  3) init: second TypeError should say "mucInvite"
+BM  3) createDOM: add </p> to first description.
+BM  N) createDOM: move @returns to the end of the comment section.
+BM  2) createDOM: JID.unescape(this.mucInvite.room().getNode())
+BM  2) createDOM: this.mucInvite.invitor().getBareJID().toDisplayString()
+BM  3) createDOM: remove references to this._defaultNick
+BM  2) createDOM: use "<input type='button'/>" instead of "<input/>"
+BM  2) joinRoom: validate nickname before calling room.enter(); display error message
+       in view and re-enable buttons
+       
+jabberwerxEvents.html
+---------------------------
+BM  3) jabberwerx.ui.MUCInviteView: Change {event_source} to jabberwerx_ui_MUCInviteView
+BM  2) jabberwerx.ui.MUCInviteView: Change "subscription" to "MUC invite"
+JabberWerxAJAX - 2009.11.12 - MUC Invite sent
+===========================
+model/MUCRoom.js
+---------------------------
+JJF 3) invite: accept JID as well as string in the JID array.
+JJF 3) invite: reason comment 'alnong' should be 'along'
+JJF 3) invite: return array of JIDs.
+JJF 3) invite: remove tabs from comment.
+JJF 3) invite: check if updateMessage can't leave if statement scope.
+JJF 3) invite: accept single JID.
+
+JabberWerxAJAX - 2009.11.10 - JID Refactor
+===========================
+model/JID.js
+-------------
+MAM 3) init: prepFN ~ remove mapped variable
+MAM 2) init: switch statements swapped for if statements
+MAM 3) wasUnserialized: Can remove check for legacy serialized JIDs
+MAM 1) InvalidJIDError: Needs commenting
+=======
+CODE REVIEW NOTES
+
+
+
+JabberWerxAJAX - 2009.12.07 - Refactor out JSJac in BOSH.
+
+===========================
+
+
+
+src/util/cyypto.js
+
+---------------------------
+
+MAM 2) b64Encode: add comment about input string in UTF8 format
+
+MAM 2) b64Decode: add comment about output string in UTF8 format
+
+MAM 2) utf16Encode: remove as absolete
+
+    1) str2hex : add an optional parameter for the case
+
+    2) make all input/output strings for encoding/decoding UTF8 strings  and
+
+       clean comments accordingly
+
+MAM 2) remove cnonce
+
+
+
+src/model/Stream.js
+
+---------------------------
+
+MAM 2) open: no assumtions should be made about httpbinding url
+
+MAM 2) send: should add "NotOpenError" exception to comments
+
+MAM 2) send: fix typo in "elem must be a DOM elmeent"
+
+MAM 2) _sendRequest: remove line 238
+
+MAM 3) _handleClose: add comments about why is this callbacked invoked twice
+
+MAM 3) reset: removed commented out code
+
+MAM 3) willBeSerialized: fix typo "Callbed"
+
+MAM 2) removed references to this._boshProps.maxPause
+
+MAM 2) removed references to abort() calls
+
+MAM 2) wasUnserialized: only send alone last request, not the serialized elements
+
+MAM 2) removed legacy: true flag
+
+
+
+src/model/SASL.js
+
+---------------------------
+
+MAM 2) _decodeData: b64Decode needs to be wrapped with UTF8 decode
+
+
+
+src/model/Client.js
+
+---------------------------
+
+    2) add file header
+
+    2) add "@private" comment to all private functions
+
+    3) change _addStreamHandler to _setStreamHandler
+
+    2) persist or set invocations (not function name)
+
+    3) connect: remove line 333, 349
+
+    2) make sure httpBindingURL is removed from jabberwerx.Server
+
+    2) don't need to look at https when setting secure in _connectParams 
+
+    1) connect: timeout, wait should be set with ||
+
+    2) _handleAuthInit: namespace mechanisms
+
+    2) _handleBind/handleSession: make ele jQuery object instead of element
+
+    2) _handleSession: change find to children
+
+    2) _exceptionToErrorNode: no need to change message
+
+
+
+JabberWerxAJAX - 2009.12.07 - Reduce Namespace Pollution
+
+===========================
+
+src/JWCore.js
+
+---------------------------
+
+YR  3) remove 'observe' method
+
+YR  3) remove 'tickleObservee' method
+
+YR  3) remove 'notifyObservers' method
+
+YR  3) remove 'observing_tickleOnAdd' property, observing_noTickleOnAdd
+
+YR  3) remove 'addObserver' method
+
+YR  3) remove 'removeObserver' method
+
+
+
+JabberWerxAJAX - 2009.11.20 - XML Node creation
+
+===========================
+
+src/jabberwerx.js
+
+---------------------------
+
+MAM 2) global change is not undefined to defined 
+
+MAM 3) constructor: move ln check to _parseName
+
+MAM 1) constructor: initialize pre
+
+MAM 1) attribute: document that we do not support ns for attributes
+
+MAM 2) node: move n = n.cloneNode(true) inside if isElement block
+
+MAM 2) xml: change doc for @returns 
+
+MAM 2) xml: get rid of retval
+
+MAM 2) _parseName: add more comments
+
+MAM 2) _createDoc: add DEBUG block around log
+
+JJF 2)  revisit unserializeXML to match _parseXML 
+
+
+
+JabberWerxAJAX - 2009.11.19 - Stanza
+
+===========================
+
+model/Stanza.js
+
+---------------------------
+
+MAM 1) xml: add documentation
+
+MAM 3) _setChildText:document removal of the element
+
+MAM 2) getFromJID/getToJID: fix iif
+
+MAM 2) getFromJID/getToJID: check for empty string
+
+MAM 2) setFrom/setTo: add check for valid jid and throw exception if not
+
+
+
+model/Stanza.js, ErrorInfo 
+
+---------------------------
+
+MAM 2) init: document optional parameters(type, cond)
+
+MAM 2) document: type, condition, text properties
+
+MAM 2) createWithNode: document
+
+MAM 2) createWithNode: fix typeOrNode (line 407)
+
+
+
+model/Stanza.js, jabberwerx.IQ, jabberwerx.Message, jabberwerx.Presence (node)
+
+---------------------------
+
+MAM 2) init: document param packet
+
+MAM 1) fix "jabberwerx;Message" line 682
+
+MAM 2) getPriority: fix return statement
+
+MAM 2) setPriority: fix doc for TypeError
+
+MAM 2) getShow/getStatus: add || null to return statement
+
+MAM 3) compareTo: add check for presence type, throw error if not Presence
+
+MAM 3) showStrToInt: add doc for unavailable presence
+
+MAM 2) setPresence: add check for priority for null
+
+
+
+JabberWerxAJAX - 2009.11.17 - Pub Sub Controller
+
+===========================
+
+controller/PubSubController.js
+
+---------------------------
+
+MJW 3) destroy: unbind event handlers
+
+MJW 3) node: remove declaration for var jid
+
+
+
+model/PubSubNode.js
+
+---------------------------
+
+MAM 2) PubSubItem: document id property
+
+MAM 2) subscribe/unsbubscribe: err;    // the stanza error if retrieve failed
+
+MAM 2) subscribe/ubsubscribe: change callback comments
+
+MAM 2) subscribe: fix error text in jQuery.isFunction
+
+MAM 2) subscribe: set the subscription property on success
+
+MAM 2) unsubscribe: remove , in line 259
+
+MAM 2) unsubscribe: clear unsubscribe error("not-subscribed") before invoking callback
+
+MAM 2) retrieve: document client not connected error
+
+MAM 2) retract: document id required
+
+MAM 2) retract: fix the code not to check for id (line 419)
+
+MAM 3) clear empty else statement
+
+MAM 3) _delete: fix operation to: "delete" (MM: fixed to "deleteNode")
+
+
+
+doc/api/jabbewerxEvents.html
+
+---------------------------
+
+MAM 2) add doc for pubSubNodeDeleted event
+
+
+
+JabberWerxAJAX - 2009.11.16 - Default Roster Group
+
+===========================
+
+controller/RosterController.js
+
+---------------------------
+
+BM  2) _updateContact: ensure that, if defaultGroup is non-empty, the contact
+
+       always gets a group (even if "" or [] is passed into methods)
+
+
+
+JabberWerxAJAX - 2009.11.11 - Explicit Roster Subscriptions
+
+===========================
+
+controller/RosterController.js
+
+---------------------------
+
+MJW 3) deleteContact: remove jid existence check (JID.asJID does)
+
+MJW 2) _autoAccept: try to use acceptSubscription
+
+MJW 3) _autoAccept: try to retain displayname and groups if entity already exists
+
+MJW 1) _handleSubscription: revert the "subscribed" and "unsubscribed" cases
+
+
+
+JabberWerxAJAX - 2009.11.16 - MUC Invite received
+
+===========================
+
+controller/MUCController.js
+
+---------------------------
+
+BM  3) add XEP 249 features to our outbound caps.
+
+BM  3) _handleMediatedInvite: documentation should say the invite element is the selected element.
+
+    N) _handleMediatedInvite: var invite = $(evtObj.selected); var reason = invite.children("reason").text() || null;
+
+BM  2) _handleMediatedInvite: pass 'password' into _handleInvite.
+
+BM  2) _handleInvite: remove exception handling
+
+
+
+model/MUCInvite.js
+
+---------------------------
+
+BM  2) use getters and setters.
+
+
+
+views/MUCInviteView.js
+
+---------------------------
+
+BM  3) remove ;(function() { file.
+
+BM  3) init: first TypeError should say "muc"
+
+BM  3) init: second TypeError should say "mucInvite"
+
+BM  3) createDOM: add </p> to first description.
+
+BM  N) createDOM: move @returns to the end of the comment section.
+
+BM  2) createDOM: JID.unescape(this.mucInvite.room().getNode())
+
+BM  2) createDOM: this.mucInvite.invitor().getBareJID().toDisplayString()
+
+BM  3) createDOM: remove references to this._defaultNick
+
+BM  2) createDOM: use "<input type='button'/>" instead of "<input/>"
+
+BM  2) joinRoom: validate nickname before calling room.enter(); display error message
+
+       in view and re-enable buttons
+
+       
+
+jabberwerxEvents.html
+
+---------------------------
+
+BM  3) jabberwerx.ui.MUCInviteView: Change {event_source} to jabberwerx_ui_MUCInviteView
+
+BM  2) jabberwerx.ui.MUCInviteView: Change "subscription" to "MUC invite"
+
+JabberWerxAJAX - 2009.11.12 - MUC Invite sent
+
+===========================
+
+model/MUCRoom.js
+
+---------------------------
+
+JJF 3) invite: accept JID as well as string in the JID array.
+
+JJF 3) invite: reason comment 'alnong' should be 'along'
+
+JJF 3) invite: return array of JIDs.
+
+JJF 3) invite: remove tabs from comment.
+
+JJF 3) invite: check if updateMessage can't leave if statement scope.
+
+JJF 3) invite: accept single JID.
+
+
+
+JabberWerxAJAX - 2009.11.10 - JID Refactor
+
+===========================
+
+model/JID.js
+
+-------------
+
+MAM 3) init: prepFN ~ remove mapped variable
+
+MAM 2) init: switch statements swapped for if statements
+
+MAM 3) wasUnserialized: Can remove check for legacy serialized JIDs
+
+MAM 1) InvalidJIDError: Needs commenting
+
+
+JabberWerxAJAX - 2009.11.09 - Private Storage
+===========================
+controllers/PrivateStorageController
+---------------------------
+YR  3) fetch documentation: 'funnction' misspelled.
+YR  3) fetch documentation: ename should be string.
+YR  3) fetch documentation: callback takes 2 params.
+YR  3) fetch documentation: should be {jabberwerx.Client.NotConnectedError}.
+YR  3) fetch documentation: mention throwing TypeError for no callback.
+YR  2) fetch: remove 'callback !== undefined && ' from if statement.
+YR  2) fetch: add
+YR      'var query = new jabberwerx.NodeBuilder("{jabber:iq:private}query");'
+YR      'var prv_elem = query.element(ename);'
+YR            and remove the first assignment to prv_elem.
+YR  3) update documentation: change private_elm to '@param   {Element} private_elm Document element.'
+YR  3) remove documentation: "cleares" misspelled.
+YR  2) remove: remove prv_elem.
+
+JabberWerxAJAX - 2009.10.30 - Privacy List
+===========================
+model/PrivacyListController.js
+---------------------------
+MAM 1) Document events create by PrivacyListController to events documentation.
+YR  3) Remove '-' in documentation after parameters.
+YR  1) _doFetch: do 'var list_name' instead of just 'list_name'
+YR  2) _doFetch: change 'that._privacyList[list_name].destroy()' instead of 'delete that._privacyList[list_name]'
+YR  1) _remove: change 'lis' to 'list'
+YR  1) _remove: change 'that' to 'this'
+YR  3) _checkError: change entire function to 'return $(parentElement).children("error")[0];'
+YR  3) apply: document throwing TypeError for list.
+YR  3) apply: change '$(queryNode.data).get(0)' to 'queryNode.data'
+YR  3) apply: remove commented code.
+YR  2) apply: callback.call(error) should have 'that' as first param.
+YR  3) _handlePrivacyListUpdate: remove listNode.
+YR  3) _handlePrivacyListUpdate: remove builder.
+YR  3) _handlePrivacyListUpdate: use 'var list_name = $(evt.selected).attr("name");'
+YR  3) _handlePrivacyListUpdate: remove stanza var.
+
+JabberWerxAJAX - 2009.10.29 - Privacy List
+===========================
+model/PrivacyList.js
+---------------------------
+MAM 2) description: Add what subset of XEP 16 we are suppporting. (i.e. Deny all stanzas).
+MAM 3) init: remove var client.
+MAM 3) destroy: remove var client.
+MAM 3) destroy: remove if statement. Just call _remove.
+MAM 3) blockJid: use getBareJIDString on first line.
+MAM 1) blockJid: move item.remove() past the if statement.
+MAM 3) unblockJid: param description needs to say unblock.
+MAM 3) unblockJid: use getBareJIDString on first line.
+MAM 1) wasUnserialized: convert the returned XML to jQuery object.
+
+demo/PrivacyDemo.html
+---------------------------
+MAM 3) _handlePrivacyUpdated: remove this.list
+
+JabberWerxAJAX - 2009.10.28 - Display Message Errors in Chat
+===========================
+model/ErrorReporter.js
+---------------------------
+MJW 3) getMessage: Change parameter 'evt' to something more relevant (e.g. 'err')
+    
+model/ChatSession.js
+---------------------------
+MJW 3) Merge all of the "messageRecieved" callbacks into one Ÿber callback against
+       "message[from^='{bindJid}'][type!='groupchat']"
+MJW 3) Remove 'chatErrorReceived' event; reuse 'chatReceived'
+    
+view/Chatview.js
+---------------------------
+MJW 3) Revert to previous revision (sans "chatErrorReceived" handlers)
+    
+doc/jabberwerxEvents.html
+---------------------------
+MAM 1) Document 'chatReceived' event
+
+doc/developerGuide.html
+---------------------------
+MJW 3) Consistent capitalization of /error reporter/gi
+MJW 2) Add Message: Use the term "errorCondition" instead of "errorObject"
+
+JabberWerxAJAX - 2009.10.21 - Configurable PW saving
+===========================
+user.js
+JJF 3) Remove ;(function() {
+    
+jabberwerx.js
+---------------------------
+JJF 3) Remove the comment about using base64 to store the password
+
+view/AuthenticateView.js
+---------------------------
+JJF 2) _login: Clear the password field right after assigning the value to 'password'
+    
+examples/savepassdemo.html
+---------------------------
+JJF 3) _setState: Move status == -1 code into the switch statement
+
+JabberWerxAJAX - 2009.10.22 - ErrorReporter
+===========================
+model/ErrorReporter.js
+---------------------------
+MW  3) addMessage: check if 'value' is a string.
+
+JabberWerxAJAX - 2009.10.21 - JID Escaping
+===========================
+model/JID.js
+---------------------------
+MAM N) Change the tabs to spaces.
+
+model/EntityTest.js
+---------------------------
+MAM N) Change the tabs to spaces.
+
+=======
+CODE REVIEW NOTES
+
+JabberWerxAJAX - 2009.10.30 - Privacy List
+===========================
+model/PrivacyListController.js
+---------------------------
+MAM 1) Document events create by PrivacyListController to events documentation.
+YR  3) Remove '-' in documentation after parameters.
+YR  1) _doFetch: do 'var list_name' instead of just 'list_name'
+YR  2) _doFetch: change 'that._privacyList[list_name].destroy()' instead of 'delete that._privacyList[list_name]'
+YR  1) _remove: change 'lis' to 'list'
+YR  1) _remove: change 'that' to 'this'
+YR  3) _checkError: change entire function to 'return $(parentElement).children("error")[0];'
+YR  3) apply: document throwing TypeError for list.
+YR  3) apply: change '$(queryNode.data).get(0)' to 'queryNode.data'
+YR  3) apply: remove commented code.
+YR  2) apply: callback.call(error) should have 'that' as first param.
+YR  3) _handlePrivacyListUpdate: remove listNode.
+YR  3) _handlePrivacyListUpdate: remove builder.
+YR  3) _handlePrivacyListUpdate: use 'var list_name = $(evt.selected).attr("name");'
+YR  3) _handlePrivacyListUpdate: remove stanza var.
+
+JabberWerxAJAX - 2009.10.29 - Privacy List
+===========================
+model/PrivacyList.js
+---------------------------
+MAM 2) description: Add what subset of XEP 16 we are suppporting. (i.e. Deny all stanzas).
+MAM 3) init: remove var client.
+MAM 3) destroy: remove var client.
+MAM 3) destroy: remove if statement. Just call _remove.
+MAM 3) blockJid: use getBareJIDString on first line.
+MAM 1) blockJid: move item.remove() past the if statement.
+MAM 3) unblockJid: param description needs to say unblock.
+MAM 3) unblockJid: use getBareJIDString on first line.
+MAM 1) wasUnserialized: convert the returned XML to jQuery object.
+
+demo/PrivacyDemo.html
+---------------------------
+MAM 3) _handlePrivacyUpdated: remove this.list
+
+JabberWerxAJAX - 2009.10.28 - Display Message Errors in Chat
+===========================
+model/ErrorReporter.js
+---------------------------
+MJW 3) getMessage: Change parameter 'evt' to something more relevant (e.g. 'err')
+    
+model/ChatSession.js
+---------------------------
+MJW 3) Merge all of the "messageRecieved" callbacks into one Ÿber callback against
+       "message[from^='{bindJid}'][type!='groupchat']"
+MJW 3) Remove 'chatErrorReceived' event; reuse 'chatReceived'
+    
+view/Chatview.js
+---------------------------
+MJW 3) Revert to previous revision (sans "chatErrorReceived" handlers)
+    
+doc/jabberwerxEvents.html
+---------------------------
+MAM 1) Document 'chatReceived' event
+
+doc/developerGuide.html
+---------------------------
+MJW 3) Consistent capitalization of /error reporter/gi
+MJW 2) Add Message: Use the term "errorCondition" instead of "errorObject"
+
+JabberWerxAJAX - 2009.10.21 - Configurable PW saving
+===========================
+user.js
+JJF 3) Remove ;(function() {
+    
+jabberwerx.js
+---------------------------
+JJF 3) Remove the comment about using base64 to store the password
+
+view/AuthenticateView.js
+---------------------------
+JJF 2) _login: Clear the password field right after assigning the value to 'password'
+    
+examples/savepassdemo.html
+---------------------------
+JJF 3) _setState: Move status == -1 code into the switch statement
+
+JabberWerxAJAX - 2009.10.22 - ErrorReporter
+===========================
+model/ErrorReporter.js
+---------------------------
+MW  3) addMessage: check if 'value' is a string.
+
+JabberWerxAJAX - 2009.10.21 - JID Escaping
+===========================
+model/JID.js
+---------------------------
+MAM N) Change the tabs to spaces.
+
+model/EntityTest.js
+---------------------------
+MAM N) Change the tabs to spaces.
+
+JabberWerxAJAX - 2009.10.05 - SASL
+===========================
+model/SASL.js
+---------------------------
+MAM 3) Change init comments to reflect parameter change (no more 'name').
+MAM 3) Reword SASLAuthFailure description in evaluate.
+MAM 3) _handleFailure: don't need to check 'cond' since already
+       checked that it was an Element.
+MAM 3) remove reset.
+MAM 2) Add comments to addMechanism and removeMechanism.
+
+model/SASLMech.js - SASLPlainMechanism
+---------------------------
+MAM 3) evaluateStart - change comment (doesn't set complete to true).
+
+model/SASLMech.js - SASLDigestMd5Mechanism
+---------------------------
+MAM 3) init comment should say SASLDigestMd5Mechanism not SASLPlainMechanism.
+MAM 3) remove reset.
+MAM 2) _decodeProperties: change 'var ptn = ptn =' to 'var ptn ='
+MAM 3) _decodeProperties: remove name and val from for loop.
+MAM 2) _verifyRspAuth: change '!rsp == inprops.rspauth' to 'rsp != inprops.rspauth'
+
+JSJaCPatches.js
+---------------------------
+MAM 2) Remove first registerSASLCallback and unregisterSASLCallback
+MAM 3) _doSASLAuth: Remove code around 'if (false &&'
+
+
+JabberWerxAJAX - 2009.09.21 - UI Persistence
+===========================
+jwapp/JWApp.js
+---------------------------
+JJF 2) Spaces (4) instead of Tabs
+JJF 2) Documentation!
+JJF 2) File header
+JJF 2) Move JWPersistentApp members into JWApp, then remove JWPersistentApp class
+JJF 3) Move the document.ready and window.unload callback registration to
+       happen within the persistedAppClass function.  This prevents the
+       callbacks from happening unless users really want the automatic
+       persistence
+JJF 3) jabberwerx.ui.saveApp: remove call to _jwappinst.destroy()
+JJF N) Either use shouldBeSavedWithGraph or shouldBeSerializedInline, should
+       not need both?
+JJF N) Needs testing on IE7!
+    
+jwapp/JWView.js
+---------------------------
+    3) Remove references to "innerHTML" from docs; just say "HTML".
+    
+doc/examples/persist*.js
+---------------------------
+    2) Put Demo/Example classes into their own namespace (e.g. "demo" or
+       "example")
+    3) Ensure domain is "example.com"
+    3) Remove debug/test code
+
+JabberwerxAJAX - 2009.08.26 - Google Maps Demo
+===========================
+geolocDemo.html
+---------------------------
+BM  3) "Remove location" should be "Remove Location"
+BM  3) line 260: Remove marker.set_map
+BM  3) Remove mention of Tupelo
+
+JabberwerxAJAX - 2009.08.17 - Persistence Age
+===========================
+JWCore.js
+---------------------------
+    3) jw.saveGraph (line 1206): Use Date.getTime() instead of the locale-sensitive
+       toString()
+    N) jw.loadGraph: Use jw.getGraphMaxAge() instead of the value directly?
+    
+JWCoreTest.js
+---------------------------
+    2) Use fail() or ok(false) instead of ok(true) inside of catch blocks
+    N) See why we occasionally fail with the timings
+
+JabberwerxAJAX - 2009.08.17 - Private Messages
+===========================
+MucRoom.js
+---------------------------
+MW  3) line 861, use '===' instead of '=='
+MW  3) line 866, definition of var client should be before the 'if' statement inside the case block
+   
+ChatController.js
+---------------------------
+MW  3) line 182, add a JsDoc comment for the TypeError thrown
+    
+ChatSession.js
+---------------------------
+MW  3) line 97, instead of registering callback with the global entity set, it should be registered 
+       with the occupant in the MucRoom. Do the opposite in destroy() for unbind
+
+JabberwerxAJAX - 2009.08.14 - Sample UI Client (ChatController bugfixes)
+===========================
+
+
+JabberwerxAJAX - 2009.08.14 - Sample UI Client (add/rem contact)
+===========================
+jabberwerx.ui/doc/examples/sampleclient.html
+---------------------------
+BM  3) "tabActivated" event function: use "!=" when comparing numbers, strings,
+        and booleans instead of "!=="
+BM  3) "tabActivated" event function (line 128): Use
+        "evt.data.content.session && evt.data.content.session.getEntity() instanceof jabberwerx.ui.ChatView"
+        to determine if the tab is against a contact
+BM  3) "tabActivated" event function (line > 132): Include contact's displayname in
+        "remove_contact_btn" label/value
+BM  3) "input.add_contact_btn" event function (line 257): Add try/catch, and alert
+        user if there's bad input
+        
+JabberwerxAJAX - 2009.08.14 - Sample UI Client (enter MUC room)
+===========================
+jabberwerx.ui/doc/examples/sampleclient.html
+---------------------------
+BM  3) "input.enter_room_btn" event function (line 207): Assume roomName is only the
+        the name, and append "@conference.example.com"
+BM  N) "input.enter_room_btn" event function (line 210+): May not be necessary to
+        do this unregister stuff...
+BM  3) "input.enter_room_btn" event function (line 215): use room.jid as part of the
+        tab id
+    
+JabberwerxAJAX - 2009.08.10 - MucView
+===========================
+jabberwerx.ui/MucView
+---------------------------
+MW  3) init: add @description for method-specific info
+MW  2) destroy: must call this._super()
+MW  2) _setTitle: check for jq or _titleView existence before updating
+MW  3) _handleChatState: remove it!
+MW  3) s/pain/pane/g
+MW  3) createDOM: change description to match reality
+MW  3) createDOM: remove this.session from MessageHistory's constructor call
+MW  3) clearHistory: check for _messteListView existence before clearing
+MW  N) somehow document default occupants list size (and therefore tab list size)
+
+JabberwerxAJAX - 2009.08.07 - Fixes to ChatController
+===========================
+jabberwerx.ui/ChatControllerTest.js
+---------------------------
+BM  2) Test Chat Session NOT Opened upon type \"groupchat\" or \"error\":
+       add last test after each "afterMessageReceived" event.
+BM  3) Change "chatSession == null" and "userCreated == null" checks to 
+       "triggered == false" check. Change "ok(false" to "triggered = true"
+
+JabberwerxAJAX - 2009.08.07 - ChatView tabbable support.
+===========================       
+jabberwerx.ui/ChatView
+MAM 3) _handleChat: Remove TODO
+MAM 2) _selectEntity: set test and test.entity to data.
+    
+JabberwerxAJAX - 2009.08.07 - chat states.
+===========================
+jabberwerx/ChatSession
+---------------------------
+MAM 1) Update unit tests.
+MAM 2) setChatState: !msg should return retval.
+MAM 3) setChatState: remove commented code.
+MAM 2) _generateMessage: remove 2nd _statesReady check.
+    
+jabberwerx.ui/MessageHistory
+---------------------------
+MAM 2) Document public functions.
+MAM 3) addBadge: Remove doc
+MAM 3) Remove _badges
+
+JabberwerxAJAX - 2009.08.07 - MUCView tabbable.
+===========================
+mucviewdemo.html
+---------------------------
+BM  2) change conference component to conference.example.com.
+    
+JabberwerxAJAX - 2009.08.05 - ChatView
+===========================
+jabberwerx.ui/ChatView
+---------------------------
+MW  3) init: add @description
+MW  3) Document all public methods and properties
+MW  N) ChatSession._client should be changed to .client (public rather than private)
+MW  3) jsdoc ~ pain should be pane
+MW  2) width: pass noupdate = true through to all component update methods
+MW  2) width: call this._super with noupdate equal true and call
+MW  2) height: pass noupdate = true through to all component update methods
+MW  2) height: call this._super with noupdate equal true and call
+MW  N) createDOM: JSDoc could be made clearer. i.e. contains these components
+MW  3) destoryDOM: set components to null
+
+jabberwerx.ui/MessageHistory
+----------------------------
+MW  2) Finish documentation
+MW  2) addChatState: remove this from MessageHistory
+MW  3) remove session property
+MW  3) destoryDOM: set components to null
+
+jabberwerx.ui/TextInput
+----------------------------
+MW  2) _old_width: remove
+MW  3) createDOM: change sendButton class to send_button
+MW  3) destoryDOM: set components to null
+MW  2) destoryDOM: clear timer if set
+MW  2) _send: delete or set to null this._timer
+MW  3) _send: don't need to return false
+MW  2) _handleKeyUp: this.jq.val() should be this._textArea.val()
+MW  2) _handleKeyUp: delete this._timer after clearing it
+
+    
+JabberwerxAJAX - 2009.07.31 - SubscriptionView
+===========================
+jabberwerx/RosterController
+---------------------------
+    N) acceptSubscription: should we call updateContact if they
+       *are* in the roster?
+       
+jabberwerx.ui/SubscriptionView
+------------------------------
+BM  3) init:  JSDoc needs to have a @description to describe the      constructor (around line 41)
+BM  2) "actionComplete" data should have "action" property instead of
+       "actionTaken"
+BM  2) createDOM: Document what the generated DOM looks like
+BM  3) createDOM: do not need onchange handler; read value from DOM when
+       actually accepting
+BM  3) acceptSubscription: use getNickname() and getGroup() instead
+BM  3) getNickname: read value from DOM; fallback to this._nick if
+       this.jq does not exist
+BM  3) getGroup: read value from DOM; fallback to this._group if
+       this.jq does not exit
+BM  2) _groupSelected: use == instead of ===
+BM  2) _groupSelected/_groupEntered: create the group text input as part of
+       createDOM, then show/hide as appropriate (reverse with group selector)
+BM  2) _groupSelected/_groupEntered: see about binding on "blur" instead of
+       "keyup"; keyup assumes the user always hits ENTER, "blur" should handle
+       user simply clicking "accept"
+BM  3) Document ACTION_* constants
+BM  N) In JSDocs, favor multiple <p> tags over <br/>
+    
+
+JabberwerxAJAX - 2009.07.30 - TabbedView
+===========================
+JWCore
+---------------------------
+MAM 3) Document what a property in a Mixin will do if the property exists in
+       the target class.
+MAM 1) Create unit tests.
+       
+jabberwerx.ui/TabbedView
+---------------------------
+MAM 3) Line 32: Deselected misspelled.
+MAM 3) Finish comment for addTab.
+MAM 1) Create destroy to clean up _tabList.
+MAM 3) Remove active param from addTab.
+MAM 2) Change 'select' to 'activate'.
+MAM 3) addTab: Remove check for '!tab.jq'
+MAM 3) update: move .tabcontent and .tablist out of jquery.each call.
+MAM 2) removeTab: extract 'Remove from the set' stuff to its own function.
+MAM N) consider changing the name tabSize.
+MAM 3) width: noupdate comment has </t> instead of </b>
+MAM 3) width: remove 'size' and 'delta' variable
+MAM 3) copy dimensions call from height to width. (MAM: redimensioning content
+    happens as part of update)
+    
+jabberwerx.ui/TabbedView.Tab
+----------------------------
+MAM 2) label: move update into if statement.
+MAM 3) deactivate should be _deactivate.
+MAM 3) wrapper should be _wrapper.
+
+
+JabberwerxAJAX - 2009.07.28 - Get available groups
+===========================
+jabberwerx/EntitySetTest
+------------------------
+BM  2) Use "!=" instead of "!==" (the latter may have unexpected results when
+       dealing with "primitive" types like boolean, numbers, and strings)
+
+JabberwerxAJAX - 2009.07.22
+===========================
+jabberwerx.ui/Emoticons
+------------------------
+BM  3) @extends should be JWModel instead of JWView
+BM  N) @param, @returns, and @throws need to surround the type with { and }
+        (for example: @param {String} rawText text to translate)
+BM  2) emoticon images MUST NOT start with "jinc_" (just rename to omit "jinc_")
+BM  1) emoticons should not require a jabberwerx_ui_config to be specified; use
+        jabberwerx.ui.getThemeURL() or jabberwerx.ui.getThemeImageURL() to determine
+        path to emoticons
+
+JabberwerxAJAX - 2009.07.16 - RosterView
+===========================
+jabberwerx.ui/RosterView
+------------------------
+MAM N) _rebuildGroupings jsdoc comment seems to abruptly stop
+MAM 3) RosterView._updateEntity:341 - updating is initialized to empty, but never referenced. Is this check really needed?
+MAM 2) Comment why in RosterView._handleEntityEvent evt.data isn't the entity we want, but evt.data.entity is. (entityrenamed event)
+MW  3) RosterView._sortEntity: Maybe use parens on "idx = high + low >> 1"
+MAM 1) RosterView._sortGroup should do something
+MW  1) RosterView._sortEntity:435 "idx = arr.length+1" is 1 higher than you want.
+MW  2) RosterView.addFilter should throw on invalid type (and check to see if the filter exists?)
+MW  1) RosterView.clearFilters should reset this._filterCB to empty array
+MW  2) RosterView.setSort should throw on invalid type
+MW  3) RosterView.Grouping._updateEntity mapItems function could use a comment explaining working backwards behavior
+2) RosterView.Grouping.createDOM comment regarding structure of this DOM isn't representative of the code
+
+JabberWerxAJAX - 2009.07.14 - ContactPresenceView
+===========================
+jabberwerx.ui/ContactPresenceView
+------------------
+MAM 3) Replace tabs with spaces.
+MAM 2) Update docs to include events.
+MAM 2) init(): Check if entity is a jabberwerx.Entity.
+MAM 2) createDOM(): Add "jabberwerx" to parent div.
+MAM 3) _onPrimaryPresenceChange: remove first 2 commented lines.
+MAM 3) _displayPresence: move removeClass to the line above.
+MAM 3) _onEntityUpdated: only call this.update()
+MAM 2) _onEntityCreated: use an 'if' statement instead of inline '&&' for delegate check.
+
+JabberWerxAJAX - 2009.07.10 - AuthenticationView
+===========================
+jabberwerx.ui/AuthenticationView
+------------------
+MW  3) init(): make domain optional, can be pulled from config. default be the domain of where the page was loaded from.
+MW  3) init(): use external definitions for client and domain so that they can be documented as public
+MW  3) init(): use jabberwerx.JID.asJID() instead of creating  a new JID object
+MW  2) createDOM(): line 52: class will suffice instead of id
+MW  3) createDOM(): use multiple CSS classes to have JW specific class names e.g. "jabberwerx auth_form"
+MW  3) all methods: use this.jq instead of defining new this.authJquery
+MW  2) createDOM(): change the dummy id, check use of float for spacing
+MW  3) createDOM(): occupy white space for the status (use \u00A0)
+MW  3) _login(): line 124, replace jQueryData with this.jq
+MW  3) _login(): line 156, no need for getBareJIDString() as JID is already in that format
+MW  2) onSuccess() and onError(): use 'var onSuccess = function {}'
+MW  3) _updateStatus: line 175, use span.auth_status instead for class defintion (apply elsewhere also)
+MW  3) _updateStatus: line 177, use '\u00A0' instead
+MW  3) _updateStatus: use static error strings declared outside the class
+MW  3) _updateStatus: change 'Something went wrong' to 'Login failed'
+MW  3) _updateStatus: consider changing arg name
+
+JabberWerxAJAX - 2009.07.07 - SelfPresenceView
+===========================
+jabberwerx.ui/SelfPresenceView
+------------------
+MAM 1) _sendPresence: 407, when setting priority the variable name prsence should be presence
+
+JabberWerxAJAX - 2009.06.30 - View base classes
+===========================
+jabberwerx.ui/JWView
+------------------
+MAM 3) parent: Recursing through the ancenstors
+MAM 3) width: remove updating variable
+MAM 3) height: remove updating variable
+MAM 3) remove: remove line jq = this.jq || jq;
+
+JabberWerxAJAX - 2009.06.10 (MUC support)
+===========================
+jabberwerx/MUCOccupantCache
+------------------
+    3) Consider an intermediate base class for MUCOccupantCache and ClientEntityCache
+MAM 3) occupant: line 253, need to be consistent with how JID are concatenated
+
+jabberwerx/MUCController
+------------------
+MAM 2) enterRoom: remove this method as it exists in MUCRoom.enter();
+
+jabberwerx/MUCRoom
+------------------
+MAM 2) enter: add @throws declaration for MUCRoomActive (already in MUCController.enterRoom())
+MAM 3) enter: consider removing the local ref to 'me' and use this.me instead
+MAM 3) changeNickname: line 510, in previous two methods have used the var 'prs' for the Presence object instead of 'stanza'
+MAM 3) changeSubject: line 542, the subject should be referred to not the nickname
+MAM 3) changeSubject: line 559, consider not using toString() for consistency elswhere (see 611 also)
+MAM 1) changeSubject: line 561, bug with the || "" ... should be inside parentheses
+MAM 2) updatePresence: no @throws declarations for the method
+MAM 2) updatePresence: line 695, use local 'jid' reference instead of calling getFromJID() again
+	   
+JabberWerxAJAX - 2009.06.05 (simplify connect)
+===========================
+jabberwerx/Client
+------------------
+MW  2) connect: Document method
+MW  3) connect: Check for bindURL in args, then default to global value
+MW  3) connect: Move connectTo's code into here (should be "simply"
+       cut and paste)
+
+JabberWerxAJAX - 2009.06.05 (auto-reconnect)
+===========================
+jabberwerx/Client
+------------------
+BM  3) _startReconnectCountdown: Do not need to check
+       jabberwerx._config.baseReconnectCountdown for existence
+BM  2) _startReconnectCountdown: Simplify code to do a single
+       setTimeout instead of a 1 second setInterval
+BM  3) change "_reconnectIntervalHanlder" to "_reconnectInternvalHandler"
+BM  2) _handleJSJaCError: delay the starting of reconnects (and therefore
+       delay the triggering of reconnect events) until after status change
+       and client error events have been triggered.
+
+JabberWerxAJAX - 2009.06.03
+===========================
+jabberwerx/Entity
+---------------------------
+MAM 3) apply: Use jquery.extend
+MAM 2) apply: change 'update' to 'noupdate'
+MAM 2) addPresence: document presence is not unavailable
+MAM 2) addPresence: throw exception if not valid input
+MAM 2) removePresence: throw exception if not valid input
+MAM 2) setDisplayName: don't call update if the display name hasn't changed
+MAM 2) setGroups: move specified outside of the function
+MAM 1) update: check for updateEntity existence
+MAM 3) EntitySet: remove _batches
+MAM 3) _map: private decorator. Update description
+MAM 3) Remove SingletonError
+    
+jabberwerx/Client
+MAM 3) Line 4: Rename EntityCache to ClientEntityCache
+MAM 3) startBatch: change post-increment to increment then assign
+    
+MAM N) Consider making a 'unique' function against an array of anything
+MAM N) Consider rename 'expunge' and 'delete' to Ôremove'
+
+JabberWerxAJAX - 2009.06.02
+===========================
+jabberwerx/ChatController
+-------------------------
+BM  3) init(): _client property not necessary. Superclass defines "client"
+       property
+BM  2) have "_messageHandler" bind on the "afterMessageReceived" event
+BM  2) rename method startChatSession to openSession
+BM  2) rename event "chatSessionCreated" to "chatSessionOpened"
+BM  2) rename method closeChatSession to closeSession
+BM  2) rename getChatSession to getSession
+BM  2) _getChatSessionIndex: should check {session} for instanceof JID,
+       instanceof ChatSession, and otherwise create a JID.
+BM  3) _getChatSessionIndex: second need only check that jid exists
+BM  3) _messageHandler: use Message.getFromJID instead of Message.getFrom
+BM  2) _messageHandler: have ChatSession trigger chatReceived events right
+       after triggering chatSessionCreated
+BM  3) _messageHandler: return true if a new session is created (since the
+       message is being handled), and false otherwise (since the message is
+       NOT being handled)
+    
+jabberwerx/ChatSession
+----------------------
+BM  2) init: Use "resourcePresenceChanged" on an Entity (or the globalEvents)
+BM  2) refactor "correspondentStateChanged" to be "chatStateChanged", which
+       includes state changes both locally and remote (differentiated by JID).
+BM  3) rename close to destroy
+BM  2) close: reuse setChatState for sending 'gone'
+BM  3) _generateMessage: Create the NodeBuilder around the message.getNode(),
+       then call element(statestate...)
+BM  3) remove "beforeChatReceived" event (just have "chatReceived")
+BM  2) _udpateLockedResource: copy the new JID instead of changing the existing
+       JID
+BM  2) rename state property to localState
+BM  3) rename correspondentState to remoteState
+
+JabberWerxAJAX - 2009.05.12
+===========================
+jabberwerx/CapabilityController
+--------------------------------
+BM  1) (init) inline filtering function for "beforePresenceSent" will not
+        serialize.  Recommend performing "filter check" within actual
+        callback
+BM  2) (init) filter string for "iqReceived" (disco#info) should also filter on
+        type='get' (e.g. "[type='get'] query[xmlns='http://jabber.org/protocol/disco#info']")
+BM  2) containsFeature should return a boolean
+BM  3) removeFeature should just operate on strings
+BM  3) use jQuery.inArray instead of custom function
+BM  3) no need for intermediate caps string; just have generateVerificationString include
+        getBaseString's logic
+BM  3) _sortFeatureSet custom function unnecessary; just call Array.sort directy
+BM  3) Recommend using jabberwerx.NodeBuilder, for consistency and ease-of-use
+BM  3) Try to use IQ.reply() instead of recreating IQ result from scratch
+BM  2) Outgoing Stanzas SHOULD NOT include from addresses (e.g. line 158)
+BM  3) use $(iq.getQuery()).attr("node") instead of hand-walking the DOM tree
+BM  3) use iq.errorReply(ERR_ITEM_NOT_FOUND) instead of hand-building error
+BM  2) make _node a public property, and document its usage.
+BM  3) Remove private property _client
+    
+jabberwerx/Client.js:init
+--------------------
+BM  3) Look for capabilitiesIdentity.node, and apply to
+        CapabilitiesController.node if valid
+BM  3) Remove public property capabilitiesController
+        (already stored as controllers["capabilities"])
+
+JabberWerxAJAX - 2009.05.12
+===========================
+jabberwerx/Client.js:init
+---------------------
+BM  1) line 121: (init) inline filter function will not serialize with object
+       graph;  Recommend moving filtering to _presenceStanzaHandler, since
+       callback needs to run on almost every presence
+jabberwerx/Client.js:getAllPresenceForEntity
+---------------------
+BM  3) check for jid existence is unnecessary (line 684)
+BM  2) return value should be empty []
+jabberwerx/Client.js:getPrimaryPresenceForEntity
+---------------------
+BM  3) check for jid existence is unnecessary (line 710)
+jabberwerx/Client.js:_presenceStanzaHandler
+---------------------
+BM  3) check for presence existence is unnecessary (line 732)
+BM  3) do not need to wrap presence.getFromJID with creating a new jabberwerx.JID
+BM  3) calling JID.getBareJIDString() creates a new string each time; more effective
+        to call once in this scope
+        
+jabberwerx/Entity.js:getResourcePresence
+---------------------
+BM  3) be sure jQuery.each callback always returns true or false (jQuery sometimes
+        treats no return value as false)
+jabberwerx/Entity.js:addPresence
+---------------------
+BM  2) validate presence really does belong with this entity (by bare jid)
+BM  3) check for primary presence existence unnecessary (this is add, not remove)
+jabberwerx/Entity.js:removePresence
+---------------------
+    2) validate presence really does belong with this entity (by bare jid)
+BM  2) make sure _presenceList[0] exists before checking its value
+BM  3) sorting presenceList unnecessary on remove (already sorted)
+jabberwerx/Entity.js:_removePresenceFromList
+---------------------
+BM  3) check for jid existence unncessary (this is a private function that's
+        always called with a valid jid)
+jabberwerx/Entity.js:_sortPresenceArray
+---------------------
+BM  3) separate function unnecessary; only done in one place and
+        straightforward.  Recommend inlining sort call
+
+jabberwerx/RosterController.js
+------------------------------
+MAM 1) (_handleRosterUpdate) No removing of Contacts on subscription="remove"
+
+JabberWerxAJAX - 2009.05.12
+===========================
+jabberwerx/Client.js
+--------------------
+MAM 1) break out of notifier loops when one returns handled (815)
+MAM 2) wrap log call in debug comments (168)
+MAM 2) remove property listener for current presence
+MAM 2) clear out experimental presence send in _handleCOnnect
+    
+
+JabberWerxAJAX - 2009.05.08
+===========================
+jabberwerx/Events.js
+--------------------
+MAM 2) call suoer classes consructor from init
+MAM 2) include callback signiture in comments
+MAM 2) function typecheck on bind, not in unbind
+MAM 2) add exceptions to jsdoc comments
+MAM 3) change jabbwerwerx.event to jabberwerx.globalEvents
+MAM 2) remove jabbwerx.event existance check on 262
+MAM 2) add _ to private members
+MAM 2) 306 fix it!
+MAM 2) add param type for src
+MAM 2) remove other arg handling in EventDispatcher.init
+MAM 2) cleanup GlobalEventDispatch.bind/binwhen other arg handling
+
+
+JabberWerxAJAX - 2009.05.06
+===========================
+jabberwerx/RosterController.js:fetch
+------------------------------
+SK  4) RosterController.init, use TypeError instead of custom error class
+SK  3) Use jabberwerx.Client.NotConnectedError instead of RosterController
+       specific error types
+SK  2) Use "variable === undefined" or "variable !== undefined" instead of
+       "typeof variable == 'undefined'" or "typeof variable != 'undefined'"
+       (RosterController.js line 34 et al)
+SK  4) Alternate ' and ", instead of trying to escape them in strings
+SK  2) in RosterController.fetch (or on a client.disconnect), remove all
+       contacts from client.entitySet
+N/A 2) in RosterController.fetch, verify the Contact for a given JID is
+       not already present before adding.
+SK  2) For RosterContorller.fetch, the callback should be called in the
+       context of this RosterController (that), and passed the stanza error
+       (if any).  E.G.  callback.call(that, error)
+       
+jabberwerx/RosterController.js:updateContact
+------------------------------
+SK  2) JIDs should be normalized; use jid = new jabberwerx.JID(jid) or
+       (when available) jid = jabberwerx.JID.valueOf(jid)
+SK  2) on RosterController.updateContact, use bare JIDs (convert from full to
+       bare if necessary)
+SK  1) Sanitize jid, nick, and group values (recommend using DOM, but not yet
+       required)
+       
+SK 3)  _stringNullOrEmpty not necessary
+SK  2) RosterController.client property needs documentation
+
+JabberWerxAJAX - 2009.04.21
+===========================
+    4) in unregisterDisconnectCallback, use delete var or var = undefined instead
+        of var = null
+BM  3) in _handleJSJaCError, don't bother throwing anything; rely on callbacks
+
+JabberWerxAJAX - 2009.04.14
+===========================
+BM  3)  Error object message format should be "{namespae}defined-condition",
+        no spaces between parts
+    4)  Use spaces instead of tabs
+    
+jabberwerx/Client.js
+--------------------
+    N)  See about unregistering temporary callbacks (e.g. errorCallback on
+        Client.connectTo)
+BM  3)  Client.js:697 Use jQuery.each on results from element selection
+        instead of for loop
+BM  2)  Client.js:709 either remove log or wrap with DEBUG-BEGIN/DEBUG-END
+        compile directives
+BM  1)  Client.js:725 make sure errorCallback is a function (or at least not
+        undefined and not null)
+    
+JSJaCPatches.js
+---------------
+    N)  See about submitting back some/most/all of our patches to the JSJaC
+        team
+BM  2)  line 242:  Use window.location instead of window.parent.document.location
+
+JabberWerxAJAX - 2009.04.10
+===========================
+MAM 3) Fix tabs in entityset.each
+MAM 2) Check op is function in entityset.each
+
+JabberWerxAJAX - 2009.04.01
+===========================
+
+JWCore.js
+---------
+MAM 3) Really remove jw._objectRegistry instead of commenting
+MAM 3) Check for other commented code that isn't used.
+MAM 2) Line 1153 shouldn't have inline comment in if statement.
+MAM 1) jw.saveGraph DEBUG-BEGIN ~line 1210 should be a DEBUG-END
+MAM 3) Maybe jw.loadGraph should comment its complex inner functions.
+MAM 3) jw.loadGraph knitter vs. loader/walk function mix typeof [variable]
+       and instanceof with different expected results? (In particular 'array'
+       vs. 'object'.)
+MAM N) Consider droping _jw_store_ prefixing on tags.

@@ -1,0 +1,189 @@
+<!--
+/**
+ * filename:        chapter-04.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2012 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>The CAXL Book :: Chapter 4 - Contacts and Presence</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" type="text/css" href="book.css" />
+  </head>
+  <body>
+    <h1><a href="index.html">The CAXL Book</a> :: Chapter 4 - Contacts and Presence</h1>
+    <nav>
+      <h2>Table of Contents</h2>
+      <ol start='0'>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#roster">Roster Management Using RosterController</a></li>
+        <li><a href="#presence">Presence</a></li>
+        <li><a href="#quickcontacts">QuickContacts</a></li>
+      </ol>
+    </nav>
+    <section id="overview">
+      <h2>4.0 Overview</h2>
+      <p>Now that you know how to log in, you'll certainly be interested in using your session to interact with other people and entities over the XMPP network. In general, the people you want to chat with can be found in your contact list or "roster." In XMPP, the roster also includes the subscription states for your contacts, which enables you to receive information about their network availability or "presence."</p>
+      <p>The roster contains contacts you are connected with on a semi-permanent basis, and roster-based subscriptions last until the contact is removed from the roster or the subscription is cancelled. However, sometimes you want to interact with people temporarily on an ad-hoc basis. If you are using <strong>Cisco WebEx</strong> or <strong>Cisco Unified Presence</strong>, the QuickContacts feature gives you access to presence information without needing to establish a long-lived subscription.</p> 
+    </section>
+    <section id="roster">
+      <h2>4.1 Roster Management Using RosterController</h2>
+      <p>Once a client has logged in, typically the next thing it does is retrieve the roster. Because the core XMPP specifications recommend retrieving the roster before sending initial presence, we cover presence in the next section.</p>
+      <p>The roster is just a list of JabberIDs, containing one bare JID for each contact (e.g., "bob@example.com"). The roster also includes information about the presence subscription state for each contact (e.g., "both" for a bidirectional presence subscription), a user-friendly handle (e.g., "Big Bob"), and the roster groups to which a contact belongs (e.g., "Bigwigs").</p>
+      <p>As you might recall from <a href='chapter-02.html'>Chapter 2</a>, CAXL includes a construct for lists of JIDs, called the EntitySet. Thus it comes as no surprise that the roster is represented as an EntitySet in CAXL.</p>
+      <p>To access the roster, you first instantiate a client and create a roster controller, then connect to the server:</p>
+      <pre>
+        client = new jabberwerx.Client();
+        roster = new jabberwerx.RosterController(client);
+        client.connect(bareJID, password, arg);
+      </pre>
+      <p>On connect, the client retrieves the roster in the background on your behalf, and the client's EntitySet caches all of the roster contacts (as we'll see, it also caches other sorts of entities, such as QuickContacts and multi-user chat rooms). This makes it easy for your code to access the contacts. One simple way to do so is to walk through the EntitySet using the <code>each()</code> method and then pull out all of the entities that match the <code>jabberwerx.Contact</code> type, as shown in the following example:</p>
+      <pre>
+        client.entitySet.each(function(entity) {
+            //check the entities type, allow only jabberwerx.Contact
+            if (entity instanceof jabberwerx.Contact) {
+                // do something, like show the contact in a user interface
+            }
+        });
+      </pre>
+      <p>The roster is not a completely static thing: sometimes you will want to add, modify, or delete contacts. The RosterController class provides two methods for these actions: <code>updateContact()</code> and <code>deleteContact()</code>.</p>
+      <p>The <code>deleteContact()</code> method is the simpler of the two: its primary argument is just the JID of the contact you want to delete (it can also take a callback).</p>
+      <pre>
+        deleteContact(jid);
+      </pre>
+      <p>The <code>updateContact()</code> method is a bit more complex, because it allows arguments for the contact's nickname and the roster group or groups to which the contact belongs, in addition to the JID and a callback.</p>
+      <pre>
+        updateContact(jid,nickname,groups);
+      </pre>
+      <p>Note that if the contact does not already exist in the EntitySet, the <code>updateContact()</code> method will add the contact, whereas if the contact already exists then the <code>updateContact()</code> method will modify various information about the contact (e.g., the nickname or groups). Although you can use the <code>entityCreated</code> event to be informed when this specific contact has been added to the roster, that will be only a one-time event. A more sustainable approach is to register the <code>entityCreated</code>, <code>entityUpdated</code>, and <code>entityDestroyed</code> events with the client's EntitySet, then filter out all entities except instances of <code>jabberwerx.Contact</code>. This way you will be informed whenever anything changes with all of your roster contacts, which is important because XMPP allows you to simultaneously log into the same account with multiple devices, and one of those other devices could modify the roster during your session. Registering for all contact-related events enables you to keep in sync with the roster as it is stored on the server.</p>
+    </section>
+    <section id="presence">
+      <h2>4.2 Presence</h2>
+      <p>In XMPP, presence and rosters are closely intertwined (read <a href='http://xmpp.org/rfcs/rfc6121.html'>RFC 6121</a> for all the details). Typically &mdash; that is, not including special cases like QuickContacts and directed presence &mdash; it is the contacts in your roster to which you send presence and from which you receive presence.</p>
+      <p>In the following sections, we cover sending your own presence, receiving presence from others, and managing presence subscriptions.</p>
+      <section id="presence-send">
+        <h2>4.2.1 Sending Presence</h2>
+        <p>To send outbound presence to the contacts in your roster, usually you will use the <code>sendPresence()</code> method on the <code>jabberwerx.Client</code> object. This method takes two arguments:</p>
+        <ul>
+          <li><p><strong>show</strong> &mdash; This is the value of the XMPP &lt;show/&gt; element, which has four pre-defined values: "away" (the user is away or idle for a short time), "xa" (the user is away for an extended period), "dnd" (the user is busy and does not wish to be disturbed), and "chat" (the user is actively interested in chatting &mdash; many clients do not expose this option to the user).</li>
+          <li><p><strong>status</strong> &mdash; This is a user-provided string that provides a longer description about the user's availability state, such as "In a meeting" or "On the phone".</p></li> 
+        </ul>
+        <p>Here is an example:</p>
+        <pre>
+          client.sendPresence('away','In a WebEx Meeting');
+        </pre>
+        <p>When you set presence, your XMPP server will return your own presence to you, which you will learn about if you bind the <code>resourcePresenceChanged</code> event (described in the next section) to the <code>client.connectedUser</code> object (which represents connection information about your account, i.e. your bare JID). This also enables you to listen for presence changes related to other devices that are logged into your same account.</p>
+      </section>
+      <section id="presence-receive">
+        <h2>4.2.2 Receiving Presence</h2>
+        <p>The contacts in your roster are continually interacting with the XMPP server: logging in, logging out, sending notifications about taking phone calls, joining voice conferences, being in meetings, running errands, etc. These changes in ability or willingness to communicate are represented in XMPP as inbound presence notifications that you will receive from your contacts.</p>
+        <p>Because these presence notifications are really a kind of "push" mechanism, they are perfectly suited to listening for events. There are two events in particular that you'll want to use: <code>primaryPresenceChanged</code> and <code>resourcePresenceChanged</code>, both of which are associated with the <code>jabberwerx.Entity</code> class.</p>
+        <ul>
+          <li>The <strong>primaryPresenceChanged</strong> event informs you when the new primary resource has changed for a JID. The primary resource is the "most available" device or connection (XMPP resourcepart) associated with a given bare JID (XMPP localpart@domainpart). This event returns a <code>fullJID</code> (i.e., <code>jabberwerx.JID</code>) and a <code>presence</code> (i.e., <code>jabberwerx.Presence</code>) for the new primary resource. If there is no primary resource (usually because there are no online resources for the bare JID, i.e., because the contact went offline), the <code>presence</code> is <code>&lt;null&gt;</code> and the <code>fullJID</code> is the contact's bare JID</li>
+          <li>The <strong>resourcePresenceChanged</strong> event informs you about all presence changes associated with a bare JID or full JID, depending on which you specified when registering for the event. Here the <code>fullJID</code> is the localpart@domainpart/resourcepart whose availability changed, and the <code>presence</code> is the presence stanza that triggered the change. Note that the presence stanza might be of type "unavailable", indicating that the resource has gone offline.</li>
+        </ul>
+        <p>Normally, you will bind one of these events on each entity in the EntitySet and define a callback method that is invoked when you are notified about an incoming presence notification for that contact:</p>
+        <pre>
+          client.entitySet.event("entityCreated", (function(evt) {
+              var contact = evt.source;
+              contact.event("primaryPresenceChanged", (function(evt) {
+                  _handlePresence(evt.data.stanza);
+              });
+          });
+          _handlePresence: function(presence) {
+              var show = presence.getShow();
+              var status = presence.getStatus();
+              var priority = String(presence.getPriority());
+              var fromJID = presence.getFromJID();
+              var type = presence.getType();
+          }
+        </pre>
+        <p>As you can see, when getting presence information you can pull out the show value via <code>getShow()</code>, the status message via <code>getStatus()</code>, the priority via <code>getPriority()</code>, or all three. The <code>jabberwerx.Presence</code> object also inherits various methods from <code>jabberwerx.Stanza</code>, such as <code>getFromJID()</code> to determine the sender and <code>getType()</code> to determine (for presence) whether this event indicates that the sender is available or unavailable. Note that in XMPP a presence stanza with no 'type' value is assumed to be available!</p>
+      </section>
+      <section id="presence-subs">
+        <h2>4.2.3 Managing Presence Subscriptions</h2>
+        <p>In XMPP, you can't see just anyone's presence information, and random people can't see your presence either. Instead, presence requires authorization: you need to approve of my request to see when you are online, and I need to approve such a request from you. These approvals happen though a kind of two-way "handshake" based on long-lived subscriptions.</p>
+        <p>The CAXL RosterController provides methods for managing presence subscriptions. These methods abstract away the messy details of the XMPP presence subscription protocol, which has a somewhat complex state chart. Instead, RosterController gives you two simple methods for adding and removing contacts, the very same <code>updateContact()</code> and <code>deleteContact()</code> methods that we've already discussed in the first section of this chapter. These methods generate all the necessary subscription-related stanzas for you.</p>
+        <p>However, RosterController also gives you access to some of the lower-layer stanzas. For example, you can explicitly call the <code>subscribe()</code> and <code>unsubscribe()</code> methods to send XMPP presence stanzas of type "subscribe" and "unsubscribe" respectively (see <a href='http://xmpp.org/rfcs/rfc6121.html'>RFC 6121</a> for a complete definition of these actions).</p>
+        <p>You also require mechanisms for approving and denying incoming subscription requests. Here you'll need to listen for the relevant event, which is <code>subscriptionReceived</code>:</p>
+        <pre>
+          roster.event("subscriptionReceived"), (function(evt) {
+              // Handle the incoming subscription request, probably by showing a dialogue box.
+          });
+        </pre>
+        <p>Depending on user input, you will call <code>acceptSubscription()</code> or <code>denySubscription()</code>, which send presence stanzas of type "subscribed" and "unsubscribed" respectively (again, see <a href='http://xmpp.org/rfcs/rfc6121.html'>RFC 6121</a> for details). You can do the same thing with the <code>unsubscriptionReceived</code> event (e.g., to remove contacts who unsubscribe from your presence).</p>
+        <p>At this point, you might be wondering: do I really want to bother the user about every incoming subscription request? Probably not. For that reason, CAXL enables you to establish general policies for handling subscription-related stanzas from other entities; this is done by setting various flags in the RosterController.</p>
+        <p>For instance, if the <code>RosterController.autoaccept_in_domain</code> configuration option is set to true, then the client will automatically accept subscription requests when the domain name of the contact's JID matches the domain name of the user. This setting can be very useful in certain scenarios (e.g., enterprise deployments).</p>
+        <pre>
+          roster = new jabberwerx.RosterController(client);
+          roster.autoaccept_in_domain = true;
+        </pre>
+        <p>Similarly, if the <code>RosterController.autoaccept</code> configuration option is set to true (which is the default), then the client will automatically accept some subscription requests according to the policies established by one of the following constants:</p>
+        <ul>
+          <li><code>RosterController.AUTOACCEPT_ALWAYS</code> tells the client to automatically accept all subscription requests. This is usually not a great idea!</li>
+          <li><code>RosterController.AUTOACCEPT_IN_ROSTER</code> tells the client to automatically accept subscription requests if the sender is in the user's roster (e.g., because the user previously sent an outbound subscription request to the contact). This is the default when <code>autoaccept</code> is set to true.</li>
+          <li><code>RosterController.AUTOACCEPT_NEVER</code> tells the client to never automatically accept subscription requests (essentially equivalent to setting the <code>RosterController.autoaccept</code> configuration option to false).</li>
+        </ul>
+        <p>The following code snippet shows an example of setting a policy of automatically accepting subscription requests from people in our domain, but never automatically accepting subscription requests from outside our domain.</p>
+        <pre>
+          roster = new jabberwerx.RosterController(client);
+          roster.autoaccept_in_domain = true;
+          roster.autoaccept = true; // the default, so actually not necessary to set it here
+          roster.AUTOACCEPT_NEVER = true;
+        </pre>
+        <p>Finally, CAXL includes an <code>autoremove</code> configuration option similar to <code>autoaccept</code> (although without all the additional policies). This option, which defaults to true, removes contacts from the roster if they send a presence stanza of type "unsubscribe", thus helping to prevent "ghost" contacts in the roster who have an XMPP subscription state of "none".</p>
+      </section>
+    </section>
+    <section id="quickcontacts">
+      <h2>4.3 QuickContacts</h2>
+      <p>The core XMPP model for presence subscriptions is to add contacts to your roster and establish long-lived subscriptions. <strong>Cisco WebEx</strong> and <strong>Cisco Unified Presence</strong> also support a temporary subscription ("tempsub") model for use when a long-lived subscription is not needed or appropriate. CAXL provides access to these temporary subscriptions through the <code>QuickContactController</code> class.</p>
+      <p>To access QuickContacts, you first instantiate a client and create a QuickContact controller, then connect to the server. Note that usually you will also create a roster controller to handle various edge cases (e.g., if you already have a long-lived presence subscription to a contact then you can't to add that person as a QuickContact, as described below).</p>
+      <pre>
+        client = new jabberwerx.Client();
+        var quickcontacts = new jabberwerx.QuickContactController(client);
+        var roster = new jabberwerx.RosterController(client);
+        client.connect(bareJID, password, arg);
+      </pre>
+      <p>The QuickContact feature is implemented using directed presence (see Section 4.6 of <a href='http://xmpp.org/rfcs/rfc6121.html'>RFC 6121</a>) and entity capabilities (see <a href='http://xmpp.org/extensions/xep-0115.html'>XEP-0115</a>). However, all you need to do is call the <code>subscribe()</code> method to add someone to your QuickContacts (note that it is safest to do this inside a try block in case the JID is invalid):</p>
+      <pre>
+        function mysubscribe(jid) {
+            try {
+               quickcontacts.subscribe(jid);
+            } catch (ex) {
+               alert("Exception thrown by subscribe: " + ex.message)
+            }
+         mysubscribe("someone@example.com");
+      </pre>
+      <p>The contact is now available in the client's general EntitySet:</p>
+      <pre>
+        var myquickcontact = client.EntitySet.entity("someone@example.com");
+      </pre>
+      <p>To track changes to this contact's presence, we can bind the <code>primaryPresenceChanged</code> event to the entity:</p>
+      <pre>
+        myquickcontact.event("primaryPresenceChanged").bind(function(evt) {
+          // do something here, e.g. update the user interface
+        }
+      </pre>
+      <p>To put an end to a temporary subscription, you can either remove the QuickContact from the EntitySet or unsubscribe:</p>
+      <pre>
+        myquickcontact.remove(); // the next line does the same thing!
+        // quickcontacts.unsubscribe("somejid@example.com");
+      </pre>
+      <p>The QuickContactsController also includes two convenience functions for subscribing to and unsubscribing from multiple JIDs at the same time: <code>subscribeAll()</code> and <code>unsubscribeAll()</code>. Both of these helper functions take a list of JIDs as their only argument.</p>
+      <p>When using the QuickContacts feature, it is important to understand how it interacts with the core XMPP roster. In particular, because QuickContacts supplement roster-based contacts, various QuickContactController methods take account of existing roster contacts:</p>
+      <ul>
+        <li>If you call the <code>QuickContactController.subscribe()</code> method on a JID that is in your roster and you receive presence from that JID (because the subscription is of type "to" or "both), the QuickContactController will deny the request with an exception. It is up to the developer using the library to check if the JID is in the roster with a subscription of "to" or "both" before attempting to create a temporary subscription to that JID using <code>QuickContactController.subscribe()</code>.</li>
+        <li>If you call the <code>QuickContactController.subscribe()</code> method on a JID that is in your roster but you don't receive presence from that JID (i.e., because the JID is an "observer" with a subscription state of "from"), no exception occurs and the existing contact is temporarily updated to indicate that there is also a temporary presence subscription. However, this does not modify the long-lived subscription state, which is still "from".</li>
+        <li>If you call the <code>QuickContactController.unsubscribe()</code> method on an "observer" JID (as defined above), the existing roster contact is updated to indicate that there is no longer a temporary presence subscription. Here again, the long-lived subscription state is not modified.</li>
+        <li>You can promote a QuickContact into a roster contact by adding the QuickContact to your roster using the <code>RosterController.subscribe()</code> method. Note that all temporary subscription data is maintained until a long-lived subscription is actually established.</li> 
+      </ul>
+    </section>
+    <div>
+      <p>&copy; 2012 Cisco Systems, Inc. All rights reserved.</p>
+    </div>
+  </body>
+</html>

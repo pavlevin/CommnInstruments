@@ -1,0 +1,339 @@
+<!--
+/**
+ * filename:        capsDemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>CAPS Demo</title>
+        <style>
+            .title {
+                text-align: center;
+            }
+            .table_data {
+                vertical-align: top;
+            }
+            .col_header {
+                text-align: center;
+                font-weight: bold;
+            }
+            .source_header {
+                text-align: center;
+            }
+            .send_presence_btn {
+                margin-top: 6px;
+            }
+            .template {
+                display: none;
+            }
+        </style>
+        <script type="text/javascript" src="../../jabberwerx.js"></script>
+        <script type="text/javascript">
+            var demo_config = {
+                httpBindingURL: "/httpbinding",
+                username: "jwtest0@example.com/res-1",
+                password: "test",
+                sourceJIDs: ["jwtest1@example.com/res-1",
+                             "jwtest1@example.com/res-2",
+                             "jwtest2@example.com/res-1"],
+                sourceFeats: ["http://jabber.org/protocol/caps",
+                              "http://jabber.org/protocol/disco#info",
+                              "http://jabber.org/protocol/disco#items",
+                              "http://jabber.org/protocol/muc"],
+                sourceIdents: ["client/pc//JWA",
+                               "client/pc//JabberWerx AJAX",
+                               "client/pc//Cisco AJAX XMPP Library"]
+            };
+
+            var capsDemo = {
+                sources: []
+            }
+
+            var sendPresence = function(eventObject) {
+                var src = eventObject.data;
+                //set caps based on selections
+                src.srcSite.find(":checkbox").each(function(idx, cb) {
+                    cb = jabberwerx.$(cb);
+                    if (cb.prop("checked")) {
+                        src.caps.addFeature(cb.val());
+                    } else {
+                        src.caps.removeFeature(cb.val());
+                    }
+                });
+                //set identity
+                src.srcSite.find(":radio[checked]:first").each(function(idx, rb) {
+                    rb = jabberwerx.$(rb);
+                    rb = rb.val().split("/");
+                    src.caps.identity.category = rb[0];
+                    src.caps.identity.type = rb[1];
+                    src.caps.identity.name = rb[3];
+                });
+                src.client.sendPresence();
+                return false;
+            };
+
+            _handleEntityUpdated = function(evt) {
+                var entity = evt.data;
+                //add/update table entry
+                var topdiv = jabberwerx.$('#cache-site');
+                topdiv.empty();
+                var cachedJIDs = [];
+                for (var ver in capsDemo.target.caps._capsCache) {
+                    var ci = capsDemo.target.caps._capsCache[ver];
+                    topdiv.append("<p>HASH: " + ver + "</p>");
+                    var htmlstr = "<ul><li>Identities<ul>";
+                    jabberwerx.$.each(ci.identities, function(idx, ident) {
+                        htmlstr += "<li>"+ident+"</li>";
+                    });
+                    htmlstr += "</ul></li><li>Features<ul>";
+                    jabberwerx.$.each(ci.features, function(idx, feat) {
+                        htmlstr += "<li>"+feat+"</li>";
+                    });
+                    htmlstr += "</ul></li><li>JIDs<ul>";
+                    jabberwerx.$.each(ci.items, function(idx, jid) {
+                        htmlstr += "<li>"+jid+"</li>";
+                    });
+                    htmlstr += "</ul></li></ul>";
+                    topdiv.append(htmlstr);
+                }
+
+
+                var __fillLists = function(jid, listNode) {
+                    listNode.find("#jid-node").text(jid.getNode() + (jid.getResource() ? '/'+jid.getResource() : ''));
+                    var tlist = capsDemo.target.caps.getFeatures(jid);
+                    jabberwerx.$.each(tlist, function(idx, ele) {
+                        listNode.find("#feature-list:first").append(jabberwerx.$("<li/>").text(tlist[idx]));
+                    });
+                    tlist = capsDemo.target.caps.getIdentities(jid);
+                    jabberwerx.$.each(tlist, function(idx, ele) {
+                        listNode.find("#ident-list:first").append(jabberwerx.$("<li/>").
+                            text(tlist[idx].category+'/'+tlist[idx].type+"//"+tlist[idx].name));
+                    });
+                }
+                capsDemo.target.byJidSite.empty();
+                var currBareJID = null;
+                var byJIDTemplate = jabberwerx.$("#by-jid-result-template");
+                for (var i = 0; i < capsDemo.sources.length; ++i) {
+                    var src = capsDemo.sources[i];
+                    var byJIDResult = byJIDTemplate.clone();
+                    if (!src.jid.getBareJID().equals(currBareJID)) {
+                        currBareJID = jabberwerx.JID.asJID(src.jid.getBareJID());
+                        __fillLists(currBareJID, byJIDResult);
+                        capsDemo.target.byJidSite.append(byJIDResult);
+                        byJIDResult = byJIDTemplate.clone();
+                    }
+                    __fillLists(src.jid, byJIDResult);
+                    capsDemo.target.byJidSite.append(byJIDResult);
+                }
+                return false;
+            },
+
+            //setup sources and target datastructs from configuration
+            //render sources by cloning templates, modifying.inserting as needed
+            _initialize = function() {
+                var $ = jabberwerx.$;
+
+                var tjid = jabberwerx.JID.asJID(demo_config.username);
+                var tclient = new jabberwerx.Client(tjid.getResource());
+                capsDemo.target = {
+                    jid:        tjid,
+                    client:     tclient,
+                    caps:       tclient.controllers.capabilities
+                }
+
+                //jwa events
+                capsDemo.target.client.entitySet.event("entityUpdated").bind(_handleEntityUpdated);
+                capsDemo.target.client.event("clientStatusChanged").bind(function(evt) {
+                    if (evt.data.next != jabberwerx.Client.status_connected) {
+                        $("#login").show();
+                        $("#logout").hide();
+                        $("#demo-site").hide();
+                    } else  {
+                        //sync source presentation with model features && idents
+                        for (var i = 0; i < capsDemo.sources.length; ++i) {
+                            var features = capsDemo.sources[i].caps.getFeatureSet();
+                            capsDemo.sources[i].srcSite.find(":checkbox").each(function(idx, cb) {
+                                cb = $(cb);
+                                cb.prop("checked", ($.inArray(cb.val(), features) != -1));
+                            });
+                            $.each(capsDemo.sources[i].srcSite.find(":radio"), function(index, ele) {
+                                if ($(ele).val() == capsDemo.sources[i].caps.identity.toString()) {
+                                    $(ele).prop("checked", true);
+                                }
+                            });
+                        }
+
+                        $("#login").hide();
+                        $("#logout").show();
+                        $("#demo-site").show();
+                    }
+                });
+
+                demo_config.sourceJIDs.sort();
+                capsDemo.sources = [];
+                for (var i = 0; i < demo_config.sourceJIDs.length; ++i) {
+                    tjid = jabberwerx.JID.asJID(demo_config.sourceJIDs[i]);
+                    tclient = new jabberwerx.Client(tjid.getResource());
+                    var src = {
+                        jid:    tjid,
+                        client: tclient,
+                        caps:   tclient.controllers.capabilities
+                    }
+                    //turn off source client caps handling to make logging/debugging more clear
+                    // N clients on one page makes for a confused firebug log
+                    src.caps._handle115Receiving = false;
+                    capsDemo.sources[i] = src;
+                }
+
+                capsDemo.target.cacheSite = $("#cache-site");
+                capsDemo.target.byJidSite = $("#by-jid-site");
+                $("#result-header").text('"Incomming" Result Client (' + capsDemo.target.jid.getNode() + '/' + capsDemo.target.jid.getResource() + ')');
+
+                demo_config.sourceFeats.sort();
+                var featDiv = $("<div/>").attr("id", "features");
+                for (var i = 0; i < demo_config.sourceFeats.length; ++i) {
+                    featDiv.append($("<input type='checkbox' name='feat'/>").val(demo_config.sourceFeats[i])).
+                            append($("<span/>").text(demo_config.sourceFeats[i])).
+                            append($("<br/>"));
+                }
+                demo_config.sourceIdents.sort();
+                var identDiv = $("<div/>").attr("id", "identities");
+                for (var i = 0; i < demo_config.sourceIdents.length; ++i) {
+                    identDiv.append($("<input type='radio' name='ident'/>").val(demo_config.sourceIdents[i])).
+                             append($("<span/>").text(demo_config.sourceIdents[i])).
+                             append($("<br/>"));
+                }
+                var srcTemplate = $("#src-frm-template");
+                for (var i = 0; i < capsDemo.sources.length; ++i) {
+                    var src = capsDemo.sources[i];
+                    src.srcSite = srcTemplate.clone();
+                    src.srcSite.find("#src-frm-header").text(src.jid.getNode() + "/" + src.jid.getResource());
+                    src.srcSite.find("#feature-site").append(featDiv.clone());
+                    src.srcSite.find("#ident-site").append(identDiv.clone());
+                    src.srcSite.find("#src-frm").bind("submit", src, sendPresence);
+                    src.srcSite.appendTo($("#source-site"));
+                }
+            },
+
+            jabberwerx.$(document).ready(function() {
+                var $ = jabberwerx.$;
+                $("#login").show();
+                $("#logout").hide();
+                $("#demo-site").hide();
+
+                //html events
+                $("#logout").click(function() {
+                    for (var i = 0;i < capsDemo.sources.length; ++i) {
+                        capsDemo.sources[i].client.disconnect();
+                    }
+                    capsDemo.target.client.disconnect();
+
+                    //cleanup exisiting
+                    capsDemo.target.client.destroy();
+                    for (var i = 0; i < capsDemo.sources.length; ++i) {
+                        capsDemo.sources[i].client.destroy();
+                    }
+                    capsDemo.sources=[];
+                    capsDemo.target.cacheSite.empty();
+                    capsDemo.target.byJidSite.empty();
+                    $("#source-site").empty();
+                    capsDemo.target = null;
+                });
+                $("#login").click(function() {
+                    _initialize();
+
+                    // connectArgs object sent through to client.connect method.
+                    var connectArgs = {httpBindingURL: demo_config.httpBindingURL};
+
+                    for (var i = 0; i < capsDemo.sources.length; ++i) {
+                        capsDemo.sources[i].client.connect(capsDemo.sources[i].jid.getBareJIDString(),
+                                                           demo_config.password, connectArgs);
+                    }
+                    capsDemo.target.client.connect(capsDemo.target.jid.getBareJIDString(),
+                                                   demo_config.password, connectArgs);
+                }).click(); //login on page load
+            });
+        </script>
+    </head>
+    <body>
+        <div class="title">
+            <h1>Cisco AJAX XMPP Library Client Caps Demo</h1>
+        </div>
+        <div id="connect-site">
+            <div id="login">
+                <div>
+                    <label for="login-btn"></label>
+                    <button id="login-btn">Start Demo</button>
+                </div>
+            </div>
+            <div id="logout">
+                <div>
+                    <label for="logout-btn"></label>
+                    <button id="logout-btn">Stop Demo</button>
+                </div>
+            </div>
+        </div>
+        <div id="demo-site">
+            <table width="100%">
+                <col width="55%"/>
+                <col width="45%"/>
+                <tr class="col_header">
+                    <td id="result-header">"Incomming" Results</td>
+                    <td>"Outgoing" Source Clients</td>
+                </tr>
+                <tr>
+                    <td>
+                        <table width="100%">
+                            <col width="50%"/>
+                            <col width="50%"/>
+                            <tr class="col_header"><td>Cache</td><td>Cache by Sources</td></tr>
+                            <tr>
+                                <td class="table_data"><div id="cache-site">cache results</div></td>
+                                <td class="table_data"><div id="by-jid-site">by jid results</div></td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td class="table_data" id="source-site"></td>
+                </tr>
+            </table>
+        </div>
+        <div class="template">
+            <div id="src-frm-template">
+                <div id="src-frm-header"></div>
+                <form id="src-frm">
+                    <table border="1" width="100%">
+                        <col width="50%"/>
+                        <col width="50%"/>
+                        <tr class="col_header">
+                            <td>Features</td>
+                            <td>Identities</td>
+                        </tr>
+                        <tr>
+                            <td class="table_data"><div id="feature-site"></div></td>
+                            <td class="table_data"><div id="ident-site"></div></td>
+                        </tr>
+                    </table>
+                    <input type="submit" value="Send Presence" class="send_presence_btn"></input>
+                </form>
+            </div>
+            <div id="by-jid-result-template">
+                <div id="jid-node"></div>
+                <ul>
+                    <li>
+                        Identities
+                        <ul id="ident-list"></ul>
+                    </li>
+                    <li>
+                        Features
+                        <ul id="feature-list"></ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

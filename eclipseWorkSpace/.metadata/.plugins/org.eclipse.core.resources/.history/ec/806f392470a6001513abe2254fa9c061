@@ -1,0 +1,36 @@
+import java.util.ArrayList;
+public class Account{
+	private static ArrayList<User> usersList = new ArrayList<User>();
+	public static void main(String[] args){
+		
+		DBUser dbUser = new DBUser("DBUser", "DBPass");
+		UnixUser unixUser = new UnixUser("UnixUser", "UnixPass");
+		usersList.add(unixUser);
+		usersList.add(dbUser);
+		System.out.println(dbUser.getLogin()+"/"+dbUser.getUserPassword());
+		System.out.println(unixUser.getLogin()+"/"+unixUser.getUserPassword());
+	}
+	public User getUser(int Index){
+		return usersList.get(0);
+	}
+	public User getUserByName(String userName){
+		User user = null;
+		for (User i : usersList){
+			if ("DBUser".equals(i.getLogin()))
+				return user=i;
+		}
+		return user;
+	}
+	public void addUser(String username, String password){
+		//public ArrayList<User> usersCredentials = new ArrayList<User>();
+	}
+	public void removeUser(UnixUser user){
+		//this.usersCredentials.remove(user);
+	}
+}
+
+
+
+
+
+

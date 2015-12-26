@@ -1,0 +1,115 @@
+<!--
+/**
+ * filename:        chapter-02.html
+ *
+ * Portions created or assigned to Cisco Systems, Inc. are
+ * Copyright (c) 2012 Cisco Systems, Inc.  All Rights Reserved.
+ */
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>The CAXL Book :: Chapter 2 - Concepts</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" type="text/css" href="book.css" />
+  </head>
+  <body>
+    <h1><a href="index.html">The CAXL Book</a> :: Chapter 2 - Concepts</h1>
+    <nav>
+      <h2>Table of Contents</h2>
+      <ol start='0'>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#xmpp">XMPP Basics</a></li>
+        <li><a href="#async">Asynchronous Operation</a></li>
+        <li><a href="#events">Events and Eventing</a></li>
+        <li><a href="#entities">Entities and EntitySets</a></li>
+      </ol>
+    </nav>
+    <section id="overview">
+      <h2>2.0 Overview</h2>
+      <p>Several aspects of CAXL are different enough from what you find in typical libraries that it is helpful to describe them at the beginning. The CAXL team has found that these aspects can be confusing to developers who are new to CAXL, and we will be building on these concepts throughout the book. Some of these building blocks come from the fact that CAXL is a library for XMPP interactions, and some of them have emerged from the CAXL team's design for the library itself. Let's dive right in.</p>
+    </section>
+    <section id="xmpp">
+      <h2>2.1 XMPP Basics</h2>
+      <p>XMPP is a technology for instant messaging, presence, and other forms of real-time communication. Because of their real-time nature, XMPP libraries need to handle a number of XMPP "primitives".</p>
+        <h3>2.1.0 Addresses</h3>
+        <p>XMPP is a distributed client-server technology. In XMPP, both servers and clients have addresses based on the domain name system (DNS). For historical reasons, an XMPP address is called a JabberID or "JID". A server's JID is a domain name, such as <code>example.com</code> or <code>cisco.com</code>. A user's JID looks like an email address, such as <code>user@example.com</code>. One distinctive addition to XMPP addressing is the concept of a "resource", which is a specific session or device that is currently associated with a user's account, such as <code>user@example.com/mobile</code> or <code>user@example.com/web</code>. (A JID of the form <code>localpart@domainpart/resource</code> is known as a "full JID", whereas a JID of the form <code>localpart@domainpart</code> is known as a "bare JID".)</p>
+        <h3>2.1.1 Stateful Sessions</h3>
+        <p>As mentioned in Chapter 1, the traditional method by which a client connects to a server in XMPP is an XML stream over a long-lived TCP socket. The HTTP binding that CAXL uses, called BOSH, emulates long-lived TCP sockets by sharing XML streams using HTTP long-polling techniques. Whether the TCP binding or the HTTP binding is used, an XMPP client has a stateful session on an XMPP server, which lasts as long as the client is connected (whether directly over TCP or virtually over BOSH). The states associated with a session might include presence information (e.g., "away" or "do not disturb") and some XMPP details that we'll explore later in the book.</p>
+        <h3>2.1.2 Availability</h3>
+        <p>One of the distinctive features of XMPP is presence: the ability to know when entities on the network are available for communication. At the level of a session, a server knows when clients are available by the mere existence of the session itself. At the level of a contact list or "roster", a client knows when other entities are available because the user of the client has been authorized to receive presence information about those entities (typically other users).</p>
+        <h3>2.1.3 Asynchronous Communication</h3>
+        <p>In a more general sense, an online client is always available for incoming data it might receive from the server, such as instant messages or presence information from the user's contacts. This model is quite different from, say, HTTP, where a browser requests data (via HTTP GET) and then receives it. In XMPP, once a client is online it might receive data at any time, and it needs to be ready to handle that data in real time. (Web developers might be familiar with the XMLHttpRequest API, which somewhat blurs the lines between the more synchronous world of HTTP and the more asynchronous world of XMPP; in a sense, CAXL combines the best of HTTP and XMPP by providing a web-friendly API for XMPP interactions.)</p>
+        <h3>2.1.4 Communication Primitives</h3>
+        <p>The core XMPP protocol, specified in <a href='http://xmpp.org/rfcs/rfc6120.html'>RFC 6120</a>, includes three kinds of "stanza", which function as communication primitives: <code>&lt;message/&gt;</code>, <code>&lt;presence/&gt;</code>, and <code>&lt;iq/&gt;</code>. As you might imagine, CAXL has three distinct classes for these stanza kinds, named <code>Message</code>, <code>Presence</code>, and <code>IQ</code>.</p>
+        <ul>
+          <li>The <code>&lt;message/&gt;</code> stanza is used to send one-to-one IM messages, notifications, information within textual chatrooms, and the like. Typically it is a "fire-and-forget" mechanism and a reply is not necessarily expected. Message stanzas can contain a wide variety of payloads, including plaintext bodies, XHTML formatted text, and other, more specialized payloads (including custom data for specific applications).</li> 
+          <li>The <code>&lt;presence/&gt;</code> stanza is used to send presence notifications about the availability of a client and receive presence notifications about the availability state of other entities. Presence stanzas are also used to manage presence subscription states by requesting subscriptions, approving or denying subscription requests, and cancelling existing subscriptions.</t>
+          <li>The <code>&lt;iq/&gt;</code> stanza (short for "info/query") provides more structured interactions, similar to HTTP. An IQ stanza of type "get" is similar to an HTTP GET and requests the receipt of information from the server or from another entity on the network. An IQ stanza of type "set" is similar to an HTTP PUT or POST and creates or updates information on the server or another entity. A reply to an IQ stanza of type "get" or "set" is mandatory, and consists of an IQ stanza of type "result" or "error". We will see many examples of IQ-based interactions throughout the book.</li>
+        </ul>
+    </section>
+    <section id="async">
+      <h2>2.2 Asynchronous Operations</h2>
+      <p>Just as XMPP enables asynchronous communication, CAXL assumes that interactions between the client and the server (or between the client and other entities on the network) will also be asynchronous. Beginning programmers might expect to send some data to the server and then wait for a response, as in the following pseudocode:</p>
+      <pre>
+    request = prepare();
+    response = send_and_wait(request);
+    handle(response);
+      </pre>
+      <p>In CAXL, we don't wait and we don't block while we're waiting (in fact, CAXL doesn't even let you do that). Instead, when we send something off to another entity, we create a callback function that is invoked when we receive a response, as in the following pseudocode:</p> 
+      <pre>
+    request = prepare();
+    send_and_listen(request, function(response) {
+      handle(response);
+    });
+      </pre>
+      <p>We will see endless examples of this pattern throughout the book.</p>
+    </section>
+    <section id="events">
+      <h2>2.3 Events and Eventing</h2>
+      <p>From the beginnings of JavaScript, the goal was to add interactivity to web pages: the script lies dormant until the user does something on the page, thereby triggering an event. (There also are non-user-generated events, such as the <code>load</code> event triggered when the page is loaded.)</p>
+      <p>CAXL adds a whole range of communication-related events to this interactivity model, because in CAXL many events are triggered when the script (i.e., the XMPP client) receives data from the XMPP server.</p>
+        <!--<h3>2.3.0 Eventing Sequence</h3>-->
+      <p>In CAXL, your script can create a new event, register for an event, and trigger an event (for which other scripts or other parts of the current script might be registered).</p>
+      <p>To create a new event on an object of type <code>jabberwerx.JWModel</code>, your code calls the <code>applyEvent(eventName)</code> method. This creates a new event and returns a <code>jabberwerx.EventNotifier</code> object.</p>
+      <p>To register for an event, you use the <code>event(eventName)</code> method on objects of type <code>jabberwerx.JWModel</code>, which returns the associated <code>jabberwerx.EventNotifier</code> for an existing event. There are two methods on the <code>jabberwerx.EventNotifier</code> object:</p>
+      <ul>
+        <li><code>bind(callback)</code>: register a callback method which is invoked when the event triggers. The callback method is passed an <code>jabberwerx.EventObject</code>.</li>
+        <li><code>bindWhen(selector, callback)</code>: similar to <code>bind()</code> but with the additional selector (jQuery string or method) which is a filter to determine whether to trigger the event or not</li>
+      </ul>
+      <p>To trigger an event, your code uses the <code>trigger()</code> method on the <code>jabberwerx.EventNotifier</code> object</p>
+        <!--
+        <h3>2.3.1 Event Chaining</h3>
+        <p>Because sending, receiving, and processing XMPP stanzas is the primary job of CAXL and different parts of a CAXL-based application might want to react separately to incoming data, the library includes some sophisticated techniques for handling stanzas that the client receives from the server. In particular, CAXL provides ways to access a stanza at different stages: before it is received, when it is received, and after it is received. Because there are three kinds of stanza, there are nine distinct events:</p>
+        <ul>
+          <li>beforeIqReceived</li> 
+          <li>beforeMessageReceived</li> 
+          <li>beforePresenceReceived</li> 
+          <li>iqReceived</li> 
+          <li>messageReceived</li> 
+          <li>presenceReceived</li> 
+          <li>afterIqReceived</li> 
+          <li>afterMessageReceived</li> 
+          <li>afterPresenceReceived</li> 
+        </ul>
+        <p>When one of those events occurs, all of the registered callbacks are triggered. Each function that receives the callback can take appropriate action and optionally return true. If the function returns true after the callback, then the later events in the chain are not triggered; if the function returns false or does not return, then the later events in the chain are triggered. For example, if a callback for "beforeIqReceived" returns true, then the "iqReceived" and "afterIqReceived" events are not triggered.</p>
+        -->
+    </section>
+    <section id="entities">
+      <h2>2.4 Entities and EntitySets</h2>
+      <p>Because XMPP is a technology for communication, almost everything we want to interact with &#151; servers and users and clients and chatrooms and data sources and so on &#151; has a JabberID (and sometimes a secondary identifier called a node &#151; more about that later). Anything that's addressable on the network might be, in CAXL terms, an Entity. Thus, for example, each of the contacts in a user's contact list or roster is an Entity. So is a chatroom that a user joins, and so is each occupant in the chatroom.</p>
+      <p>Sometimes, entities are also grouped together into buckets called EntitySets. Thus a user's roster is an EntitySet, consisting of all the user's contacts. Similarly, collectively the occupants in a chatroom also form an EntitySet (which is related to, but distinct from, the Entity that is the chatroom itself).</p>
+      <p>If you think of an Entity as a JID or information about a JID, you won't go far wrong in CAXL.</p> 
+    </section>
+    <!--
+    <section id="controllers">
+      <h2>2.5 Controllers</h2>
+      <p>
+    </section>
+    -->
+    <div>
+      <p>&copy; 2012 Cisco Systems, Inc. All rights reserved.</p>
+    </div>
+  </body>
+</html>

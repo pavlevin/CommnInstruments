@@ -1,0 +1,279 @@
+<!--
+/**
+ * filename:        timedrosterdemo.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications. 
+ */
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Cisco AJAX XMPP Library ~ Persistent Roster</title>
+        <link rel="stylesheet" href="../../resources/themes/default/css/styles.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="../../jabberwerx.ui.js"></script>
+        <script type="text/javascript">
+
+var demo_config = {
+    user: "jwtest4",
+    password: "test",
+    domain: "example.com"
+};
+var NUM_GROUPS_ADD = 5;
+
+//persistDuration should be at least 30 seconds to allow for
+//browser page loading completion
+var jabberwerx_config = {
+    persistDuration: 0
+};
+
+jabberwerx._config.persistDuration = 0;
+var reportEventTime = function(etype, estart) {
+    var et = (new Date().getTime() - estart);
+    var nt = parseInt(jabberwerx.$("table#timing td.timing#" + etype + "_time").text()) + et;
+    var tt = parseInt(jabberwerx.$("table#timing td.timing#total_time").text()) + et;
+    var count = parseInt(jabberwerx.$("table#timing td.timing#" + etype + "_count").text()) + 1;
+
+    jabberwerx.$("table#timing td.timing#" + etype + "_count").text(count);
+    jabberwerx.$("table#timing td.timing#" + etype + "_time").text(nt);
+    jabberwerx.$("table#timing td.timing#total_time").text(tt);
+};
+
+jabberwerx.ui.RosterView.intercept({
+    _handleBatchEntityEvents: function(evt) {
+        var start = new Date().getTime();
+        this._super(evt);
+        reportEventTime("bevent", start);
+    },
+    _handleEntityEvent: function(evt) {
+        var start = new Date().getTime();
+        this._super(evt);
+        reportEventTime("eevent", start);
+    },
+    _handlePrimaryPresence: function(evt) {
+        var start = new Date().getTime();
+        this._super(evt);
+        reportEventTime("pevent", start);
+    }
+});
+
+jabberwerx.app.RosterDemo = jabberwerx.ui.JWApp.extend({
+
+    /**
+     * Method invoked when the application is initially created.
+     * NOT invoked when application is loaded from store.
+     *
+     * Applications should create JWA objects and bind JWA
+     * events with invocations in this method.
+     */
+    appCreate: function() {
+        this._super();
+
+        this.client = new jabberwerx.Client();
+        this.client.event("clientStatusChanged").
+             bind(this.invocation('_onClientStatusChanged'));
+
+        this.roster = this.client.controllers.roster ||
+                      new jabberwerx.RosterController(this.client);
+
+        this.view = new jabberwerx.ui.RosterView(this.client.entitySet);
+
+        this.view.setDefaultGroupingName("unknown");
+        this.client.connect(demo_config.user + "@" + demo_config.domain, demo_config.password);
+    },
+
+    /**
+     * Method is invoked once the application is loaded
+     * (all JWA objects have been created/loaded and initialized.
+     * Method is also called after application creation
+     * (after appCreate has been called).
+     *
+     * Application should render it's views and rebind any HTML events
+     * JWA events *not* bound with invocations should be defined here.
+     */
+    appInitialize: function() {
+        this._super();
+        jabberwerx.$("div#jwa-ver").text("JabberWerx:AJAX version " + jabberwerx.version);
+        this.view.render().appendTo("div#roster_stuff");
+        this.view.dimensions({width:200, height:350});
+        var that = this;
+        //bind HTML events
+        jabberwerx.$("input:checkbox[name='filter_contacts']").bind("click", function() {
+           if (jabberwerx.$(this).get(0).checked) {
+               that.view.addFilter(that.view.invocation("filterByContacts"));
+           } else {
+               that.view.removeFilter(that.view.invocation("filterByContacts"));
+           }
+        });
+        jabberwerx.$("input:checkbox[name='filter_active']").bind("click", function() {
+           if (jabberwerx.$(this).get(0).checked) {
+               that.view.addFilter(that.view.invocation("filterByActive"));
+           } else {
+               that.view.removeFilter(that.view.invocation("filterByActive"));
+           }
+        });
+        jabberwerx.$("input[name='add_groups']").bind("click", function() {
+            var count = 0;
+            that.client.entitySet.each(function(entity) {
+                if (entity instanceof jabberwerx.RosterContact) {
+                    var newgroups = ["Friends_" + ((count % NUM_GROUPS_ADD) + 1)];
+                    jabberwerx.$.merge(newgroups, entity.getGroups());
+                    entity.setGroups(jabberwerx.unique(newgroups));
+                    ++count;
+                }
+            });
+        });
+        jabberwerx.$("input[name='remove_groups']").bind("click", function() {
+            that.client.entitySet.each(function(entity) {
+                if (entity instanceof jabberwerx.RosterContact) {
+                    entity.setGroups(["Friends"]);
+                }
+            });
+        });
+        jabberwerx.$("input#clearBtn").bind("click", function() {
+            jabberwerx.$("table#timing td.timing#bevent_count").text("0");
+            jabberwerx.$("table#timing td.timing#bevent_time").text("0");
+            jabberwerx.$("table#timing td.timing#eevent_count").text("0");
+            jabberwerx.$("table#timing td.timing#eevent_time").text("0");
+            jabberwerx.$("table#timing td.timing#pevent_count").text("0");
+            jabberwerx.$("table#timing td.timing#pevent_time").text("0");
+            jabberwerx.$("table#timing td.timing#total_time").text("0");
+        });
+        //bind JWA events without invocations
+        this.view.event("rosterItemSelected").bind(function(evt) {
+           alert("selected via " + evt.data.type + ": " + evt.data.item.entity);
+        });
+        this.view.event("rosterGroupingRendered").bind(function(evt) {
+           if (evt.data.grouping.name != "") {
+               evt.data.grouping.expand();
+           }
+        });
+
+        //finally check state and set view accordingly
+        this._setState(this.client.clientStatus, false);
+    },
+
+    /**
+     * Destroy any JWA objects this application explicitly created.
+     * Unbind any JWA events bound with invocations
+     */
+    destroy: function() {
+        this.client.event("clientStatusChanged").
+             unbind(this.invocation('_onClientStatusChanged'));
+
+        this.view.destroy();
+        this.view = null;
+        this.roster.destroy();
+        this.roster = null;
+        this.client.destroy();
+        this.client = null;
+        this._super();
+    },
+
+    _onClientStatusChanged: function(evt) {
+        this._setState(this.client.clientStatus, true);
+    },
+
+    _setState: function(state, statusChanged) {
+        switch (state) {
+            case -1: //initializing
+                break;
+            case jabberwerx.Client.status_connected:
+                break;
+            case jabberwerx.Client.status_disconnected:
+                break;
+        }
+    }
+}, "jabberwerx.app.RosterDemo");
+
+/**
+ * Allow jabberwerx.app to control lifetime of application.
+ * Application is loaded from persisted store if possible
+ * otherwise a new instance is created.
+ * New instance is assigned to singleton jabberwerx.util.app._jwappinst.
+ */
+jabberwerx.app.persistedApplicationClass('jabberwerx.app.RosterDemo');
+
+        </script>
+        <style type="text/css">
+div.roster {
+    border: 1px solid #000099;
+    background: #cccccc;
+}
+
+div.roster div.group.section {
+    background: #ffffff;
+}
+div.roster .contact .status {
+    display:        block;
+    color:          #cccccc;
+}
+
+table#timing {
+    width: 50%;
+    margin: 12px;
+}
+table#timing th {
+    text-align: left;
+}
+table#timing th.timing {
+    width:      20%;
+    padding:    0px 12px;
+    text-align: right;
+}
+table#timing th.timing.total {
+    width:      20%;
+    padding:    0px 12px;
+    text-align: right;
+}
+table#timing td.timing {
+    padding:    0px 12px;
+    border:     1px solid black;
+}
+        </style>
+    </head>
+    <body>
+        <h2>Timed Roster Demo</h2>
+        <div id="jwa-ver"></div>
+        <div>
+            <div id="roster_stuff"></div>
+            <div id="roster_filters">
+                <div><input type='checkbox' name='filter_contacts'/> Contacts only</div>
+                <div><input type='checkbox' name='filter_active'/> Active only</div>
+            </div>
+            <div>
+                <input type='button' name='add_groups' value="Add Groups"/>
+                <input type='button' name='remove_groups' value="Remove Groups"/>
+            </div>
+        </div>
+        <table id="timing">
+            <tr>
+                <th>Batch Events</th>
+                <th class='timing'># of Events</th>
+                <td id="bevent_count" class="timing">0</td>
+                <th class='timing'>Time (ms)</th>
+                <td id="bevent_time" class="timing">0</td>
+            </tr>
+            <tr>
+                <th>Entity Events</th>
+                <th class='timing'># of Events</th>
+                <td id="eevent_count" class="timing">0</td>
+                <th class='timing'>Time (ms)</th>
+                <td id="eevent_time" class="timing">0</td>
+            </tr>
+            <tr>
+                <th>Presence Events</th>
+                <th class='timing'># of Events</th>
+                <td id="pevent_count" class="timing">0</td>
+                <th class='timing'>Time (ms)</th>
+                <td id="pevent_time" class="timing">0</td>
+            </tr>
+            <tr>
+                <th><input type='button' id='clearBtn' value="Clear"></input></th><td/>
+                <th class="timing total" colspan="2">Total Elapsed (ms)</th>
+                <td class="timing total" id="total_time">0</td>
+            </tr>
+        </table>
+    </body>
+</html>

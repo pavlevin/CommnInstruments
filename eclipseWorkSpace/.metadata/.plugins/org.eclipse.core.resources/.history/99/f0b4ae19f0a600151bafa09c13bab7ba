@@ -1,0 +1,107 @@
+import java.lang.reflect.Field;
+
+interface show{
+	default String getLoginFor1(CombinedUser.DBUsr dbUsr) {
+		return CombinedUser.getServiceName(dbUsr);
+	}
+	default void showString(int g){
+		System.out.println(g);
+		
+	};
+}
+
+public class CombinedUser implements show{
+	private String userName;
+	CombinedUser(){
+		DBUsr dbUser1 = new DBUsr("DB User 1", "DB Pass 1");
+		this.userName="NoName";
+		System.out.println(getLoginFor1(dbUser1));
+		showString(3);
+}
+	CombinedUser(String userName){
+		this.userName=userName;
+	}
+	public static void main(String[] args) {
+	
+		UnixUsr unixUsr1 = new UnixUsr("Unix User 1", "Unix Pass 1");
+		DBUsr dbUser1 = new DBUsr("DB User 1", "DB Pass 1");
+	
+		System.out.println(dbUser1.serviceName);
+		setServiceName(dbUser1,"OGO!");
+		System.out.println(dbUser1.serviceName);
+		System.out.println(unixUsr1.identityFile);
+		setIdentityFile(unixUsr1,"OGgO!");
+		System.out.println(unixUsr1.identityFile);
+	}
+	
+	void setLoginFor(UnixUsr unixUsr,String login) { 
+		unixUsr.login=login;	
+	}
+	
+	String getLoginFor(UnixUsr unixUsr) {
+		return unixUsr.login;
+	}
+	
+	void setLoginFor(DBUsr dbUsr,String login) {
+		dbUsr.login=login;	
+	}
+
+	String getLoginFor(DBUsr dbUsr) {
+		return dbUsr.login;
+	}
+	
+	void setPasswordFor(UnixUsr unixUsr,String password) {
+		unixUsr.password=password;
+	}
+	
+	String getPasswordFor(UnixUsr unixUsr) {
+		return unixUsr.password;
+	}
+	
+	void setPasswordFor(DBUsr dbUsr,String password) {
+		dbUsr.password=password;
+	}
+	
+	String getPasswordFor(DBUsr dbUsr) {
+		return dbUsr.password;
+	}
+	
+	void setUserName(String userName) {
+		this.userName=userName;
+		
+	}
+	
+	String getUserName() {
+		return userName;
+	}
+
+	static void setServiceName(DBUsr dbUsr,String serviceName){
+		dbUsr.serviceName=serviceName;
+	}
+	static String getServiceName(DBUsr dbUsr){
+		return dbUsr.serviceName;
+	}
+	
+	static void setIdentityFile(UnixUsr unixUsr,String identityFile){
+		unixUsr.identityFile=identityFile;
+	}
+	
+	static class DBUsr{
+		private String serviceName, login, password;
+		DBUsr(String login, String password){
+			this.login = login;
+			this.password=password;
+			this.serviceName="jjj";
+		}
+
+	}
+
+	static class UnixUsr {
+		private String identityFile, login, password;
+		UnixUsr(String login, String password){
+			this.login = login;
+			this.password=password;
+		}
+	}
+}
+

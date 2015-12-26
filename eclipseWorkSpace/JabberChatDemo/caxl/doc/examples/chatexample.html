@@ -1,0 +1,202 @@
+<!--
+/**
+ * filename:        chatexample.html
+ *
+ * Cisco encourages developers to incorporate example code into
+ * their applications.
+ */
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--    This is a simple example that demonstrates sending and
+                receiving messages between jabberwerx contacts.
+        -->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>1-1 Chat Example</title>
+
+        <script type='text/javascript' src='../../jabberwerx.js'></script>
+        <script type='text/javascript' src='./jabberwerxexamples.js'></script>
+
+        <script type="text/javascript">
+        (function() { //wrapped in an anon function to avoid polluting global namespace
+
+            // Map the global jQuery symbol to jabberwerx's jquery for convenience.
+            var $ = jabberwerx.$;
+
+            /**
+             * Configuration information including
+             *   httpBindingURL - the BOSH binding URL.
+             *   domain - The user's domain (domain part of the connected JID)
+             *   username - The user (local part of connected JID)
+             *   password - The account password.
+             */
+            var demo_config = {
+                httpBindingURL: "/httpbinding",
+                domain: "example.com",
+                username: "jwtest0",
+                password: "test"
+            };
+
+            /**
+             * Instantiate the Jabberwerx Client, the main access and routing
+             * object. Clients define a connection and session.
+             *
+             * see ../api/symbols/jabberwerx.Client.html
+             */
+            var client = new jabberwerx.Client();
+
+            /**
+             * Instantiate the chat controller. The
+             * constructor is passed the associated client and registers itself
+             * with the client. The controller is managed by the client. The
+             * ChatController allows us to manage chat sessions.
+             *
+             * see ../api/symbols/jabberwerx.ChatController.html
+             */
+            var chatController = new jabberwerx.ChatController(client);
+
+            /**
+             *  Convenience function called to send a message to the recipient.
+             *  Session is fetched from the Chat Controller for the given
+             *  JID if it exists otherwise a new session is created. Please refer
+             *  to the jabberwerx.ChatController and jabberwerx.ChatSession for more
+             *  information.
+             *  An exception will be thrown for bad JIDs, and if the message is sent
+             *  before the connection is made.
+             *
+             *  see ../api/symbols/jabberwerx.ChatController.html
+             */
+            function sendMessage() {
+                try{
+                    /**
+                     * openSession is passed the bare jid of the user we want to
+                     * chat with and returns an existing session or creates a
+                     * new one for us. The method may throw an exception on
+                     * bad arguments or invalid state and should be wrapped in
+                     * a try-catch block.
+                     *
+                     * see ../api/symbols/jabberwerx.ChatController.html#openSession
+                     */
+                    var chatSession = chatController.openSession($("#recipientUsername").val()+ "@" + demo_config.domain);
+
+                    /**
+                     * sendMessage is passed a plaintext message to send. The
+                     * method may throw an exception on bad arguments or invalid
+                     * state and should be wrapped in a try-catch block.
+                     *
+                     * see ../api/symbols/jabberwerx.ChatSession.html#sendMessage
+                     */
+                    chatSession.sendMessage($("#message").val());
+                }
+                catch(e){
+                    alert("An exception occurred while trying to obtain a session and send a message: " + e.message);
+                }
+            }
+            /**
+             * Simple Chat example where the user sends a message to another user.
+             */
+            $(document).ready(function() {
+                /**
+                 * Add a login to this example by inserting appropriate HTML
+                 * into #conn-data. See Simple Client Connection example for extensive
+                 * details on connection.
+                 *
+                 * see ./connectexample.html
+                 */
+                jabberwerx_examples.addLogin($("#conn-data"), client, demo_config);
+
+                /**
+                 * Bind the "chatSessionOpened" event on the chat controller.
+                 * When the event is triggered, the 'chatSession' is extracted
+                 * from the event data. This session is used to bind further
+                 * chat specific events.
+                 */
+                chatController.event("chatSessionOpened").bind(function(evt) {
+                    var chatSession = evt.data.chatSession;
+
+                    /**
+                     * Here we bind the "chatReceived" event on the chat session.
+                     * When the event is triggered, the message details are extracted
+                     * from the event data, data contains the event-specific information.
+                     * getBody() - will return the body of the message.
+                     * getFrom() - will return the JID of the sender
+                     * Once we have this information, it is displayed in the textarea.
+                     *
+                     * see ../api/symbols/jabberwerx.Message.html
+                     */
+                    chatSession.event("chatReceived").bind(function(evt) {
+                        var message = evt.data;
+                        $("#chat").val(message.getFrom() + ": " + message.getBody());
+                    });
+                });
+
+                /**
+                 * Setting the default values for the username/password and recipient fields
+                 */
+                $('#recipientUsername').val('jwtest1');
+
+                /**
+                 * Clicking the 'Send' button will call a conveince function
+                 * 'sendMessage' to send a message to the specified recipient
+                 * username. Please refer to the the funtion for detailed explanation.
+                 */
+                $('#sendButton').click(sendMessage);
+            });
+        })();
+        </script>
+    </head>
+    <body>
+        <h2>1-1 Chat Example</h2>
+        <div>An example demonstrating how to send and recieve messages between two users.</div>
+        <h3>How it Works</h3>
+        This example automatically performs a number of actions in the page onReady event.
+        <ol>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.Client.html' target='_blank'>jabberwerx.Client</a>.</li>
+            <li>Creating a <a href='../../doc/api/symbols/jabberwerx.ChatController.html' target='_blank'>jabberwerx.ChatController</a> to manage chat sessions and send/receive messages.</li>
+            <li>Registering for <a href='../../doc/api/jabberwerxEvents.html' target='_blank'>jabberwerx.ChatSession Events</a> to handle messages received.</li>
+        </ol>
+        The example also demonstrates (based on user actions like button clicks) additional one-to-one chat functionality available within CAXL:
+        <ul>
+            <li><div>Connecting as a given username with a given password.</div>
+            &nbsp;&nbsp;NOTE: the <a href='./connectexample.html' target='none'>Simple Client Connection</a> example is the best source for connection information.</li>
+            <li><a href='../../doc/api/symbols/jabberwerx.ChatController.html#openSession' target='_blank'>Starting a chat session.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.ChatSession.html#sendMessage' target='_blank'>Sending a chat message.</a></li>
+            <li><a href='../../doc/api/symbols/jabberwerx.ChatSession.html' target='_blank'>Receiving a chat message.</a></li>
+        </ul>
+
+        <h3>In Action</h3>
+        <table align="left"><tr><td>
+            <p>Instructions for using this example:</p>
+            <ul>
+                <li>Click the "Connect" button to connect the client to the server.</li>
+                <li>Enter the username you wish to send a message to, the message itself and then click the 'Send Message' button.</li>
+                <li>Message received will be displayed.</li>
+            </ul>
+
+            <p>***Note: In order to simulate users chatting with one another, please open another instance of your browser and navigate to this
+            page.</p>
+        </td></tr></table>
+        <table align="center" border="1"><tr><td>
+            <table align="center" border="0">
+                <!-- login HTML will be inserted here -->
+                <tr><td colspan="2" id="conn-data"></td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+                <tr>
+                    <td><label for="recipientUsername">Recipient Username: </label></td>
+                    <td><input type="text" id="recipientUsername" size="45" maxLength="45"/></td>
+                </tr>
+                <tr>
+                    <td><label for="message">Message: </label></td>
+                    <td><input type="text" id="message" size="45"/><input type="button" id="sendButton" value="Send Message"/></td>
+                </tr>
+                <tr>
+                    <td><label for="chat">Chat: </label></td>
+                    <td><textarea type="text" id="chat" rows="10" cols="55"></textarea></td>
+                </tr>
+            </table>
+        </td></tr></table>
+    </body>
+</html>
